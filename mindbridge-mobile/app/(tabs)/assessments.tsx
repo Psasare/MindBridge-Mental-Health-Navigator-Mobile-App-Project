@@ -474,7 +474,7 @@ export default function AssessmentsScreen() {
     if (!activeTestId) return null;
     
     // If loading dynamic questions, show spinner
-    if (loading && activeTestId === 'personalized') {
+    if (loading) {
       return (
         <View style={[styles.wizardContainer, { justifyContent: 'center', alignItems: 'center' }]}>
           <ActivityIndicator size="large" color={getActiveColor()} />
@@ -483,7 +483,7 @@ export default function AssessmentsScreen() {
       );
     }
 
-    const questions = activeTestId === 'personalized' ? personalizedQuestions : getQuestionsForLanguage(theme.language, activeTestId);
+    const questions = personalizedQuestions;
     
     // Safety check if questions failed to load or are empty
     if (!questions || questions.length === 0) return null;
@@ -515,7 +515,7 @@ export default function AssessmentsScreen() {
 
           {/* Options */}
           <View style={styles.optionsContainer}>
-            {currentQuestion.options.map((option, idx) => {
+            {currentQuestion.options.map((option: string, idx: number) => {
               const isSelected = answers[currentQuestionIndex] === idx;
               return (
                 <TouchableOpacity
@@ -597,74 +597,77 @@ export default function AssessmentsScreen() {
     
     return (
       <ScrollView contentContainerStyle={styles.resultScroll} showsVerticalScrollIndicator={false}>
-        <View style={styles.successIconWrap}>
-          <Icon color={getActiveColor()} size={64} />
+        <View style={[styles.successIconWrap, { backgroundColor: getActiveColor() + '20', borderColor: getActiveColor() + '40' }]}>
+          <Icon color={getActiveColor()} size={48} />
         </View>
-        <Text style={styles.resultHeading}>{getTestTitle(activeTestId)} Complete</Text>
-        <Text style={styles.resultSubheading}>Here is what the Oracle observed:</Text>
+        <Text style={styles.resultHeading}>{getTestTitle(activeTestId)}</Text>
+        <Text style={styles.resultSubheading}>Here is your clinical evaluation:</Text>
         
-        {/* Insight Card */}
-        <View style={[styles.resultCard, { borderColor: getActiveColor(), padding: 20 }]}>
-          <Text style={{ color: theme.colors.text.secondary, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, fontWeight: '700' }}>
-            Clinical Insight
-          </Text>
-          <Text style={{ color: theme.colors.text.primary, fontSize: 16, lineHeight: 24, textAlign: 'center' }}>
-            {personalizedFeedback.insight}
-          </Text>
+        {/* Score and Severity Card */}
+        <View style={[styles.resultCard, { borderColor: getActiveColor(), flexDirection: 'column' }]}>
+          <View style={{ flexDirection: 'row', width: '100%', marginBottom: 16 }}>
+            <View style={styles.scoreContainer}>
+              <Text style={styles.scoreTitle}>Clinical Score</Text>
+              <Text style={[styles.scoreValue, { color: getActiveColor() }]}>{personalizedFeedback.score || 0}</Text>
+            </View>
+            <View style={styles.dividerVertical} />
+            <View style={styles.severityContainer}>
+              <Text style={styles.severityTitle}>Risk Level</Text>
+              <View style={[
+                styles.severityBadge, 
+                { backgroundColor: isSevere ? 'rgba(230, 0, 0, 0.15)' : 'rgba(90, 138, 112, 0.15)' }
+              ]}>
+                <Text style={[
+                  styles.severityText, 
+                  { color: isSevere ? theme.colors.semantic.danger : theme.colors.semantic.success }
+                ]}>
+                  {personalizedFeedback.severity}
+                </Text>
+              </View>
+            </View>
+          </View>
+          
+          {/* Explanation */}
+          <View style={{ borderTopWidth: 1, borderTopColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', paddingTop: 16 }}>
+            <Text style={{ color: theme.colors.text.secondary, fontSize: 14, lineHeight: 22, textAlign: 'center', fontFamily: theme.typography.fonts.body }}>
+              {personalizedFeedback.explanation || "This score helps us understand where you are at today so we can provide the best resources."}
+            </Text>
+          </View>
         </View>
 
-        {/* Dynamic Action / Recommendation Card */}
-        {isSevere ? (
-          <View style={[
-            styles.actionCard, 
-            { 
-              backgroundColor: theme.isDark ? 'rgba(230, 0, 0, 0.08)' : 'rgba(230, 0, 0, 0.04)',
-              borderColor: theme.colors.semantic.danger 
-            }
-          ]}>
-            <ShieldAlert color={theme.colors.semantic.danger} size={32} style={{ marginBottom: 12 }} />
-            <Text style={[styles.actionTitle, { color: theme.colors.semantic.danger }]}>
-              Crisis Support Available
+        {/* AI Insight & Prescription Card */}
+        <View style={[
+          styles.actionCard, 
+          { 
+            backgroundColor: theme.colors.surface,
+            borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+            alignItems: 'flex-start',
+            padding: 24,
+            marginBottom: 24
+          }
+        ]}>
+          <Text style={{ color: theme.colors.text.secondary, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, fontFamily: theme.typography.fonts.accent, fontWeight: '700', marginBottom: 12 }}>
+            Oracle Insight & Next Steps
+          </Text>
+          <Text style={{ color: theme.colors.text.primary, fontSize: 15, lineHeight: 24, fontFamily: theme.typography.fonts.body, marginBottom: 20 }}>
+            {personalizedFeedback.insight} {personalizedFeedback.recommendation}
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.actionBtn, 
+              { backgroundColor: isSevere ? theme.colors.semantic.danger : getActiveColor() }
+            ]}
+            onPress={() => {
+              setActiveTestId(null);
+              router.push(isSevere ? '/(tabs)/crisis' : '/(tabs)/knowledge-hub');
+            }}
+          >
+            <Text style={styles.actionBtnText}>
+              {isSevere ? 'Connect with Support' : 'Explore Resources'}
             </Text>
-            <Text style={styles.actionText}>
-              {personalizedFeedback.recommendation || "Your responses suggest you might be having a difficult time right now. We are here for you."}
-            </Text>
-            <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: theme.colors.semantic.danger }]}
-              onPress={() => {
-                setActiveTestId(null);
-                router.push('/(tabs)/crisis');
-              }}
-            >
-              <Text style={styles.actionBtnText}>Connect with Support</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={[
-            styles.actionCard, 
-            { 
-              backgroundColor: theme.isDark ? 'rgba(123, 97, 255, 0.08)' : 'rgba(123, 97, 255, 0.04)',
-              borderColor: getActiveColor() 
-            }
-          ]}>
-            <Compass color={getActiveColor()} size={32} style={{ marginBottom: 12 }} />
-            <Text style={[styles.actionTitle, { color: theme.colors.text.primary }]}>
-              Recommended Next Step
-            </Text>
-            <Text style={styles.actionText}>
-              {personalizedFeedback.recommendation || "Explore the Knowledge Hub or start a breathing exercise to rest your mind."}
-            </Text>
-            <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: getActiveColor() }]}
-              onPress={() => {
-                setActiveTestId(null);
-                router.push('/(tabs)/knowledge-hub');
-              }}
-            >
-              <Text style={styles.actionBtnText}>Explore Resources</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          </TouchableOpacity>
+        </View>
 
         {/* Done Button (Hidden if strict CSSRS positive) */}
         {!(activeTestId === 'cssrs' && isSevere) && (

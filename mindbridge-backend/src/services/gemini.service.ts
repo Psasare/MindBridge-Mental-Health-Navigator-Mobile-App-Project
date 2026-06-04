@@ -416,16 +416,37 @@ export const generatePersonalizedAssessment = async (userId: string, context: an
     const modelName = "gemini-2.5-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
       
-    // Map testType to clinical focus
+    // Map testType to clinical focus and question count
     let clinicalFocus = "general well-being";
-    if (testType === 'phq9') clinicalFocus = "depression, lack of interest, and mood";
-    if (testType === 'gad7') clinicalFocus = "anxiety, worry, and nervous tension";
-    if (testType === 'pss') clinicalFocus = "perceived stress and feeling overwhelmed";
-    if (testType === 'brs') clinicalFocus = "resilience and ability to bounce back from stress";
-    if (testType === 'cssrs') clinicalFocus = "suicidal ideation and severe emotional pain";
+    let questionCount = 3; // Default short check-in
+    
+    if (testType === 'phq9') {
+      clinicalFocus = "depression, lack of interest, and mood";
+      questionCount = 9;
+    }
+    if (testType === 'gad7') {
+      clinicalFocus = "anxiety, worry, and nervous tension";
+      questionCount = 7;
+    }
+    if (testType === 'pss') {
+      clinicalFocus = "perceived stress and feeling overwhelmed";
+      questionCount = 10;
+    }
+    if (testType === 'brs') {
+      clinicalFocus = "resilience and ability to bounce back from stress";
+      questionCount = 6;
+    }
+    if (testType === 'burnout') {
+      clinicalFocus = "academic exhaustion and academic stress";
+      questionCount = 10;
+    }
+    if (testType === 'cssrs') {
+      clinicalFocus = "suicidal ideation and severe emotional pain";
+      questionCount = 6;
+    }
 
     const prompt = `
-You are a compassionate clinical AI. Generate a personalized 3-question check-in for the user focusing heavily on **${clinicalFocus}**.
+You are a compassionate clinical AI. Generate a personalized ${questionCount}-question check-in for the user focusing heavily on **${clinicalFocus}**.
 
 USER CONTEXT:
 Name: ${context.onboarding?.firstName || 'Friend'}
@@ -435,7 +456,7 @@ Recent Journals:
 ${context.recentJournal?.map((j: any) => `- Title: ${j.title || 'Untitled'}, Content: ${j.content}`).join('\n') || 'None.'}
 
 INSTRUCTIONS:
-1. Generate exactly 3 multiple-choice questions to check in on their current state regarding ${clinicalFocus}.
+1. Generate exactly ${questionCount} multiple-choice questions to check in on their current state regarding ${clinicalFocus}.
 2. Tailor the questions to their recent struggles (e.g., if they had poor sleep, ask about their rest; if they were stressed, ask about their tension).
 3. Provide 4 options for each question, ranging from positive/healthy to negative/struggling.
 4. Output MUST be valid JSON and exactly match this schema:
@@ -483,13 +504,19 @@ Q&A:
 ${answers.map((a: any, i: number) => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n')}
 
 INSTRUCTIONS:
-1. Provide a 'feedbackMessage' (2-3 sentences) offering encouragement, validation, and a gentle recommendation based on their answers.
-2. Determine an overall 'severity' level: "Low Risk", "Moderate Risk", or "High Risk" (if they chose the most negative options consistently).
-3. If they are "High Risk", provide a 'crisisAlert' boolean as true.
-4. Output MUST be valid JSON and exactly match this schema:
+1. Provide an 'insight' (2-3 sentences) explaining exactly what you have noticed about their mental state based on their answers, and what their assessment risk means in a compassionate way.
+2. Provide a 'recommendation' (1-2 sentences) explaining exactly how you can help them right now by prescribing specific types of resources or tools available in the app.
+3. Determine an overall 'severity' level: "Low Risk", "Moderate Risk", or "High Risk".
+4. Calculate a 'score' out of 100 based on how positive/healthy their answers were (100 = excellent, 0 = severe distress).
+5. Provide an 'explanation' (1-2 sentences) explaining exactly what their score and severity level mean in plain, non-clinical language so they understand their result.
+6. If they are "High Risk", provide a 'crisisAlert' boolean as true.
+7. Output MUST be valid JSON exactly matching this schema:
 {
-  "feedbackMessage": "string",
+  "insight": "string",
+  "recommendation": "string",
   "severity": "string",
+  "score": number,
+  "explanation": "string",
   "crisisAlert": boolean
 }
 Do not output any markdown formatting, just the raw JSON object.`;
@@ -505,8 +532,11 @@ Do not output any markdown formatting, just the raw JSON object.`;
   } catch (error) {
     console.error(`[BACKEND] Error evaluating personalized assessment:`, error);
     return {
-      feedbackMessage: "Thank you for checking in. Remember that it's okay to take things one step at a time.",
+      insight: "Thank you for checking in and sharing how you're feeling.",
+      recommendation: "Take a moment to breathe and rest. We're here for you.",
       severity: "Moderate Risk",
+      score: 50,
+      explanation: "A moderate risk score indicates you are experiencing some difficulties, but they are manageable with the right support.",
       crisisAlert: false
     };
   }
