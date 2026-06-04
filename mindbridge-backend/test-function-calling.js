@@ -24,7 +24,7 @@ async function testFunctionCalling() {
   console.log("\n--- Testing Function Calling (Ritual Status) ---");
   
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash-latest",
+    model: "gemini-1.5-flash",
     systemInstruction: SYSTEM_PROMPT,
     tools: tools
   });

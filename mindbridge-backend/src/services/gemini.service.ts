@@ -124,17 +124,14 @@ const tools = [
 ];
 
 export const generateOracleResponse = async (userMessage: string, context: any, userId: string) => {
-  const modelsToTry = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-1.5-flash"];
-  let lastError: any = null;
-
-  for (const modelName of modelsToTry) {
-    try {
-      console.log(`[BACKEND] [Oracle] Attempting generateOracleResponse using model: ${modelName}`);
-      const model = genAI.getGenerativeModel({ 
-        model: modelName,
-        systemInstruction: SYSTEM_PROMPT,
-        tools: tools as any
-      });
+  try {
+    const modelName = "gemini-1.5-flash";
+    console.log(`[BACKEND] [Oracle] Attempting generateOracleResponse using model: ${modelName}`);
+    const model = genAI.getGenerativeModel({ 
+      model: modelName,
+      systemInstruction: SYSTEM_PROMPT,
+      tools: tools as any
+    });
 
       // Build a rich, structured user profile context block
       const onboarding = context.onboarding;
@@ -246,38 +243,44 @@ INSTRUCTIONS:
       let result = await chat.sendMessage(userMessage);
       let response = result.response;
 
-      // Handle Function Calls (Tools) in a loop
-      let call = response.functionCalls()?.[0];
+      // Handle Function Calls (Tools) in a loop in parallel
+      let calls = response.functionCalls();
       let iteration = 0;
-      while (call && iteration < 5) {
-        console.log(`[Oracle Tool] Calling: ${call.name} with model: ${modelName}`, call.args);
-        let toolResponse: any;
+      while (calls && calls.length > 0 && iteration < 5) {
+        const functionResponses = await Promise.all(
+          calls.map(async (call) => {
+            console.log(`[Oracle Tool] Calling: ${call.name} with model: ${modelName}`, call.args);
+            let toolResponse: any;
 
-        switch (call.name) {
-          case "get_mood_history":
-            toolResponse = await AiRepository.getMoodHistory(userId, (call.args as any).limit || 7);
-            break;
-          case "get_journal_history":
-            toolResponse = await AiRepository.getJournalHistory(userId, (call.args as any).limit || 3);
-            break;
-          case "get_ritual_status":
-            toolResponse = await AiRepository.getTodayRitualStatus(userId);
-            break;
-          case "get_recommended_resources":
-            toolResponse = await AiRepository.searchResources((call.args as any).category);
-            break;
-          default:
-            toolResponse = { error: "Unknown tool" };
-        }
+            switch (call.name) {
+              case "get_mood_history":
+                toolResponse = await AiRepository.getMoodHistory(userId, (call.args as any).limit || 7);
+                break;
+              case "get_journal_history":
+                toolResponse = await AiRepository.getJournalHistory(userId, (call.args as any).limit || 3);
+                break;
+              case "get_ritual_status":
+                toolResponse = await AiRepository.getTodayRitualStatus(userId);
+                break;
+              case "get_recommended_resources":
+                toolResponse = await AiRepository.searchResources((call.args as any).category);
+                break;
+              default:
+                toolResponse = { error: "Unknown tool" };
+            }
 
-        result = await chat.sendMessage([{
-          functionResponse: {
-            name: call.name,
-            response: { result: toolResponse }
-          }
-        }]);
+            return {
+              functionResponse: {
+                name: call.name,
+                response: { result: toolResponse }
+              }
+            };
+          })
+        );
+
+        result = await chat.sendMessage(functionResponses);
         response = result.response;
-        call = response.functionCalls()?.[0];
+        calls = response.functionCalls();
         iteration++;
       }
 
@@ -293,23 +296,17 @@ INSTRUCTIONS:
       }
 
       return finalText;
-    } catch (error: any) {
-      console.error(`[BACKEND] Error in Oracle service with model ${modelName}:`, error);
-      lastError = error;
-    }
+  } catch (error: any) {
+    console.error(`[BACKEND] Error in Oracle service:`, error);
+    throw error;
   }
-
-  // If we exit the loop, it means all models failed
-  throw lastError || new Error("Failed to generate response from all available Gemini models.");
 };
 
 export const generateProactiveInsights = async (userId: string, context: any) => {
-  let lastError = null;
-  const modelsToTry = ["gemini-3.5-flash", "gemini-flash-latest", "gemini-1.5-flash"];
-  for (const modelName of modelsToTry) {
-    try {
-      console.log(`[BACKEND] Attempting to generate insights using model: ${modelName}`);
-      const model = genAI.getGenerativeModel({ model: modelName });
+  try {
+    const modelName = "gemini-1.5-flash";
+    console.log(`[BACKEND] Attempting to generate insights using model: ${modelName}`);
+    const model = genAI.getGenerativeModel({ model: modelName });
       
       const prompt = `
 You are the AI engine for MindBridge, a mental health app for university students.
@@ -351,26 +348,23 @@ Do not output any markdown formatting, just the raw JSON object.`;
       }
 
       return JSON.parse(jsonStr);
-    } catch (error: any) {
-      console.error(`[BACKEND] Error generating insights with model ${modelName}:`, error);
-      lastError = error;
-    }
+  } catch (error: any) {
+    console.error(`[BACKEND] Error generating insights:`, error);
+    // Fallback if model fails
+    return {
+      dashboardPrompt: "How are you feeling right now?",
+      gardenInsight: {
+        title: "Emotional Reservoir Stable",
+        description: "Keep checking in to build a clearer picture of your wellness trends.",
+        icon: "Heart"
+      }
+    };
   }
-
-  // Fallback if all models fail
-  return {
-    dashboardPrompt: "How are you feeling right now?",
-    gardenInsight: {
-      title: "Emotional Reservoir Stable",
-      description: "Keep checking in to build a clearer picture of your wellness trends.",
-      icon: "Heart"
-    }
-  };
 };
 
 export const analyzeVoiceAudio = async (base64Audio: string, mimeType: string) => {
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-2.5-flash",
+    model: "gemini-1.5-flash",
   });
 
   const prompt = `You are a vocal acoustic analyzer. Do not transcribe or analyze the speech content. Listen strictly to the vocal tone, pitch variability, speech rate, and pause duration. 

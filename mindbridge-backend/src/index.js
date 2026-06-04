@@ -9,11 +9,13 @@ import resourcesRoutes from './routes/resources.routes.js';
 import aiRoutes from './routes/ai.routes.js';
 import onboardingRoutes from './routes/onboarding.routes.js';
 import profileRoutes from './routes/profile.routes.js';
+import groupsRoutes from './routes/groups.routes.js';
+import peersRoutes from './routes/peers.routes.js';
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000'],
+    origin: '*', // Allow all origins for local development with physical devices
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -31,10 +33,12 @@ app.use('/api/resources', resourcesRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/groups', groupsRoutes);
+app.use('/api/peers', peersRoutes);
 app.get('/', (req, res) => {
     res.send('MindBridge API is running');
 });
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Server is running on port ${port} (bound to 0.0.0.0)`);
 });
 //# sourceMappingURL=index.js.map

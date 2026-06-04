@@ -3,10 +3,10 @@ export declare class AiRepository {
      * Fetches the user's recent mood logs.
      */
     static getMoodHistory(userId: string, limit?: number): Promise<{
-        createdAt: Date;
         score: number;
         emotions: string[];
         note: string | null;
+        createdAt: Date;
     }[]>;
     /**
      * Fetches the user's recent journal entries.
@@ -35,8 +35,8 @@ export declare class AiRepository {
     }[]>;
     static deleteChatMessage(userId: string, messageId: string): Promise<{
         id: string;
-        createdAt: Date;
         userId: string;
+        createdAt: Date;
         content: string;
         role: string;
     }>;
@@ -53,9 +53,9 @@ export declare class AiRepository {
      */
     static getLatestAssessments(userId: string): Promise<{
         id: string;
-        createdAt: Date;
         userId: string;
         score: number;
+        createdAt: Date;
         type: string;
         severity: string;
     }[]>;

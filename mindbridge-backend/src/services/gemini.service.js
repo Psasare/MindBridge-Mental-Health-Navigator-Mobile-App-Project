@@ -10,19 +10,19 @@ You are the MindBridge Oracle — an advanced, emotionally intelligent AI compan
 IDENTITY & CORE PERSONA
 ═══════════════════════════════════════════
 - Name: "The Oracle" — wise, grounded, and deeply human in tone.
-- Role: Therapeutic companion, emotional coach, and wellness guide.
-- You never diagnose, prescribe, or replace professional therapy.
-- You speak with warmth, nuance, and cultural awareness — never clinical or robotic.
+- Role: Empathetic listener, peer support companion, and wellness navigator.
+- You never diagnose, prescribe, or act as a therapist. You are not a replacement for professional clinical care.
+- You speak with warmth, nuance, and cultural awareness — never robotic.
 - You remember what the user has shared and build on it naturally across the conversation.
 
 ═══════════════════════════════════════════
-CLINICAL FRAMEWORK (Evidence-Based Approaches)
+SUPPORT FRAMEWORK (Evidence-Based Techniques)
 ═══════════════════════════════════════════
 Fluidly integrate these frameworks depending on context:
 
 1. MOTIVATIONAL INTERVIEWING (MI): Reflect feelings, validate ambivalence, use OARS (Open questions, Affirmations, Reflective listening, Summaries).
-2. COGNITIVE BEHAVIOURAL THERAPY (CBT): Gently challenge unhelpful thought patterns. Use Socratic questioning — never lecture.
-3. ACCEPTANCE & COMMITMENT THERAPY (ACT): Help users identify values and take committed steps toward them, even through discomfort.
+2. COGNITIVE BEHAVIOURAL TECHNIQUES (CBT): Gently challenge unhelpful thought patterns. Use Socratic questioning — never lecture.
+3. ACCEPTANCE & COMMITMENT TECHNIQUES (ACT): Help users identify values and take committed steps toward them, even through discomfort.
 4. POSITIVE PSYCHOLOGY: Identify strengths, gratitude, and moments of joy (called "glimmers") proactively.
 5. MINDFULNESS-BASED STRESS REDUCTION (MBSR): Offer present-moment anchoring exercises when anxiety or overwhelm is detected.
 
@@ -67,7 +67,7 @@ RESPONSE FORMAT & RHYTHM
 ═══════════════════════════════════════════
 SAFETY PROTOCOL
 ═══════════════════════════════════════════
-- If the user expresses any suicidal ideation, self-harm, or immediate danger: STOP all therapeutic conversation. Immediately and warmly direct them to Crisis Support. Say something like: "I hear you. This is serious, and you deserve real support right now..."
+- If the user expresses any suicidal ideation, self-harm, or immediate danger: STOP all guidance conversation. Immediately and warmly direct them to Crisis Support. Say something like: "I hear you. This is serious, and you deserve real support right now..."
 - Do NOT continue normal conversation after a crisis signal — always escalate with compassion.
 - Flag "suggestCrisis: true" internally when this occurs.
 
@@ -119,57 +119,56 @@ const tools = [
     }
 ];
 export const generateOracleResponse = async (userMessage, context, userId) => {
-    const modelsToTry = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-3.5-flash", "gemini-flash-latest"];
-    let lastError = null;
-    for (const modelName of modelsToTry) {
-        try {
-            console.log(`[BACKEND] [Oracle] Attempting generateOracleResponse using model: ${modelName}`);
-            const model = genAI.getGenerativeModel({
-                model: modelName,
-                systemInstruction: SYSTEM_PROMPT,
-                tools: tools
-            });
-            // Build a rich, structured user profile context block
-            const onboarding = context.onboarding;
-            const latestMood = context.latestMood;
-            const recentJournal = context.recentJournal || [];
-            const userName = context.userName || onboarding?.firstName || 'User';
-            // Use first name if full name provided
-            const firstName = userName.split(' ')[0];
-            const moodSummary = latestMood
-                ? `Latest mood: ${latestMood.emotions?.join(', ') || 'unspecified'} (score: ${latestMood.score}/10) on ${new Date(latestMood.createdAt).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}`
-                : 'No mood logs yet.';
-            const journalSummary = recentJournal.length > 0
-                ? recentJournal.map((j, i) => `${i + 1}. "${j.title || 'Untitled'}" (${j.mood || 'no mood tag'}) — ${new Date(j.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`).join('\n')
-                : 'No journal entries yet.';
-            const assessments = context.assessments || [];
-            const assessmentSummary = assessments.length > 0
-                ? assessments.map((a) => `- ${a.type}: ${a.severity} (Score: ${a.score}) on ${new Date(a.createdAt).toLocaleDateString()}`).join('\n')
-                : 'No clinical assessments completed yet.';
-            // Prepare history: reverse since DB gives descending
-            const rawHistory = context.history || [];
-            let chatHistory = rawHistory.reverse().map((msg) => ({
-                role: msg.role === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.content }]
-            }));
-            // Ensure perfectly alternating history ending with model
-            let lastRole = 'model';
-            const validHistory = [];
-            for (const msg of chatHistory) {
-                if (msg.role !== lastRole) {
-                    validHistory.push(msg);
-                    lastRole = msg.role;
-                }
+    try {
+        const modelName = "gemini-1.5-flash";
+        console.log(`[BACKEND] [Oracle] Attempting generateOracleResponse using model: ${modelName}`);
+        const model = genAI.getGenerativeModel({
+            model: modelName,
+            systemInstruction: SYSTEM_PROMPT,
+            tools: tools
+        });
+        // Build a rich, structured user profile context block
+        const onboarding = context.onboarding;
+        const latestMood = context.latestMood;
+        const recentJournal = context.recentJournal || [];
+        const userName = context.userName || onboarding?.firstName || 'User';
+        // Use first name if full name provided
+        const firstName = userName.split(' ')[0];
+        const moodSummary = latestMood
+            ? `Latest mood: ${latestMood.emotions?.join(', ') || 'unspecified'} (score: ${latestMood.score}/10) on ${new Date(latestMood.createdAt).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}` +
+                (latestMood.facialMetrics ? ` [Video Check-in detected: ${Math.round(latestMood.facialMetrics.smileProbability * 100)}% smile frequency, ${Math.round(latestMood.facialMetrics.eyeOpenProbability * 100)}% eye contact]` : '')
+            : 'No mood logs yet.';
+        const journalSummary = recentJournal.length > 0
+            ? recentJournal.map((j, i) => `${i + 1}. "${j.title || 'Untitled'}" (${j.mood || 'no mood tag'}) — ${new Date(j.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`).join('\n')
+            : 'No journal entries yet.';
+        const assessments = context.assessments || [];
+        const assessmentSummary = assessments.length > 0
+            ? assessments.map((a) => `- ${a.type}: ${a.severity} (Score: ${a.score}) on ${new Date(a.createdAt).toLocaleDateString()}`).join('\n')
+            : 'No clinical assessments completed yet.';
+        // Prepare history: reverse since DB gives descending
+        const rawHistory = context.history || [];
+        let chatHistory = rawHistory.reverse().map((msg) => ({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.content }]
+        }));
+        // Ensure perfectly alternating history ending with model
+        let lastRole = 'model';
+        const validHistory = [];
+        for (const msg of chatHistory) {
+            if (msg.role !== lastRole) {
+                validHistory.push(msg);
+                lastRole = msg.role;
             }
-            if (validHistory.length > 0 && validHistory[validHistory.length - 1].role === 'user') {
-                validHistory.pop();
-            }
-            chatHistory = validHistory;
-            const chat = model.startChat({
-                history: [
-                    {
-                        role: "user",
-                        parts: [{ text: `
+        }
+        if (validHistory.length > 0 && validHistory[validHistory.length - 1].role === 'user') {
+            validHistory.pop();
+        }
+        chatHistory = validHistory;
+        const chat = model.startChat({
+            history: [
+                {
+                    role: "user",
+                    parts: [{ text: `
 ═══════════════════════════════════════════
 CURRENT USER CONTEXT (Confidential — for your use only)
 ═══════════════════════════════════════════
@@ -201,10 +200,17 @@ ADVANCED VITALS (Current Check-in):
   Social: ${context.social || 'None'}
   Physical Symptoms: ${context.symptoms?.join(', ') || 'None reported'}
   Environment: ${context.weather || 'Unknown'}
+  Physical Activity (Steps): ${context.steps !== undefined ? context.steps : 'Unknown'}
+  Location (Campus): ${context.location || 'Unknown'}
 
-MULTI-MODAL SENTIMENT:
+RECENT LOCATIONS:
+  ${context.recentMoods?.map((m, i) => `${i + 1}. ${m.location || 'Unknown'} (${new Date(m.createdAt).toLocaleDateString('en-GB', { weekday: 'short', hour: 'numeric' })}) - Score: ${m.score}/10`).join('\n') || 'No recent locations'}
+
+MULTI-MODAL SENTIMENT & ACTIVITY & GEOLOCATION:
   - If the user provides a journal entry or voice reflection, analyze the underlying sentiment (Grief, Frustration, Joy, etc.) and address it.
   - Look for "hidden" symptoms like burnout or social withdrawal based on the correlation of low sleep + high social stress.
+  - Evaluate Physical Activity: If steps are very low (e.g. under 1000) and mood is low, recognize this as a potential red flag for depression/lethargy and gently suggest movement. If steps are high, celebrate the exercise as a mood booster.
+  - Evaluate Campus Location & Isolation: Track the user's recent locations. If the user is constantly in 'DORM' over multiple logs and their mood is low, flag this as potential isolation and gently suggest getting out (e.g., 'I noticed you've been in your room a lot recently...'). If they check in at 'LIBRARY' and note stress, offer brief grounding exercises. If they are near 'COUNSELING_CENTER', gently remind them that they are close by and could drop in if they need immediate support.
 
 INSTRUCTIONS:
   - This context is your foundation. Use it to personalise every response.
@@ -213,19 +219,21 @@ INSTRUCTIONS:
   - Suggest specific app tools like 'Mood Garden' or 'Box Breathing' if relevant.
   - Respond in: ${onboarding?.preferredLanguage || 'English'}
             ` }]
-                    },
-                    {
-                        role: "model",
-                        parts: [{ text: `Understood. I have a full picture of ${firstName}'s world, including their academic context, recent feelings, and clinical assessments. I will provide compassionate, culturally-aware support in ${onboarding?.preferredLanguage || 'English'}, adapting my style to be ${onboarding?.communicationStyle || 'Gentle'}. I'm ready.` }]
-                    },
-                    ...chatHistory
-                ]
-            });
-            let result = await chat.sendMessage(userMessage);
-            let response = result.response;
-            // Handle Function Calls (Tools)
-            const call = response.functionCalls()?.[0];
-            if (call) {
+                },
+                {
+                    role: "model",
+                    parts: [{ text: `Understood. I have a full picture of ${firstName}'s world, including their academic context, recent feelings, and clinical assessments. I will provide compassionate, culturally-aware support in ${onboarding?.preferredLanguage || 'English'}, adapting my style to be ${onboarding?.communicationStyle || 'Gentle'}. I'm ready.` }]
+                },
+                ...chatHistory
+            ]
+        });
+        let result = await chat.sendMessage(userMessage);
+        let response = result.response;
+        // Handle Function Calls (Tools) in a loop in parallel
+        let calls = response.functionCalls();
+        let iteration = 0;
+        while (calls && calls.length > 0 && iteration < 5) {
+            const functionResponses = await Promise.all(calls.map(async (call) => {
                 console.log(`[Oracle Tool] Calling: ${call.name} with model: ${modelName}`, call.args);
                 let toolResponse;
                 switch (call.name) {
@@ -244,22 +252,134 @@ INSTRUCTIONS:
                     default:
                         toolResponse = { error: "Unknown tool" };
                 }
-                result = await chat.sendMessage([{
-                        functionResponse: {
-                            name: call.name,
-                            response: { result: toolResponse }
-                        }
-                    }]);
-                response = result.response;
-            }
-            return response.text();
+                return {
+                    functionResponse: {
+                        name: call.name,
+                        response: { result: toolResponse }
+                    }
+                };
+            }));
+            result = await chat.sendMessage(functionResponses);
+            response = result.response;
+            calls = response.functionCalls();
+            iteration++;
         }
-        catch (error) {
-            console.error(`[BACKEND] Error in Oracle service with model ${modelName}:`, error);
-            lastError = error;
+        let finalText = "";
+        try {
+            finalText = response.text() || "";
         }
+        catch (e) {
+            finalText = "";
+        }
+        if (!finalText || finalText.trim() === '') {
+            finalText = "I've checked some details for you, but I'm having trouble putting it into words. Can you tell me more about what's on your mind?";
+        }
+        return finalText;
     }
-    // If we exit the loop, it means all models failed
-    throw lastError || new Error("Failed to generate response from all available Gemini models.");
+    catch (error) {
+        console.error(`[BACKEND] Error in Oracle service:`, error);
+        throw error;
+    }
+};
+export const generateProactiveInsights = async (userId, context) => {
+    try {
+        const modelName = "gemini-1.5-flash";
+        console.log(`[BACKEND] Attempting to generate insights using model: ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const prompt = `
+You are the AI engine for MindBridge, a mental health app for university students.
+Analyse the user's recent data and provide proactive, hyper-personalised insights.
+
+USER CONTEXT:
+Name: ${context.onboarding?.firstName || 'Friend'}
+Recent Mood Logs:
+${context.recentMoods?.map((m, i) => {
+            const fm = m.facialMetrics ? `[Video Check-in: Smile Freq: ${Math.round(m.facialMetrics.smileProbability * 100)}%, Eye Contact: ${Math.round(m.facialMetrics.eyeOpenProbability * 100)}%]` : '';
+            return `- Day ${i + 1}: Mood ${m.score}/10 ${fm}, Location: ${m.location || 'Unknown'}, Social: ${m.socialSetting || 'Unknown'}, Steps: ${m.steps || 'Unknown'}, Sleep: ${m.sleepHours}h`;
+        }).join('\n') || 'Not enough logs yet.'}
+
+INSTRUCTIONS:
+1. Identify patterns (e.g., mood improves after social spaces, low sleep = high stress, isolation in dorms).
+   - If they did a Video Check-in, cross-reference their stated Mood score with their facial expressions (e.g., "You noted you were feeling 'fine' (7/10), but your video check-in showed very low smile frequency.").
+2. Generate a 'dashboardPrompt': A 1-2 sentence gentle, contextual greeting or suggestion based on their current state (e.g., "I notice you haven't left your dorm in 2 days. Getting outside might help.").
+3. Generate a 'gardenInsight': A structured insight card containing a 'title', 'description', and an 'icon' name (choose one of: 'Users', 'Moon', 'Sun', 'Wind', 'Activity', 'Brain', 'Heart').
+4. Output MUST be valid JSON and exactly match this schema:
+{
+  "dashboardPrompt": "string",
+  "gardenInsight": {
+    "title": "string",
+    "description": "string",
+    "icon": "string"
+  }
+}
+Do not output any markdown formatting, just the raw JSON object.`;
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().trim();
+        // Clean up markdown code blocks if the model included them
+        let jsonStr = text;
+        if (jsonStr.startsWith('\`\`\`json')) {
+            jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+        }
+        else if (jsonStr.startsWith('\`\`\`')) {
+            jsonStr = jsonStr.replace(/\`\`\`/g, '').trim();
+        }
+        return JSON.parse(jsonStr);
+    }
+    catch (error) {
+        console.error(`[BACKEND] Error generating insights:`, error);
+        // Fallback if model fails
+        return {
+            dashboardPrompt: "How are you feeling right now?",
+            gardenInsight: {
+                title: "Emotional Reservoir Stable",
+                description: "Keep checking in to build a clearer picture of your wellness trends.",
+                icon: "Heart"
+            }
+        };
+    }
+};
+export const analyzeVoiceAudio = async (base64Audio, mimeType) => {
+    const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+    });
+    const prompt = `You are a vocal acoustic analyzer. Do not transcribe or analyze the speech content. Listen strictly to the vocal tone, pitch variability, speech rate, and pause duration. 
+
+Return a JSON object exactly matching this structure (no markdown, just valid JSON):
+{
+  "voiceQuality": "string", // One of: "flat", "shaky", "energetic", "stable"
+  "avgPitch": number, // Estimated pitch in Hz
+  "speechRate": number, // Estimated words per minute
+  "pauseDuration": number // Estimated average pause duration in seconds
+}`;
+    try {
+        const result = await model.generateContent([
+            prompt,
+            {
+                inlineData: {
+                    data: base64Audio,
+                    mimeType: mimeType
+                }
+            }
+        ]);
+        const text = result.response.text().trim();
+        let jsonStr = text;
+        if (jsonStr.startsWith('\`\`\`json')) {
+            jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+        }
+        else if (jsonStr.startsWith('\`\`\`')) {
+            jsonStr = jsonStr.replace(/\`\`\`/g, '').trim();
+        }
+        return JSON.parse(jsonStr);
+    }
+    catch (error) {
+        console.error('[BACKEND] Error analyzing voice audio:', error);
+        // Provide a safe fallback if audio analysis fails
+        return {
+            voiceQuality: "stable",
+            avgPitch: 120,
+            speechRate: 130,
+            pauseDuration: 1.5
+        };
+    }
 };
 //# sourceMappingURL=gemini.service.js.map
