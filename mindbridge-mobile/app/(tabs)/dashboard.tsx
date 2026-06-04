@@ -467,7 +467,6 @@ export default function DashboardScreen() {
       
       setAssessments(res.data.assessments || []);
       setLatestPost(res.data.latestCommunityPost || null);
-      setSuggestedResources(res.data.suggestedResources || []);
       
       if (res.data.latestMood?.location) {
         setRecentLocation(res.data.latestMood.location);
@@ -477,6 +476,9 @@ export default function DashboardScreen() {
       api.get('/ai/proactive-insights').then(aiRes => {
         if (aiRes.data?.dashboardPrompt) {
           setAiPrompt(aiRes.data.dashboardPrompt);
+        }
+        if (aiRes.data?.suggestedResources) {
+          setSuggestedResources(aiRes.data.suggestedResources);
         }
       }).catch(err => console.warn('Failed to fetch proactive insights'));
 

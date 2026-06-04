@@ -34,7 +34,8 @@ import {
   ArrowLeft,
   ShieldAlert,
   Award,
-  Compass
+  Compass,
+  Sparkles
 } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
@@ -227,6 +228,14 @@ const calculateCSSRS = (answers: number[]) => {
 
 const getAssessments = (theme: any, t: any) => [
   {
+    id: 'personalized',
+    title: 'Personalized AI Check-in',
+    subtitle: 'Dynamic questions based on your recent state',
+    duration: `2 ${t('assessments.minutes')}`,
+    icon: Sparkles,
+    color: theme.colors.plum,
+  },
+  {
     id: 'phq9',
     title: 'Patient Health Questionnaire',
     subtitle: 'PHQ-9 Depression Screener',
@@ -330,6 +339,8 @@ export default function AssessmentsScreen() {
   const [showResultModal, setShowResultModal] = useState<boolean>(false);
   const [submittingResult, setSubmittingResult] = useState<boolean>(false);
   const [calculatedResult, setCalculatedResult] = useState<{ score: number; severity: string } | null>(null);
+  const [personalizedQuestions, setPersonalizedQuestions] = useState<any[]>([]);
+  const [personalizedFeedback, setPersonalizedFeedback] = useState<any>(null);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -351,13 +362,29 @@ export default function AssessmentsScreen() {
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const handleStartTest = (id: string) => {
-    const questList = getQuestionsForLanguage(theme.language, id);
+  const handleStartTest = async (id: string) => {
     setActiveTestId(id);
     setCurrentQuestionIndex(0);
-    setAnswers(new Array(questList.length).fill(-1));
     setCalculatedResult(null);
     setShowResultModal(false);
+    setPersonalizedFeedback(null);
+
+    if (id === 'personalized') {
+      setLoading(true);
+      try {
+        const res = await api.get('/ai/personalized-assessment');
+        setPersonalizedQuestions(res.data.questions || []);
+        setAnswers(new Array(res.data.questions?.length || 0).fill(-1));
+      } catch (e) {
+        Alert.alert('Error', 'Failed to generate personalized check-in.');
+        setActiveTestId(null);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      const questList = getQuestionsForLanguage(theme.language, id);
+      setAnswers(new Array(questList.length).fill(-1));
+    }
   };
 
   const handleCloseRequest = () => {
@@ -381,7 +408,7 @@ export default function AssessmentsScreen() {
     setAnswers(newAnswers);
 
     // Smoothly auto-advance after 250ms if not the last question
-    const questions = getQuestionsForLanguage(theme.language, activeTestId!);
+    const questions = activeTestId === 'personalized' ? personalizedQuestions : getQuestionsForLanguage(theme.language, activeTestId!);
     if (currentQuestionIndex < questions.length - 1) {
       setTimeout(() => {
         setCurrentQuestionIndex(prev => prev + 1);
@@ -396,7 +423,7 @@ export default function AssessmentsScreen() {
   };
 
   const handleNextQuestion = async () => {
-    const questions = getQuestionsForLanguage(theme.language, activeTestId!);
+    const questions = activeTestId === 'personalized' ? personalizedQuestions : getQuestionsForLanguage(theme.language, activeTestId!);
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
@@ -408,6 +435,19 @@ export default function AssessmentsScreen() {
     if (!activeTestId) return;
     setSubmittingResult(true);
     try {
+      if (activeTestId === 'personalized') {
+        const qna = personalizedQuestions.map((q: any, i: number) => ({
+          question: q.question,
+          answer: q.options[answers[i]]
+        }));
+        const res = await api.post('/ai/personalized-assessment', { answers: qna });
+        setPersonalizedFeedback(res.data);
+        setCalculatedResult({ score: 0, severity: res.data.severity });
+        setShowResultModal(true);
+        setSubmittingResult(false);
+        return;
+      }
+
       // Dynamic Routing: Intercept PHQ-9 self-harm ideation (Question 9 is index 8)
       if (activeTestId === 'phq9' && answers[8] > 0) {
         // Save the PHQ-9 silently first
@@ -479,6 +519,7 @@ export default function AssessmentsScreen() {
   };
 
   const getActiveColor = () => {
+    if (activeTestId === 'personalized') return theme.colors.plum;
     if (activeTestId === 'phq9') return theme.colors.accents.powderBlue;
     if (activeTestId === 'gad7') return theme.colors.accents.eucalyptus;
     if (activeTestId === 'pss') return theme.colors.accents.softLilac;
@@ -597,6 +638,83 @@ export default function AssessmentsScreen() {
 
   const renderResultScreen = () => {
     if (!calculatedResult || !activeTestId) return null;
+
+    if (activeTestId === 'personalized' && personalizedFeedback) {
+      const isSevere = personalizedFeedback.severity === 'High Risk' || personalizedFeedback.crisisAlert;
+      
+      return (
+        <ScrollView contentContainerStyle={styles.resultScroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.successIconWrap}>
+            <Sparkles color={getActiveColor()} size={64} />
+          </View>
+          <Text style={styles.resultHeading}>Check-in Complete</Text>
+          <Text style={styles.resultSubheading}>Here is what the Oracle observed:</Text>
+          
+          <View style={[styles.resultCard, { borderColor: getActiveColor(), padding: 20 }]}>
+            <Text style={{ color: theme.colors.text.primary, fontSize: 16, lineHeight: 24, textAlign: 'center' }}>
+              {personalizedFeedback.feedbackMessage}
+            </Text>
+          </View>
+
+          {isSevere ? (
+            <View style={[
+              styles.actionCard, 
+              { 
+                backgroundColor: theme.isDark ? 'rgba(230, 0, 0, 0.08)' : 'rgba(230, 0, 0, 0.04)',
+                borderColor: theme.colors.semantic.danger 
+              }
+            ]}>
+              <ShieldAlert color={theme.colors.semantic.danger} size={32} style={{ marginBottom: 12 }} />
+              <Text style={[styles.actionTitle, { color: theme.colors.semantic.danger }]}>
+                Crisis Support Available
+              </Text>
+              <Text style={styles.actionText}>
+                Your responses suggest you might be having a difficult time right now. We are here for you.
+              </Text>
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: theme.colors.semantic.danger }]}
+                onPress={() => {
+                  setActiveTestId(null);
+                  router.push('/(tabs)/crisis');
+                }}
+              >
+                <Text style={styles.actionBtnText}>Connect with Support</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={[
+              styles.actionCard, 
+              { 
+                backgroundColor: theme.isDark ? 'rgba(123, 97, 255, 0.08)' : 'rgba(123, 97, 255, 0.04)',
+                borderColor: getActiveColor() 
+              }
+            ]}>
+              <Compass color={getActiveColor()} size={32} style={{ marginBottom: 12 }} />
+              <Text style={[styles.actionTitle, { color: theme.colors.text.primary }]}>
+                Next Steps
+              </Text>
+              <Text style={styles.actionText}>
+                Explore the Knowledge Hub or start a breathing exercise to rest your mind.
+              </Text>
+              <TouchableOpacity
+                style={[styles.actionBtn, { backgroundColor: getActiveColor() }]}
+                onPress={() => {
+                  setActiveTestId(null);
+                  router.push('/(tabs)/knowledge-hub');
+                }}
+              >
+                <Text style={styles.actionBtnText}>Explore Resources</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <TouchableOpacity style={styles.doneBtn} onPress={() => setActiveTestId(null)}>
+            <Text style={styles.doneBtnText}>Close & Return</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      );
+    }
+
     const { score, severity } = calculatedResult;
     const isSevere = severity.toLowerCase().includes('severe') || 
                      severity.toLowerCase().includes('high burnout') || 

@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { generateOracleResponse, generateProactiveInsights, analyzeVoiceAudio } from '../services/gemini.service.js';
+import { generateOracleResponse, generateProactiveInsights, analyzeVoiceAudio, generatePersonalizedAssessment, evaluatePersonalizedAssessment } from '../services/gemini.service.js';
 import { AiRepository } from '../repositories/ai.repository.js';
 
 const prisma = new PrismaClient();
@@ -59,24 +59,8 @@ export const getOracleContext = async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    // Generate contextual resource suggestions based on recent journal themes
+    // Note: suggestedResources logic has been moved to getProactiveInsights for AI-driven personalization
     let suggestedResources: any[] = [];
-    if (recentJournal && recentJournal.length > 0) {
-      const combinedText = recentJournal.map(j => (j.title + ' ' + j.content).toLowerCase()).join(' ');
-      if (combinedText.includes('stress') || combinedText.includes('exam') || combinedText.includes('pressure')) {
-        suggestedResources.push({ id: 'res-1', title: '5-Minute Box Breathing', type: 'audio', category: 'Stress Relief' });
-      }
-      if (combinedText.includes('anxiety') || combinedText.includes('worry') || combinedText.includes('panic')) {
-        suggestedResources.push({ id: 'res-2', title: 'Grounding Technique (5-4-3-2-1)', type: 'article', category: 'Anxiety' });
-      }
-      if (combinedText.includes('lonely') || combinedText.includes('friend') || combinedText.includes('isolate')) {
-        suggestedResources.push({ id: 'res-3', title: 'Campus Support Groups', type: 'link', category: 'Community' });
-      }
-    }
-    // Always provide at least one fallback resource if none matched
-    if (suggestedResources.length === 0) {
-      suggestedResources.push({ id: 'res-4', title: 'Daily Mindfulness Practice', type: 'audio', category: 'General' });
-    }
 
     res.json({
       latestMood: latestMood || null,
@@ -292,6 +276,24 @@ export const getProactiveInsights = async (req: Request, res: Response) => {
     });
 
     const insights = await generateProactiveInsights(userId, { onboarding, recentMoods });
+    
+    // Fetch actual resources for the recommended categories
+    let suggestedResources: any[] = [];
+    if (insights.recommendedResourceCategories && Array.isArray(insights.recommendedResourceCategories)) {
+      for (const cat of insights.recommendedResourceCategories) {
+        const resources = await AiRepository.searchResources(cat);
+        if (resources && resources.length > 0) {
+          suggestedResources.push(resources[0]);
+        }
+      }
+    }
+    
+    // Add fallback if empty
+    if (suggestedResources.length === 0) {
+      suggestedResources.push({ id: 'res-fallback', title: 'Daily Mindfulness Practice', type: 'audio', category: 'General' });
+    }
+    
+    insights.suggestedResources = suggestedResources;
     proactiveInsightsCache.set(userId, { time: now, data: insights });
     res.json(insights);
   } catch (error) {
@@ -321,5 +323,48 @@ export const analyzeVoice = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error analyzing voice:', error);
     res.status(500).json({ error: 'Failed to analyze voice tone' });
+  }
+};
+
+export const getPersonalizedAssessment = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    
+    const onboarding = await prisma.onboarding.findUnique({ where: { userId } });
+    const recentMoods = await prisma.moodLog.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 7
+    });
+    const recentJournal = await prisma.journal.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 3
+    });
+
+    const questions = await generatePersonalizedAssessment(userId, { onboarding, recentMoods, recentJournal });
+    res.json({ questions });
+  } catch (error) {
+    console.error('Error getting personalized assessment:', error);
+    res.status(500).json({ error: 'Failed to generate assessment' });
+  }
+};
+
+export const submitPersonalizedAssessment = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const { answers } = req.body;
+    
+    if (!answers || !Array.isArray(answers)) {
+      return res.status(400).json({ error: 'Valid answers array is required' });
+    }
+
+    const onboarding = await prisma.onboarding.findUnique({ where: { userId } });
+    
+    const evaluation = await evaluatePersonalizedAssessment(userId, { onboarding }, answers);
+    res.json(evaluation);
+  } catch (error) {
+    console.error('Error submitting personalized assessment:', error);
+    res.status(500).json({ error: 'Failed to evaluate assessment' });
   }
 };

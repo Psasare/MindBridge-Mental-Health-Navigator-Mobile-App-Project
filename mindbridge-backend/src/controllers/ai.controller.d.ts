@@ -7,4 +7,6 @@ export declare const deleteBulkChatMessages: (req: Request, res: Response) => Pr
 export declare const saveAssessmentResult: (req: Request, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
 export declare const getProactiveInsights: (req: Request, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
 export declare const analyzeVoice: (req: Request, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
+export declare const getPersonalizedAssessment: (req: Request, res: Response) => Promise<void>;
+export declare const submitPersonalizedAssessment: (req: Request, res: Response) => Promise<Response<any, Record<string, any>> | undefined>;
 //# sourceMappingURL=ai.controller.d.ts.map

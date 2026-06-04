@@ -120,7 +120,7 @@ const tools = [
 ];
 export const generateOracleResponse = async (userMessage, context, userId) => {
     try {
-        const modelName = "gemini-1.5-flash";
+        const modelName = "gemini-2.5-flash";
         console.log(`[BACKEND] [Oracle] Attempting generateOracleResponse using model: ${modelName}`);
         const model = genAI.getGenerativeModel({
             model: modelName,
@@ -283,7 +283,7 @@ INSTRUCTIONS:
 };
 export const generateProactiveInsights = async (userId, context) => {
     try {
-        const modelName = "gemini-1.5-flash";
+        const modelName = "gemini-2.5-flash";
         console.log(`[BACKEND] Attempting to generate insights using model: ${modelName}`);
         const model = genAI.getGenerativeModel({ model: modelName });
         const prompt = `
@@ -303,14 +303,16 @@ INSTRUCTIONS:
    - If they did a Video Check-in, cross-reference their stated Mood score with their facial expressions (e.g., "You noted you were feeling 'fine' (7/10), but your video check-in showed very low smile frequency.").
 2. Generate a 'dashboardPrompt': A 1-2 sentence gentle, contextual greeting or suggestion based on their current state (e.g., "I notice you haven't left your dorm in 2 days. Getting outside might help.").
 3. Generate a 'gardenInsight': A structured insight card containing a 'title', 'description', and an 'icon' name (choose one of: 'Users', 'Moon', 'Sun', 'Wind', 'Activity', 'Brain', 'Heart').
-4. Output MUST be valid JSON and exactly match this schema:
+4. Generate a 'recommendedResourceCategories' array containing 1 to 3 categories (e.g. "Anxiety", "Sleep", "Stress", "Mindfulness", "Depression", "Burnout", "Science", "Self-Care") that would best help the user right now.
+5. Output MUST be valid JSON and exactly match this schema:
 {
   "dashboardPrompt": "string",
   "gardenInsight": {
     "title": "string",
     "description": "string",
     "icon": "string"
-  }
+  },
+  "recommendedResourceCategories": ["string"]
 }
 Do not output any markdown formatting, just the raw JSON object.`;
         const result = await model.generateContent(prompt);
@@ -340,7 +342,7 @@ Do not output any markdown formatting, just the raw JSON object.`;
 };
 export const analyzeVoiceAudio = async (base64Audio, mimeType) => {
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
     });
     const prompt = `You are a vocal acoustic analyzer. Do not transcribe or analyze the speech content. Listen strictly to the vocal tone, pitch variability, speech rate, and pause duration. 
 
@@ -379,6 +381,97 @@ Return a JSON object exactly matching this structure (no markdown, just valid JS
             avgPitch: 120,
             speechRate: 130,
             pauseDuration: 1.5
+        };
+    }
+};
+export const generatePersonalizedAssessment = async (userId, context) => {
+    try {
+        const modelName = "gemini-2.5-flash";
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const prompt = `
+You are a compassionate clinical AI. Generate a personalized 3-question check-in for the user based on their recent mental state.
+
+USER CONTEXT:
+Name: ${context.onboarding?.firstName || 'Friend'}
+Recent Mood Logs:
+${context.recentMoods?.map((m, i) => `- Day ${i + 1}: Mood ${m.score}/10, Sleep: ${m.sleepHours}h, Notes: ${m.note || 'None'}`).join('\n') || 'Not enough logs yet.'}
+Recent Journals:
+${context.recentJournal?.map((j) => `- Title: ${j.title || 'Untitled'}, Content: ${j.content}`).join('\n') || 'None.'}
+
+INSTRUCTIONS:
+1. Generate exactly 3 multiple-choice questions to check in on their current state.
+2. Tailor the questions to their recent struggles (e.g., if they had poor sleep, ask about their rest; if they were stressed, ask about their tension).
+3. Provide 4 options for each question, ranging from positive/healthy to negative/struggling.
+4. Output MUST be valid JSON and exactly match this schema:
+{
+  "questions": [
+    {
+      "question": "string",
+      "options": ["string", "string", "string", "string"]
+    }
+  ]
+}
+Do not output any markdown formatting, just the raw JSON object.`;
+        const result = await model.generateContent(prompt);
+        let jsonStr = result.response.text().trim();
+        if (jsonStr.startsWith('\`\`\`json')) {
+            jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+        }
+        else if (jsonStr.startsWith('\`\`\`')) {
+            jsonStr = jsonStr.replace(/\`\`\`/g, '').trim();
+        }
+        return JSON.parse(jsonStr).questions;
+    }
+    catch (error) {
+        console.error(`[BACKEND] Error generating personalized assessment:`, error);
+        // Fallback assessment
+        return [
+            { question: "How have you been feeling overall over the past few days?", options: ["Great", "Okay", "Struggling a bit", "Very overwhelmed"] },
+            { question: "How well have you been sleeping lately?", options: ["Very well", "Alright", "Tossing and turning", "Barely sleeping"] },
+            { question: "Are you finding time to disconnect and relax?", options: ["Yes, plenty", "Sometimes", "Rarely", "Not at all"] }
+        ];
+    }
+};
+export const evaluatePersonalizedAssessment = async (userId, context, answers) => {
+    try {
+        const modelName = "gemini-2.5-flash";
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const prompt = `
+You are a compassionate clinical AI. Evaluate the user's answers to a personalized check-in and provide a short, supportive insight.
+
+USER CONTEXT:
+Name: ${context.onboarding?.firstName || 'Friend'}
+
+Q&A:
+${answers.map((a, i) => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n')}
+
+INSTRUCTIONS:
+1. Provide a 'feedbackMessage' (2-3 sentences) offering encouragement, validation, and a gentle recommendation based on their answers.
+2. Determine an overall 'severity' level: "Low Risk", "Moderate Risk", or "High Risk" (if they chose the most negative options consistently).
+3. If they are "High Risk", provide a 'crisisAlert' boolean as true.
+4. Output MUST be valid JSON and exactly match this schema:
+{
+  "feedbackMessage": "string",
+  "severity": "string",
+  "crisisAlert": boolean
+}
+Do not output any markdown formatting, just the raw JSON object.`;
+        const result = await model.generateContent(prompt);
+        let jsonStr = result.response.text().trim();
+        if (jsonStr.startsWith('\`\`\`json')) {
+            jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+        }
+        else if (jsonStr.startsWith('\`\`\`')) {
+            jsonStr = jsonStr.replace(/\`\`\`/g, '').trim();
+        }
+        return JSON.parse(jsonStr);
+    }
+    catch (error) {
+        console.error(`[BACKEND] Error evaluating personalized assessment:`, error);
+        return {
+            feedbackMessage: "Thank you for checking in. Remember that it's okay to take things one step at a time.",
+            severity: "Moderate Risk",
+            crisisAlert: false
         };
     }
 };
