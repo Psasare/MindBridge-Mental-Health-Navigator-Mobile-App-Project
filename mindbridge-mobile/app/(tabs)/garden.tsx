@@ -57,7 +57,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import api from '../../src/services/api';
 import { AuthContext } from '../../src/context/AuthContext';
 import { useAudioRecorder, useAudioRecorderState, createAudioPlayer, AudioPlayer, requestRecordingPermissionsAsync, RecordingPresets, setAudioModeAsync } from 'expo-audio';
@@ -173,9 +173,11 @@ export default function WellnessTrackerScreen() {
   const [isAnalyzingVoice, setIsAnalyzingVoice] = useState(false);
   const [vocalMetrics, setVocalMetrics] = useState<any>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchData();
+    }, [])
+  );
 
   useEffect(() => {
     return () => {

@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "MindBridge",
+    "owner": "mindbridge",
     "slug": "mindbridge-mobile",
     "version": "1.0.0",
     "orientation": "portrait",

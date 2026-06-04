@@ -229,8 +229,8 @@ const calculateCSSRS = (answers: number[]) => {
 const getAssessments = (theme: any, t: any) => [
   {
     id: 'personalized',
-    title: 'Personalized AI Check-in',
-    subtitle: 'Dynamic questions based on your recent state',
+    title: 'AI Check-in',
+    subtitle: 'Dynamic personalized questions',
     duration: `2 ${t('assessments.minutes')}`,
     icon: Sparkles,
     color: theme.colors.plum,
@@ -538,8 +538,27 @@ export default function AssessmentsScreen() {
 
   const renderQuestionWizard = () => {
     if (!activeTestId) return null;
-    const questions = getQuestionsForLanguage(theme.language, activeTestId);
+    
+    // If loading dynamic questions, show spinner
+    if (loading && activeTestId === 'personalized') {
+      return (
+        <View style={[styles.wizardContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" color={getActiveColor()} />
+          <Text style={{ marginTop: 16, color: theme.colors.text.tertiary }}>Consulting the Oracle...</Text>
+        </View>
+      );
+    }
+
+    const questions = activeTestId === 'personalized' ? personalizedQuestions : getQuestionsForLanguage(theme.language, activeTestId);
+    
+    // Safety check if questions failed to load or are empty
+    if (!questions || questions.length === 0) return null;
+
     const currentQuestion = questions[currentQuestionIndex];
+    
+    // Another safety check in case index is out of bounds
+    if (!currentQuestion) return null;
+
     const progress = (currentQuestionIndex + 1) / questions.length;
 
     return (
