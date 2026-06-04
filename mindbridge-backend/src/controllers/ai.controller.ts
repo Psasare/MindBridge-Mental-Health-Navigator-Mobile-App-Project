@@ -329,6 +329,7 @@ export const analyzeVoice = async (req: Request, res: Response) => {
 export const getPersonalizedAssessment = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
+    const testType = req.query.type as string || 'general';
     
     const onboarding = await prisma.onboarding.findUnique({ where: { userId } });
     const recentMoods = await prisma.moodLog.findMany({
@@ -342,7 +343,7 @@ export const getPersonalizedAssessment = async (req: Request, res: Response) => 
       take: 3
     });
 
-    const questions = await generatePersonalizedAssessment(userId, { onboarding, recentMoods, recentJournal });
+    const questions = await generatePersonalizedAssessment(userId, { onboarding, recentMoods, recentJournal }, testType);
     res.json({ questions });
   } catch (error) {
     console.error('Error getting personalized assessment:', error);
@@ -353,15 +354,16 @@ export const getPersonalizedAssessment = async (req: Request, res: Response) => 
 export const submitPersonalizedAssessment = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const { answers } = req.body;
+    const { answers, type } = req.body;
     
     if (!answers || !Array.isArray(answers)) {
       return res.status(400).json({ error: 'Valid answers array is required' });
     }
 
+    const testType = type || 'general';
     const onboarding = await prisma.onboarding.findUnique({ where: { userId } });
     
-    const evaluation = await evaluatePersonalizedAssessment(userId, { onboarding }, answers);
+    const evaluation = await evaluatePersonalizedAssessment(userId, { onboarding }, answers, testType);
     res.json(evaluation);
   } catch (error) {
     console.error('Error submitting personalized assessment:', error);

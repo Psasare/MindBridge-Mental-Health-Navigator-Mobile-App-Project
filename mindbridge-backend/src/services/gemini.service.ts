@@ -411,13 +411,21 @@ Return a JSON object exactly matching this structure (no markdown, just valid JS
   }
 };
 
-export const generatePersonalizedAssessment = async (userId: string, context: any) => {
+export const generatePersonalizedAssessment = async (userId: string, context: any, testType: string) => {
   try {
     const modelName = "gemini-2.5-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
       
+    // Map testType to clinical focus
+    let clinicalFocus = "general well-being";
+    if (testType === 'phq9') clinicalFocus = "depression, lack of interest, and mood";
+    if (testType === 'gad7') clinicalFocus = "anxiety, worry, and nervous tension";
+    if (testType === 'pss') clinicalFocus = "perceived stress and feeling overwhelmed";
+    if (testType === 'brs') clinicalFocus = "resilience and ability to bounce back from stress";
+    if (testType === 'cssrs') clinicalFocus = "suicidal ideation and severe emotional pain";
+
     const prompt = `
-You are a compassionate clinical AI. Generate a personalized 3-question check-in for the user based on their recent mental state.
+You are a compassionate clinical AI. Generate a personalized 3-question check-in for the user focusing heavily on **${clinicalFocus}**.
 
 USER CONTEXT:
 Name: ${context.onboarding?.firstName || 'Friend'}
@@ -427,7 +435,7 @@ Recent Journals:
 ${context.recentJournal?.map((j: any) => `- Title: ${j.title || 'Untitled'}, Content: ${j.content}`).join('\n') || 'None.'}
 
 INSTRUCTIONS:
-1. Generate exactly 3 multiple-choice questions to check in on their current state.
+1. Generate exactly 3 multiple-choice questions to check in on their current state regarding ${clinicalFocus}.
 2. Tailor the questions to their recent struggles (e.g., if they had poor sleep, ask about their rest; if they were stressed, ask about their tension).
 3. Provide 4 options for each question, ranging from positive/healthy to negative/struggling.
 4. Output MUST be valid JSON and exactly match this schema:
@@ -460,13 +468,13 @@ Do not output any markdown formatting, just the raw JSON object.`;
   }
 };
 
-export const evaluatePersonalizedAssessment = async (userId: string, context: any, answers: any[]) => {
+export const evaluatePersonalizedAssessment = async (userId: string, context: any, answers: any[], testType: string) => {
   try {
     const modelName = "gemini-2.5-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
       
     const prompt = `
-You are a compassionate clinical AI. Evaluate the user's answers to a personalized check-in and provide a short, supportive insight.
+You are a compassionate clinical AI. Evaluate the user's answers to a personalized check-in and provide structured, design-friendly feedback.
 
 USER CONTEXT:
 Name: ${context.onboarding?.firstName || 'Friend'}
