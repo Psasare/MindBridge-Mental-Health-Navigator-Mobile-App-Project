@@ -325,8 +325,10 @@ INSTRUCTIONS:
    - If they did a Video Check-in, cross-reference their stated Mood score with their facial expressions (e.g., "You noted you were feeling 'fine' (7/10), but your video check-in showed very low smile frequency.").
 2. Generate a 'dashboardPrompt': A 1-2 sentence gentle, contextual greeting or suggestion based on their current state (e.g., "I notice you haven't left your dorm in 2 days. Getting outside might help.").
 3. Generate a 'gardenInsight': A structured insight card containing a 'title', 'description', and an 'icon' name (choose one of: 'Users', 'Moon', 'Sun', 'Wind', 'Activity', 'Brain', 'Heart').
-4. Generate a 'recommendedResourceCategories' array containing 1 to 3 categories (e.g. "Anxiety", "Sleep", "Stress", "Mindfulness", "Depression", "Burnout", "Science", "Self-Care") that would best help the user right now.
-5. Output MUST be valid JSON and exactly match this schema:
+4. Generate 'microGoals': An array of 1 to 3 tiny, highly actionable daily challenges to improve their state (e.g., "Drink a glass of water", "Text one friend", "Do a 2-minute breathing exercise").
+5. Generate an 'actionableCopingMechanisms' array: 1 to 2 very brief, immediate coping strategies they can do right now (e.g., "5-4-3-2-1 Grounding", "Box Breathing").
+6. Generate a 'recommendedResourceCategories' array containing 1 to 3 categories (e.g. "Anxiety", "Sleep", "Stress", "Mindfulness", "Depression", "Burnout", "Science", "Self-Care") that would best help the user right now.
+7. Output MUST be valid JSON and exactly match this schema:
 {
   "dashboardPrompt": "string",
   "gardenInsight": {
@@ -334,6 +336,8 @@ INSTRUCTIONS:
     "description": "string",
     "icon": "string"
   },
+  "microGoals": ["string"],
+  "actionableCopingMechanisms": ["string"],
   "recommendedResourceCategories": ["string"]
 }
 Do not output any markdown formatting, just the raw JSON object.`;
@@ -359,7 +363,10 @@ Do not output any markdown formatting, just the raw JSON object.`;
         title: "Emotional Reservoir Stable",
         description: "Keep checking in to build a clearer picture of your wellness trends.",
         icon: "Heart"
-      }
+      },
+      microGoals: ["Take 3 deep breaths", "Drink a glass of water"],
+      actionableCopingMechanisms: ["Box Breathing"],
+      recommendedResourceCategories: ["Mindfulness"]
     };
   }
 };
