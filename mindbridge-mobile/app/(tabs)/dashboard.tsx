@@ -44,6 +44,7 @@ import {
   ChevronRight,
   Flower2,
   Sun,
+  AlertTriangle,
   CircleDashed,
   TrendingUp,
   Activity,
@@ -57,8 +58,8 @@ import {
   ChevronDown,
   Flame,
   Feather,
+  Footprints,
   Calendar,
-  Footprints
 } from 'lucide-react-native';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { ReadMoreText } from '../../src/components/ReadMoreText';
@@ -432,6 +433,9 @@ export default function DashboardScreen() {
   const [stepCount, setStepCount] = useState<number | null>(null);
   const [recentLocation, setRecentLocation] = useState<string | null>(null);
   const [aiPrompt, setAiPrompt] = useState<string | null>(null);
+  const [microGoals, setMicroGoals] = useState<string[]>([]);
+  const [actionableCopingMechanisms, setActionableCopingMechanisms] = useState<string[]>([]);
+  const [insightSeverity, setInsightSeverity] = useState<string>('mild');
   const completedCount = Object.values(rituals).filter(Boolean).length;
   
   // Modals state
@@ -479,6 +483,19 @@ export default function DashboardScreen() {
         }
         if (aiRes.data?.suggestedResources) {
           setSuggestedResources(aiRes.data.suggestedResources);
+        }
+        let uniqueCoping: string[] = [];
+        if (aiRes.data?.actionableCopingMechanisms) {
+          uniqueCoping = Array.from(new Set(aiRes.data.actionableCopingMechanisms)) as string[];
+          setActionableCopingMechanisms(uniqueCoping);
+        }
+        
+        if (aiRes.data?.severity) {
+          setInsightSeverity(aiRes.data.severity);
+        }
+        if (aiRes.data?.microGoals) {
+          const uniqueGoals = (Array.from(new Set(aiRes.data.microGoals)) as string[]).filter(g => !uniqueCoping.includes(g));
+          setMicroGoals(uniqueGoals);
         }
       }).catch(err => console.warn('Failed to fetch proactive insights'));
 
@@ -630,76 +647,51 @@ export default function DashboardScreen() {
           </View>
         </Animated.View>
 
-        <View style={styles.section}>
-          <CalendarStrip theme={theme} styles={styles} />
-        </View>
-
         <View style={styles.section}><QuoteSlideshow theme={theme} styles={styles} t={t} /></View>
-        <View style={styles.section}><WeeklyPulse theme={theme} styles={styles} data={moodHistory} t={t} /></View>
 
-        <Animated.View entering={FadeInUp.delay(300)} style={[styles.ritualsContainer, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.6)', borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)' }]}>
-          <View style={styles.ritualHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Leaf color={theme.colors.plum} size={20} strokeWidth={2.5} />
-              <Text style={[styles.ritualTitle, { color: theme.colors.text.primary }]}>{t('dashboard.dailyRituals')}</Text>
-            </View>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/journey')}><Text style={{ color: theme.colors.plum, fontSize: 13, fontWeight: '700' }}>{t('dashboard.viewJourney')}</Text></TouchableOpacity>
-          </View>
-          <View style={styles.ritualRow}>
-            <RitualItem label={t('dashboard.moodSeed')} done={rituals.garden} icon={Leaf} color={theme.colors.accents.eucalyptus} theme={theme} styles={styles} onPress={() => router.push('/(tabs)/garden')} />
-            <RitualItem label={t('dashboard.reflect')} done={rituals.journal} icon={BookOpen} color={theme.colors.accents.powderBlue} theme={theme} styles={styles} onPress={() => router.push('/(tabs)/journal')} />
-            <RitualItem label={t('dashboard.breathe')} done={rituals.breathing} icon={Wind} color={theme.colors.accents.softLilac} theme={theme} styles={styles} onPress={() => router.push('/breathing')} />
-          </View>
-        </Animated.View>
-
-        {/* ── Daily Quests (Duolingo Style) ── */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={[styles.sectionTitleText, { color: theme.colors.text.primary }]}>{t('dashboard.dailyQuests')}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                <Text style={[styles.sectionSubtitleText, { marginBottom: 0 }]}>{t('dashboard.completeAllQuests')}</Text>
-                <Flame size={14} color="#EF4444" fill="#EF4444" />
+        {/* ── Personalized Actionable Insights (Hidden for now) ── */}
+        {/*
+        {(actionableCopingMechanisms.length > 0) && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={[styles.sectionTitleText, { color: theme.colors.text.primary }]}>Your Action Plan</Text>
+                <Text style={styles.sectionSubtitleText}>Immediate strategies for right now</Text>
               </View>
+              <Flame size={20} color="#FF9800" fill="#FF9800" />
             </View>
-            <View style={[styles.questProgress, { backgroundColor: theme.colors.plum + '20' }]}>
-              <Text style={[styles.questProgressText, { color: theme.colors.plum }]}>
-                {Object.values(rituals).filter(Boolean).length}/{Object.keys(rituals).length}
-              </Text>
+            
+            <View style={styles.questsCard}>
+              {(insightSeverity === 'severe' || insightSeverity === 'critical') && (
+                <QuestItem 
+                  key="crisis-alert"
+                  theme={theme} 
+                  icon={AlertTriangle} 
+                  title="Contact Campus Counseling" 
+                  subtitle="Severe distress detected" 
+                  done={false} 
+                  onPress={() => router.push('/(tabs)/crisis')}
+                  styles={styles}
+                  isLast={false}
+                />
+              )}
+              {actionableCopingMechanisms.map((coping: string, idx: number) => (
+                <QuestItem 
+                  key={`coping-${idx}`}
+                  theme={theme} 
+                  icon={Activity} 
+                  title={coping} 
+                  subtitle="Immediate Coping Strategy" 
+                  done={false} 
+                  onPress={() => {}}
+                  styles={styles}
+                  isLast={idx === actionableCopingMechanisms.length - 1}
+                />
+              ))}
             </View>
           </View>
-          
-          <View style={styles.questsCard}>
-            <QuestItem 
-              theme={theme} 
-              icon={Leaf} 
-              title={t('dashboard.plantSeed')} 
-              subtitle={t('dashboard.checkInMood')} 
-              done={rituals.garden} 
-              onPress={() => router.push('/(tabs)/garden')}
-              styles={styles}
-            />
-            <QuestItem 
-              theme={theme} 
-              icon={BookOpen} 
-              title={t('dashboard.dailyReflection')} 
-              subtitle={t('dashboard.writeJournalEntry')} 
-              done={rituals.journal} 
-              onPress={() => router.push('/(tabs)/journal')}
-              styles={styles}
-            />
-            <QuestItem 
-              theme={theme} 
-              icon={Wind} 
-              title={t('dashboard.breathe')} 
-              subtitle={t('dashboard.completeBreathing')} 
-              done={rituals.breathing} 
-              onPress={() => router.push('/breathing')}
-              isLast
-              styles={styles}
-            />
-          </View>
-        </View>
+        )}
+        */}
 
         {/* ── Mood Garden Snapshot ── */}
         {journalHistory.length > 0 && (
@@ -742,120 +734,91 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {/* ── Latest Oracle Interaction ── */}
-        {chatHistory.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitleText, { color: theme.colors.text.primary }]}>{t('dashboard.oracleInsights')}</Text>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/ai-guide')}><Text style={{ color: theme.colors.plum, fontSize: 13, fontWeight: '700' }}>{t('dashboard.chatNow')}</Text></TouchableOpacity>
-            </View>
-            <TouchableOpacity 
-              activeOpacity={0.9} 
-              onPress={() => router.push('/(tabs)/ai-guide')}
-              style={[styles.reflectionCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.plum + '20' }]}
-            >
-              <View style={styles.reflectionHeader}>
-                <View style={[styles.reflectionMood, { backgroundColor: theme.colors.plum }]}>
-                  <Bot color="#FFF" size={24} />
-                </View>
-                <View style={{ flex: 1, marginLeft: 4 }}>
-                  <View style={styles.reflectionTag}>
-                    <MessageCircle size={10} color={theme.colors.plum} />
-                    <Text style={styles.reflectionTagText}>{t('dashboard.recentConversation').toUpperCase()}</Text>
-                  </View>
-                  <Text style={[styles.reflectionTitle, { color: theme.colors.text.primary }]} numberOfLines={1}>{t('dashboard.latestGuidance')}</Text>
-                </View>
-                <View style={[styles.reflectionArrow, { backgroundColor: theme.colors.plum + '08' }]}>
-                  <ChevronRight color={theme.colors.plum} size={18} />
-                </View>
-              </View>
-              <View style={[styles.reflectionContentBox, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(123,97,255,0.03)', borderColor: theme.colors.accents.powderBlue + '40' }]}>
-                <ReadMoreText 
-                  style={[styles.reflectionContent, { color: theme.colors.text.secondary, fontStyle: 'italic', lineHeight: 20 }]} 
-                  text={`"${chatHistory[chatHistory.length - 1].content}"`}
-                  numberOfLines={2}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* ── Wellness Hub Grid ── */}
+        {/* ── Tools & Resources ── */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitleText, { color: theme.colors.text.primary }]}>{t('dashboard.wellnessHub')}</Text>
+            <Text style={[styles.sectionTitleText, { color: theme.colors.text.primary }]}>Tools & Resources</Text>
           </View>
-          <View style={styles.hubGrid}>
-            <AppleWidget 
-              title={t('dashboard.moodGarden')} 
-              subtitle={gardenStats.stage}
-              value={gardenStats.count}
-              label={t('dashboard.seeds')}
-              icon={Leaf} 
-              color={theme.colors.accents.eucalyptus} 
-              delay={400}
-              theme={theme} 
-              styles={styles}
-              onPress={() => router.push('/(tabs)/garden')}
-            />
-            {stepCount !== null ? (
-              <AppleWidget 
-                title={t('dashboard.activity')} 
-                subtitle={t('dashboard.todaysSteps')}
-                value={stepCount}
-                label={t('dashboard.steps')}
-                icon={Footprints} 
-                color={theme.colors.accents.slate} 
-                delay={450}
-                theme={theme} 
-                styles={styles}
-                onPress={() => router.push('/activity')}
-              />
-            ) : (
-              <AppleWidget 
-                title={t('dashboard.assessments')} 
-                subtitle={assessments.length > 0 ? assessments[0].type : t('dashboard.ready')}
-                value={assessments.length}
-                label={t('dashboard.done')}
-                icon={ClipboardList} 
-                color={theme.colors.accents.slate} 
-                delay={450}
-                theme={theme} 
-                styles={styles}
-                onPress={() => router.push('/(tabs)/assessments')}
-              />
-            )}
-            <AppleWidget 
-              title={t('dashboard.resources')} 
-              subtitle={t('dashboard.discoveryHub')}
-              icon={Library} 
-              color={theme.colors.accents.forestGreen} 
-              delay={500}
-              theme={theme} 
-              styles={styles}
-              onPress={() => router.push('/(tabs)/explore')}
-            />
-            <AppleWidget 
-              title={t('dashboard.crisisSupport')} 
-              subtitle={t('dashboard.247Help')}
-              icon={ShieldAlert} 
-              color={theme.colors.semantic.danger} 
-              delay={550}
-              theme={theme} 
-              styles={styles}
-              onPress={() => router.push('/(tabs)/crisis')}
-            />
-          </View>
-        </View>
+          <View style={styles.bentoContainer}>
+            {/* Top Row: Mood Garden (Large Feature) */}
+            <TouchableOpacity activeOpacity={0.9} style={[styles.bentoLarge, { backgroundColor: theme.colors.accents.eucalyptus + '15', borderColor: theme.colors.accents.eucalyptus + '30' }]} onPress={() => router.push('/(tabs)/garden')}>
+              <View style={[styles.bentoIconWrap, { backgroundColor: theme.colors.accents.eucalyptus }]}>
+                <Leaf color="#FFF" size={24} />
+              </View>
+              <View style={styles.bentoTextWrap}>
+                <Text style={[styles.bentoTitle, { color: theme.colors.text.primary }]}>{t('dashboard.moodGarden')}</Text>
+                <Text style={[styles.bentoSub, { color: theme.colors.text.secondary }]}>{gardenStats.stage} • {gardenStats.count} {t('dashboard.seeds')}</Text>
+              </View>
+            </TouchableOpacity>
 
-        <View style={styles.sectionCompact}>
-          <View style={[styles.sectionHeader, { paddingHorizontal: 24 }]}>
-            <Text style={[styles.sectionTitleText, { color: theme.colors.text.primary }]}>{t('dashboard.wellnessToolkit')}</Text>
+            {/* Middle Row: Journal & Reframer */}
+            <View style={styles.bentoRow}>
+              <TouchableOpacity activeOpacity={0.9} style={[styles.bentoSmall, { backgroundColor: theme.colors.accents.powderBlue + '15', borderColor: theme.colors.accents.powderBlue + '30' }]} onPress={() => router.push('/(tabs)/journal')}>
+                <View style={[styles.bentoIconWrap, { backgroundColor: theme.colors.accents.powderBlue }]}>
+                  <BookOpen color="#FFF" size={20} />
+                </View>
+                <View style={styles.bentoTextWrap}>
+                  <Text style={[styles.bentoTitle, { color: theme.colors.text.primary }]}>{t('dashboard.journal')}</Text>
+                  <Text style={[styles.bentoSub, { color: theme.colors.text.secondary }]}>{t('dashboard.reflections')}</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity activeOpacity={0.9} style={[styles.bentoSmall, { backgroundColor: theme.colors.plum + '15', borderColor: theme.colors.plum + '30' }]} onPress={() => router.push('/cbt-reframe')}>
+                <View style={[styles.bentoIconWrap, { backgroundColor: theme.colors.plum }]}>
+                  <BrainCircuit color="#FFF" size={20} />
+                </View>
+                <View style={styles.bentoTextWrap}>
+                  <Text style={[styles.bentoTitle, { color: theme.colors.text.primary }]}>Reframer</Text>
+                  <Text style={[styles.bentoSub, { color: theme.colors.text.secondary }]}>Challenge thoughts</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Third Row: Activity/Assessments & Community */}
+            <View style={styles.bentoRow}>
+              {stepCount !== null ? (
+                <TouchableOpacity activeOpacity={0.9} style={[styles.bentoSmall, { backgroundColor: theme.colors.accents.slate + '15', borderColor: theme.colors.accents.slate + '30' }]} onPress={() => router.push('/activity')}>
+                  <View style={[styles.bentoIconWrap, { backgroundColor: theme.colors.accents.slate }]}>
+                    <Footprints color="#FFF" size={20} />
+                  </View>
+                  <View style={styles.bentoTextWrap}>
+                    <Text style={[styles.bentoTitle, { color: theme.colors.text.primary }]}>{t('dashboard.activity')}</Text>
+                    <Text style={[styles.bentoSub, { color: theme.colors.text.secondary }]}>{stepCount} {t('dashboard.steps')}</Text>
+                  </View>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity activeOpacity={0.9} style={[styles.bentoSmall, { backgroundColor: theme.colors.accents.slate + '15', borderColor: theme.colors.accents.slate + '30' }]} onPress={() => router.push('/(tabs)/assessments')}>
+                  <View style={[styles.bentoIconWrap, { backgroundColor: theme.colors.accents.slate }]}>
+                    <ClipboardList color="#FFF" size={20} />
+                  </View>
+                  <View style={styles.bentoTextWrap}>
+                    <Text style={[styles.bentoTitle, { color: theme.colors.text.primary }]}>{t('dashboard.assessments')}</Text>
+                    <Text style={[styles.bentoSub, { color: theme.colors.text.secondary }]}>{assessments.length} {t('dashboard.done')}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity activeOpacity={0.9} style={[styles.bentoSmall, { backgroundColor: theme.colors.accents.dustyRose + '15', borderColor: theme.colors.accents.dustyRose + '30' }]} onPress={() => router.push('/(tabs)/community')}>
+                <View style={[styles.bentoIconWrap, { backgroundColor: theme.colors.accents.dustyRose }]}>
+                  <Users color="#FFF" size={20} />
+                </View>
+                <View style={styles.bentoTextWrap}>
+                  <Text style={[styles.bentoTitle, { color: theme.colors.text.primary }]}>{t('dashboard.community')}</Text>
+                  <Text style={[styles.bentoSub, { color: theme.colors.text.secondary }]}>{t('dashboard.connect')}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Bottom Row: Crisis Support Banner */}
+            <TouchableOpacity activeOpacity={0.9} style={[styles.bentoBanner, { backgroundColor: theme.colors.semantic.danger + '15', borderColor: theme.colors.semantic.danger + '30' }]} onPress={() => router.push('/(tabs)/crisis')}>
+              <View style={[styles.bentoBannerIcon, { backgroundColor: theme.colors.semantic.danger }]}>
+                <ShieldAlert color="#FFF" size={22} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.bentoTitle, { color: theme.colors.text.primary }]}>{t('dashboard.crisisSupport')}</Text>
+                <Text style={[styles.bentoSub, { color: theme.colors.text.secondary }]}>{t('dashboard.247Help')}</Text>
+              </View>
+              <ChevronRight color={theme.colors.semantic.danger} size={20} />
+            </TouchableOpacity>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll} snapToInterval={154} decelerationRate="fast">
-            <AppleWidget title={t('dashboard.journal')} subtitle={t('dashboard.reflections')} icon={BookOpen} color={theme.colors.accents.powderBlue} size="fixed" delay={650} theme={theme} styles={styles} onPress={() => router.push('/(tabs)/journal')} />
-            <AppleWidget title={t('dashboard.community')} subtitle={t('dashboard.connect')} icon={Users} color={theme.colors.accents.dustyRose} size="fixed" delay={700} theme={theme} styles={styles} onPress={() => router.push('/(tabs)/community')} />
-          </ScrollView>
         </View>
 
         {/* ── Suggested Resources ── */}
@@ -953,7 +916,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   pulseBarBg: { width: 14, height: 60, borderRadius: 7, overflow: 'hidden', justifyContent: 'flex-end' },
   pulseBarFill: { width: '100%', borderRadius: 7 },
   pulseDayLabel: { fontSize: 11, fontFamily: theme.typography.fonts.accent, fontWeight: '800', opacity: 0.9 },
-  quoteCardContainer: { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10 },
+  quoteCardContainer: { shadowColor: theme.isDark ? 'transparent' : '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: theme.isDark ? 0 : 0.1, shadowRadius: 20, elevation: theme.isDark ? 0 : 10 },
   quoteCard: { borderRadius: 32, padding: 32, minHeight: 180, justifyContent: 'center', overflow: 'hidden' },
   quoteMarkContainer: { position: 'absolute', top: -20, left: 20, opacity: 0.1 },
   largeQuoteMark: { fontSize: 140, color: '#FFF', fontFamily: theme.typography.fonts.header },
@@ -989,11 +952,11 @@ const createStyles = (theme: any) => StyleSheet.create({
     padding: 24, 
     borderWidth: 1, 
     borderColor: 'rgba(0,0,0,0.05)',
-    shadowColor: '#000',
+    shadowColor: theme.isDark ? 'transparent' : '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
+    shadowOpacity: theme.isDark ? 0 : 0.05,
     shadowRadius: 12,
-    elevation: 3,
+    elevation: theme.isDark ? 0 : 3,
   },
   reflectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20, gap: 16 },
   reflectionMood: { width: 56, height: 56, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
@@ -1005,7 +968,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   reflectionContentBox: { borderRadius: 16, padding: 16, marginTop: 4, borderLeftWidth: 4 },
   reflectionContent: { fontSize: 13, fontFamily: theme.typography.fonts.body, lineHeight: 20, opacity: 0.8 },
   hubGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 16 },
-  detailedCard: { flex: 1, borderRadius: 28, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
+  detailedCard: { flex: 1, borderRadius: 28, padding: 20, shadowColor: theme.isDark ? 'transparent' : '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0 : 0.05, shadowRadius: 10, elevation: theme.isDark ? 0 : 2 },
   detailedHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   detailedIconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   detailedContent: {},
@@ -1022,14 +985,14 @@ const createStyles = (theme: any) => StyleSheet.create({
     flexDirection: 'row', 
     alignItems: 'center', 
     marginRight: 16,
-    shadowColor: '#000', 
+    shadowColor: theme.isDark ? 'transparent' : '#000', 
     shadowOffset: { width: 0, height: 4 }, 
-    shadowOpacity: 0.05, 
+    shadowOpacity: theme.isDark ? 0 : 0.05, 
     shadowRadius: 12, 
-    elevation: 3, 
+    elevation: theme.isDark ? 0 : 3, 
     overflow: 'hidden' 
   },
-  resourceCard: { borderRadius: 32, padding: 24, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3, overflow: 'hidden' },
+  resourceCard: { borderRadius: 32, padding: 24, flexDirection: 'row', alignItems: 'center', shadowColor: theme.isDark ? 'transparent' : '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0 : 0.05, shadowRadius: 12, elevation: theme.isDark ? 0 : 3, overflow: 'hidden' },
   resourceInfo: { flex: 1 },
   resourceTag: { alignSelf: 'flex-start', backgroundColor: 'rgba(123, 97, 255, 0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 12 },
   resourceTagText: { fontSize: 10, fontFamily: theme.typography.fonts.accent, fontWeight: '800', color: '#7B61FF', letterSpacing: 0.5 },
@@ -1147,11 +1110,11 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   currentJourneyDot: {
     transform: [{ scale: 1.2 }],
-    shadowColor: '#000',
+    shadowColor: theme.isDark ? 'transparent' : '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: theme.isDark ? 0.3 : 0.2,
+    shadowOpacity: theme.isDark ? 0 : 0.2,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: theme.isDark ? 0 : 6,
   },
   journeyDotText: {
     fontSize: 14,
@@ -1195,11 +1158,11 @@ const createStyles = (theme: any) => StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-    shadowColor: '#000',
+    shadowColor: theme.isDark ? 'transparent' : '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: theme.isDark ? 0.2 : 0.05,
+    shadowOpacity: theme.isDark ? 0 : 0.05,
     shadowRadius: 15,
-    elevation: 5,
+    elevation: theme.isDark ? 0 : 5,
   },
   premiumJourney: {
     marginTop: 20,
@@ -1232,18 +1195,18 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: theme.isDark ? 'transparent' : '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: theme.isDark ? 0 : 0.05,
     shadowRadius: 5,
-    elevation: 2,
+    elevation: theme.isDark ? 0 : 2,
   },
   beamedCircle: {
-    shadowColor: '#000',
+    shadowColor: theme.isDark ? 'transparent' : '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: theme.isDark ? 0.3 : 0.2,
+    shadowOpacity: theme.isDark ? 0 : 0.2,
     shadowRadius: 12,
-    elevation: 10,
+    elevation: theme.isDark ? 0 : 10,
     borderWidth: 0,
   },
   frozenCircle: {
@@ -1264,11 +1227,11 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderColor: '#FF9800',
     borderWidth: 2,
     transform: [{ scale: 1.12 }],
-    shadowColor: '#000',
+    shadowColor: theme.isDark ? 'transparent' : '#000',
     shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: theme.isDark ? 0.3 : 0.15,
+    shadowOpacity: theme.isDark ? 0 : 0.15,
     shadowRadius: 10,
-    elevation: 6,
+    elevation: theme.isDark ? 0 : 6,
   },
   journeyDayText: {
     fontSize: 11,
@@ -1391,4 +1354,15 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderRadius: 2.5,
     marginTop: 2,
   },
+  // Bento Layout
+  bentoContainer: { gap: 12 },
+  bentoRow: { flexDirection: 'row', gap: 12 },
+  bentoLarge: { height: 160, borderRadius: 28, padding: 20, borderWidth: 1, justifyContent: 'space-between' },
+  bentoSmall: { flex: 1, height: 140, borderRadius: 28, padding: 18, borderWidth: 1, justifyContent: 'space-between' },
+  bentoBanner: { height: 86, borderRadius: 24, paddingHorizontal: 20, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 16 },
+  bentoIconWrap: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  bentoBannerIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  bentoTextWrap: { marginTop: 'auto' },
+  bentoTitle: { fontSize: 16, fontFamily: theme.typography.fonts.header, fontWeight: '800', marginBottom: 4 },
+  bentoSub: { fontSize: 12, fontFamily: theme.typography.fonts.body, fontWeight: '500', opacity: 0.8 },
 });

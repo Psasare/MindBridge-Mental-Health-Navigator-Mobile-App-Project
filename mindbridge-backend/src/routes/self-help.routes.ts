@@ -1,10 +1,10 @@
 import express from 'express';
 import { processCBTWorksheet } from '../controllers/self-help.controller.js';
-import { authenticate } from '../middleware/auth.js';
+import { auth } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-router.use(authenticate);
+router.use(auth);
 
 router.post('/cbt-reframe', processCBTWorksheet);
 

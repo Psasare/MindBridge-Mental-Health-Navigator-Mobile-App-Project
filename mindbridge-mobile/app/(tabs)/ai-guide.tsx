@@ -37,6 +37,8 @@ import {
   History,
   X,
   Trash2,
+  BrainCircuit,
+  Wind
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAudioRecorder, useAudioRecorderState, requestRecordingPermissionsAsync, RecordingPresets, setAudioModeAsync } from 'expo-audio';
@@ -114,18 +116,58 @@ const MessageItem = ({ item, theme, router, t }: any) => {
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onLongPress={onLongPress}
-              style={[msgStyles.bubbleAi, {
-                backgroundColor: theme.colors.surface,
-                borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-              }]}
-            >
-              <Text style={[msgStyles.textAi, { color: theme.colors.text.primary }]}>
-                {item.text}
-              </Text>
-            </TouchableOpacity>
+            <View>
+              <TouchableOpacity
+                activeOpacity={0.9}
+                onLongPress={onLongPress}
+                style={[msgStyles.bubbleAi, {
+                  backgroundColor: theme.colors.surface,
+                  borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                }]}
+              >
+                <Text style={[msgStyles.textAi, { color: theme.colors.text.primary }]}>
+                  {item.text}
+                </Text>
+              </TouchableOpacity>
+              
+              {/* Contextual Action Card based on Current State */}
+              {item.state && item.state.primaryCondition && item.state.primaryCondition !== 'unknown' && item.state.primaryCondition !== 'neutral' && (
+                <Animated.View entering={FadeInUp.delay(300)} style={msgStyles.stateCard}>
+                  <View style={[msgStyles.stateHeader, { backgroundColor: theme.colors.plum + '15' }]}>
+                    <Activity size={12} color={theme.colors.plum} />
+                    <Text style={[msgStyles.stateLabel, { color: theme.colors.plum }]}>
+                      {item.state.severity?.toUpperCase()} {item.state.primaryCondition?.toUpperCase()} DETECTED
+                    </Text>
+                  </View>
+                  
+                  <Text style={[msgStyles.stateActionText, { color: theme.colors.text.secondary }]}>
+                    {item.state.severity === 'severe' || item.state.severity === 'critical'
+                      ? 'We strongly recommend speaking with a campus counselor about this.'
+                      : `Here is a tool that might help with your ${item.state.primaryCondition}:`}
+                  </Text>
+
+                  <TouchableOpacity 
+                    style={[msgStyles.stateActionBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : '#FFF', borderColor: theme.colors.plum + '30' }]}
+                    onPress={() => {
+                      if (item.state.severity === 'severe' || item.state.severity === 'critical') router.push('/(tabs)/crisis');
+                      else if (item.state.primaryCondition.toLowerCase().includes('anxi') || item.state.primaryCondition.toLowerCase().includes('stress')) router.push('/breathing');
+                      else router.push('/cbt-reframe');
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      {(item.state.severity === 'severe' || item.state.severity === 'critical') ? <MessageCircle size={16} color={theme.colors.plum} /> : 
+                       (item.state.primaryCondition.toLowerCase().includes('anxi') || item.state.primaryCondition.toLowerCase().includes('stress')) ? <Wind size={16} color={theme.colors.plum} /> : 
+                       <BrainCircuit size={16} color={theme.colors.plum} />}
+                      <Text style={[msgStyles.stateActionBtnText, { color: theme.colors.text.primary }]}>
+                        {(item.state.severity === 'severe' || item.state.severity === 'critical') ? 'Contact Counseling' : 
+                         (item.state.primaryCondition.toLowerCase().includes('anxi') || item.state.primaryCondition.toLowerCase().includes('stress')) ? 'Start Breathing Exercise' : 'Use Thought Reframer'}
+                      </Text>
+                    </View>
+                    <ArrowRight size={16} color={theme.colors.text.tertiary} />
+                  </TouchableOpacity>
+                </Animated.View>
+              )}
+            </View>
           )}
           <Text style={[msgStyles.time, { color: theme.colors.text.tertiary }]}>{item.time}</Text>
         </View>
@@ -162,6 +204,12 @@ const createMsgStyles = (theme: any) => StyleSheet.create({
   crisisLabel: { fontSize: 10, fontWeight: '800', color: '#E60000', letterSpacing: 0.8, fontFamily: theme.typography.fonts.accent },
   crisisBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#E60000', paddingVertical: 11, borderRadius: 12, marginTop: 12, gap: 8 },
   crisisBtnText: { color: '#FFF', fontWeight: '800', fontSize: 14, fontFamily: theme.typography.fonts.header },
+  stateCard: { marginTop: 8, maxWidth: width * 0.74, borderRadius: 16, padding: 12, borderWidth: 1, borderColor: 'rgba(123,97,255,0.2)', backgroundColor: theme.isDark ? 'rgba(123,97,255,0.06)' : 'rgba(123,97,255,0.03)' },
+  stateHeader: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginBottom: 8, gap: 6 },
+  stateLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5, fontFamily: theme.typography.fonts.accent },
+  stateActionText: { fontSize: 13, lineHeight: 18, fontFamily: theme.typography.fonts.body, marginBottom: 10 },
+  stateActionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderRadius: 12, borderWidth: 1 },
+  stateActionBtnText: { fontSize: 13, fontWeight: '700', fontFamily: theme.typography.fonts.header },
 });
 
 // ─── Main Screen ───────────────────────────────────────────────────────────────
@@ -284,6 +332,7 @@ export default function AIGuideScreen() {
         text: res.data.response,
         isAi: true,
         suggestCrisis: res.data.suggestCrisis,
+        state: res.data.state,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, aiMsg]);

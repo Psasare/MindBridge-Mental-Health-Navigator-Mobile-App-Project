@@ -122,6 +122,87 @@ const tools = [
     ]
   }
 ];
+export const analyzeCurrentState = async (userMessage: string, context: any) => {
+  try {
+    const modelName = "gemini-2.5-flash";
+    const model = genAI.getGenerativeModel({ model: modelName });
+    
+    // Convert history for context
+    const recentHistory = context.history?.slice(0, 10).map((m: any) => `${m.role}: ${m.content}`).join('\n') || 'None';
+    
+    const prompt = `
+You are the Real-Time State Analyzer for MindBridge. Your job is to analyze the user's latest message and recent context to determine exactly what Mental State they are currently experiencing.
+
+You MUST map their state strictly to the following taxonomy:
+- **Depression**: Persistent sadness, Loss of interest, Hopelessness, Fatigue
+- **Anxiety**: Worry, Panic, Social anxiety, Performance anxiety
+- **Stress**: Overwhelm, Time pressure, Multiple demands, Tension
+- **Loneliness**: Social isolation, Lack of support, Feeling misunderstood, Disconnection
+- **Academic Pressure**: Exam anxiety, Grade worry, Thesis stress, Workload overload
+- **Burnout**: Exhaustion, Cynicism, Reduced performance, Disengagement
+
+RECENT CONTEXT:
+Latest Mood Log: ${context.latestMood?.score}/10, emotions: ${context.latestMood?.emotions?.join(', ')}
+Recent History:
+${recentHistory}
+
+LATEST MESSAGE:
+"${userMessage}"
+
+INSTRUCTIONS - 7-STEP DETECTION LOGIC:
+Before deciding on the final state, you MUST perform this internal 7-step analysis:
+1. Extract emotional keywords from the message.
+2. Check messaging patterns (e.g. rapid pacing, short answers).
+3. Analyze sentiment (positive, negative, volatile).
+4. Cross-reference sensor data (sleep, energy, context).
+5. Compare to historical baseline (recent moods and history).
+6. Score each of the 6 core conditions from 0-10 based on evidence.
+7. Select the top 2-3 highest scoring states as the "primaryStates".
+
+Output MUST be valid JSON and exactly match this schema:
+{
+  "reasoning": "string", // A 1-2 sentence summary of your 7-step analysis
+  "conditionScores": {
+    "Depression": number, // 0-10
+    "Anxiety": number, // 0-10
+    "Stress": number, // 0-10
+    "Loneliness": number, // 0-10
+    "Academic Pressure": number, // 0-10
+    "Burnout": number // 0-10
+  },
+  "primaryStates": ["string"], // up to 3 highest scoring categories
+  "subStates": ["string"], // specific symptoms from the taxonomy
+  "severity": "string", // MUST be one of: "mild", "moderate", "severe", "critical"
+  "emotions": ["string"],
+  "triggers": ["string"], // e.g. ["exam prep", "poor sleep"]
+  "crisisAlert": boolean // true ONLY if there is immediate risk of self-harm, suicide, or severe crisis
+}
+Do not output any markdown formatting, just the raw JSON object.`;
+
+    const result = await model.generateContent(prompt);
+    let jsonStr = result.response.text().trim();
+    if (jsonStr.startsWith('\`\`\`json')) {
+      jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+    } else if (jsonStr.startsWith('\`\`\`')) {
+      jsonStr = jsonStr.replace(/\`\`\`/g, '').trim();
+    }
+    
+    const parsedState = JSON.parse(jsonStr);
+    return parsedState;
+  } catch (error) {
+    console.error(`[BACKEND] Error in analyzeCurrentState:`, error);
+    return {
+      reasoning: "Failed to parse state",
+      conditionScores: { Depression: 0, Anxiety: 0, Stress: 0, Loneliness: 0, "Academic Pressure": 0, Burnout: 0 },
+      primaryStates: ["Unknown"],
+      subStates: [],
+      severity: "mild",
+      emotions: ["unknown"],
+      triggers: [],
+      crisisAlert: false
+    };
+  }
+};
 
 export const generateOracleResponse = async (userMessage: string, context: any, userId: string) => {
   try {
@@ -184,6 +265,17 @@ export const generateOracleResponse = async (userMessage: string, context: any, 
 ═══════════════════════════════════════════
 CURRENT USER CONTEXT (Confidential — for your use only)
 ═══════════════════════════════════════════
+
+CURRENT REAL-TIME STATE (Analyzed from this exact moment):
+  Primary States: ${context.currentState?.primaryStates?.join(', ') || 'Unknown'}
+  Sub-States (Symptoms): ${context.currentState?.subStates?.join(', ') || 'Unknown'}
+  Severity: ${context.currentState?.severity || 'Unknown'}
+  Detected Emotions: ${context.currentState?.emotions?.join(', ') || 'Unknown'}
+  Identified Triggers: ${context.currentState?.triggers?.join(', ') || 'Unknown'}
+  
+  ADAPTATION INSTRUCTION: The system has detected this user is currently in a state of ${context.currentState?.severity || 'unknown'} ${context.currentState?.primaryStates?.join(' and ') || 'distress'}.
+  - If severity is "severe", provide gentle, highly structured, step-by-step guidance. Do not overwhelm them. Strongly encourage them to seek campus counseling without being alarmist.
+  - If severity is "mild" or "moderate", provide validating support and a brief in-app tool suggestion.
 
 PROFILE:
   Name: ${firstName} (use this to address them)
@@ -325,11 +417,13 @@ INSTRUCTIONS:
    - If they did a Video Check-in, cross-reference their stated Mood score with their facial expressions (e.g., "You noted you were feeling 'fine' (7/10), but your video check-in showed very low smile frequency.").
 2. Generate a 'dashboardPrompt': A 1-2 sentence gentle, contextual greeting or suggestion based on their current state (e.g., "I notice you haven't left your dorm in 2 days. Getting outside might help.").
 3. Generate a 'gardenInsight': A structured insight card containing a 'title', 'description', and an 'icon' name (choose one of: 'Users', 'Moon', 'Sun', 'Wind', 'Activity', 'Brain', 'Heart').
-4. Generate 'microGoals': An array of 1 to 3 tiny, highly actionable daily challenges to improve their state (e.g., "Drink a glass of water", "Text one friend", "Do a 2-minute breathing exercise").
+4. Generate 'microGoals': An array of 1 to 3 deeply meaningful, hyper-personalized, and achievable daily challenges. These MUST be tailored specifically to their university context, recent mood, social setting, and physical location. Avoid generic goals. (e.g., instead of "Drink water", use "Take a 5-minute walk outside the library to rest your eyes", or "Send a voice note to someone back home to feel connected").
 5. Generate an 'actionableCopingMechanisms' array: 1 to 2 very brief, immediate coping strategies they can do right now (e.g., "5-4-3-2-1 Grounding", "Box Breathing").
 6. Generate a 'recommendedResourceCategories' array containing 1 to 3 categories (e.g. "Anxiety", "Sleep", "Stress", "Mindfulness", "Depression", "Burnout", "Science", "Self-Care") that would best help the user right now.
-7. Output MUST be valid JSON and exactly match this schema:
+7. Evaluate the 'severity' of the user's recent state (MUST be one of: "mild", "moderate", "severe", "critical").
+8. Output MUST be valid JSON and exactly match this schema:
 {
+  "severity": "string",
   "dashboardPrompt": "string",
   "gardenInsight": {
     "title": "string",
@@ -358,15 +452,16 @@ Do not output any markdown formatting, just the raw JSON object.`;
     console.error(`[BACKEND] Error generating insights:`, error);
     // Fallback if model fails
     return {
+      severity: "mild",
       dashboardPrompt: "How are you feeling right now?",
       gardenInsight: {
         title: "Emotional Reservoir Stable",
         description: "Keep checking in to build a clearer picture of your wellness trends.",
         icon: "Heart"
       },
-      microGoals: ["Take 3 deep breaths", "Drink a glass of water"],
-      actionableCopingMechanisms: ["Box Breathing"],
-      recommendedResourceCategories: ["Mindfulness"]
+      microGoals: ["Take 3 deep breaths before your next class"],
+      actionableCopingMechanisms: ["5-4-3-2-1 Grounding"],
+      recommendedResourceCategories: ["Self-Care"]
     };
   }
 };

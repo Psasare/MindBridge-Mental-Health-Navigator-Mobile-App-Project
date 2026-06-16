@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { generateOracleResponse, generateProactiveInsights, analyzeVoiceAudio, generatePersonalizedAssessment, evaluatePersonalizedAssessment } from '../services/gemini.service.js';
+import { generateOracleResponse, generateProactiveInsights, analyzeVoiceAudio, generatePersonalizedAssessment, evaluatePersonalizedAssessment, analyzeCurrentState } from '../services/gemini.service.js';
 import { AiRepository } from '../repositories/ai.repository.js';
 
 const prisma = new PrismaClient();
@@ -153,8 +153,7 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       data: { userId, role: 'user', content: message }
     });
 
-    // 4. Generate AI Response
-    const aiResponse = await generateOracleResponse(message, {
+    const contextForOracle: any = {
       latestMood,
       recentMoods,
       recentJournal,
@@ -162,7 +161,6 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       userName: user?.name || 'Friend',
       history,
       assessments,
-      // Add advanced dimensions
       energy: latestMood?.energyLevel,
       sleep: { hours: latestMood?.sleepHours, quality: latestMood?.sleepQuality },
       social: latestMood?.socialSetting,
@@ -170,14 +168,52 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       weather: latestMood?.weather,
       steps: latestMood?.steps,
       location: latestMood?.location,
-    }, userId);
+    };
 
-    // 5. Save AI Response
+    // 4. Analyze Current State
+    const currentState = await analyzeCurrentState(message, contextForOracle);
+    
+    // Save the Mental State Log to DB
+    try {
+      if (currentState.primaryStates && currentState.primaryStates.length > 0) {
+        await prisma.mentalStateLog.create({
+          data: {
+            userId,
+            primaryState: currentState.primaryStates[0], // Store dominant
+            subStates: currentState.subStates || [],
+            severity: currentState.severity || 'mild',
+            emotions: currentState.emotions || [],
+            triggers: currentState.triggers || [],
+            // @ts-ignore - Requires Prisma client regeneration (restart dev server and run npx prisma generate)
+            conditionScores: currentState.conditionScores || null,
+            crisisAlert: currentState.crisisAlert || false,
+          }
+        });
+      }
+    } catch (e) {
+      console.error('Failed to log Mental State to DB:', e);
+    }
+    
+    if (currentState.crisisAlert) {
+      return res.json({
+        response: "I'm hearing a lot of pain in your words, and I'm very concerned about you. You don't have to carry this alone. Please reach out to one of the professionals on our Crisis Support page immediately — they are ready to help right now.",
+        suggestCrisis: true,
+        state: currentState
+      });
+    }
+
+    // Pass the state into the context
+    contextForOracle.currentState = currentState;
+
+    // 5. Generate AI Response
+    const aiResponse = await generateOracleResponse(message, contextForOracle, userId);
+
+    // 6. Save AI Response
     await prisma.chatMessage.create({
       data: { userId, role: 'model', content: aiResponse }
     });
 
-    res.json({ response: aiResponse });
+    res.json({ response: aiResponse, state: currentState });
   } catch (error) {
     console.error('Error in Oracle chat:', error);
     res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
