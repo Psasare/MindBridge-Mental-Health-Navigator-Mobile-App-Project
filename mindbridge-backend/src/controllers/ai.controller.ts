@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { generateOracleResponse, generateProactiveInsights, analyzeVoiceAudio, generatePersonalizedAssessment, evaluatePersonalizedAssessment, analyzeCurrentState } from '../services/gemini.service.js';
+import { generateOracleResponse, generateProactiveInsights, analyzeVoiceAudio, generatePersonalizedAssessment, evaluatePersonalizedAssessment } from '../services/gemini.service.js';
+import { analyzeCurrentState } from '../services/ai/mental-state-analyzer.service.js';
 import { AiRepository } from '../repositories/ai.repository.js';
 
 const prisma = new PrismaClient();
