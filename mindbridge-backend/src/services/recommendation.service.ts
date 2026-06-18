@@ -3,8 +3,8 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export const recommendResources = async (userId: string, primaryState: string, severity: number) => {
-  const resourceClient = prisma.resource as any;
-  const historyClient = prisma.userResourceHistory as any;
+  const resourceClient = (prisma as any).resource;
+  const historyClient = (prisma as any).userResourceHistory;
 
   // 1. Get all resources matching condition
   // In our DB, condition is mapped to 'category' (e.g., 'anxiety', 'depression')
@@ -26,7 +26,7 @@ export const recommendResources = async (userId: string, primaryState: string, s
   }, {} as Record<string, any>);
 
   // 3. Score each resource
-  const scoredResources = matchingResources.map(resource => {
+  const scoredResources = matchingResources.map((resource: any) => {
     let score = 100; // Base score
 
     // Add user effectiveness history
@@ -62,14 +62,14 @@ export const recommendResources = async (userId: string, primaryState: string, s
   });
 
   // 4. Sort by score
-  const ranked = scoredResources.sort((a, b) => b.score - a.score);
+  const ranked = scoredResources.sort((a: any, b: any) => b.score - a.score);
 
   // 5. Return top 5
   return ranked.slice(0, 5);
 };
 
 export const updateUserPersonalization = async (userId: string, interaction: { resourceId: string, outcomeRating: number, mentalState: string }) => {
-  const historyClient = prisma.userResourceHistory as any;
+  const historyClient = (prisma as any).userResourceHistory;
   const { resourceId, outcomeRating, mentalState } = interaction;
 
   // Check if history exists
