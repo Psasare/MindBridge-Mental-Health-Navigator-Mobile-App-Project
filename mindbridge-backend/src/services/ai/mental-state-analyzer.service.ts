@@ -44,21 +44,20 @@ Before deciding on the final state, you MUST perform this internal 7-step analys
 
 Output MUST be valid JSON and exactly match this schema:
 {
-  "reasoning": "string", // A 1-2 sentence summary of your 7-step analysis
-  "conditionScores": {
-    "Depression": number, // 0-10
-    "Anxiety": number, // 0-10
-    "Stress": number, // 0-10
-    "Loneliness": number, // 0-10
-    "Academic Pressure": number, // 0-10
-    "Burnout": number // 0-10
+  "primaryState": "string", // single dominant state from taxonomy
+  "severity": number, // integer 0-10
+  "confidence": number, // float 0.0-1.0
+  "secondaryStates": [
+    { "state": "string", "severity": number, "confidence": number }
+  ],
+  "triggers": ["string"],
+  "physicalIndicators": {
+    "sleepQuality": "string",
+    "activityLevel": "string",
+    "heartRate": "string"
   },
-  "primaryStates": ["string"], // up to 3 highest scoring categories
-  "subStates": ["string"], // specific symptoms from the taxonomy
-  "severity": "string", // MUST be one of: "mild", "moderate", "severe", "critical"
-  "emotions": ["string"],
-  "triggers": ["string"], // e.g. ["exam prep", "poor sleep"]
-  "crisisAlert": boolean // true ONLY if there is immediate risk of self-harm, suicide, or severe crisis
+  "actionRequired": "string", // e.g. "immediate_support", "check_in", "monitor"
+  "supportLevel": "string", // e.g. "high", "medium", "low"
 }
 Do not output any markdown formatting, just the raw JSON object.`;
 
@@ -75,14 +74,14 @@ Do not output any markdown formatting, just the raw JSON object.`;
   } catch (error) {
     console.error(`[BACKEND] Error in analyzeCurrentState:`, error);
     return {
-      reasoning: "Failed to parse state",
-      conditionScores: { Depression: 0, Anxiety: 0, Stress: 0, Loneliness: 0, "Academic Pressure": 0, Burnout: 0 },
-      primaryStates: ["Unknown"],
-      subStates: [],
-      severity: "mild",
-      emotions: ["unknown"],
+      primaryState: "Unknown",
+      severity: 0,
+      confidence: 0,
+      secondaryStates: [],
       triggers: [],
-      crisisAlert: false
+      physicalIndicators: { sleepQuality: "unknown", activityLevel: "unknown", heartRate: "unknown" },
+      actionRequired: "monitor",
+      supportLevel: "low"
     };
   }
 };

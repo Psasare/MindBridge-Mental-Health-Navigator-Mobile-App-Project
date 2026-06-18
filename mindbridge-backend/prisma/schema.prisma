@@ -124,15 +124,20 @@ model ChatMessage {
 }
 
 model MentalStateLog {
-  id              String   @id @default(uuid())
-  userId          String
-  primaryState    String
-  subStates       String[]
-  severity        String
-  emotions        String[]
-  triggers        String[]
-  conditionScores Json?
-  crisisAlert     Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String   @id @default(uuid())
+  userId             String
+  primaryState       String
+  subStates          String[]
+  severity           Int
+  confidence         Float?
+  secondaryStates    Json?
+  emotions           String[]
+  triggers           String[]
+  physicalIndicators Json?
+  conditionScores    Json?
+  actionRequired     String?
+  supportLevel       String?
+  crisisAlert        Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

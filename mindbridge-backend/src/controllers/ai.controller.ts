@@ -176,18 +176,30 @@ export const chatWithOracle = async (req: Request, res: Response) => {
     
     // Save the Mental State Log to DB
     try {
-      if (currentState.primaryStates && currentState.primaryStates.length > 0) {
+      if (currentState.primaryState && currentState.primaryState !== 'Unknown') {
+        const isCrisis = currentState.actionRequired === 'immediate_support';
+        currentState.crisisAlert = isCrisis; // set for legacy flow
+
         await prisma.mentalStateLog.create({
           data: {
             userId,
-            primaryState: currentState.primaryStates[0], // Store dominant
-            subStates: currentState.subStates || [],
-            severity: currentState.severity || 'mild',
-            emotions: currentState.emotions || [],
+            primaryState: currentState.primaryState,
+            subStates: [], // Optional now
+            emotions: [], // Optional now
             triggers: currentState.triggers || [],
-            // @ts-ignore - Requires Prisma client regeneration (restart dev server and run npx prisma generate)
-            conditionScores: currentState.conditionScores || null,
-            crisisAlert: currentState.crisisAlert || false,
+            crisisAlert: isCrisis,
+            // @ts-ignore - Requires Prisma client regeneration
+            severity: currentState.severity || 0,
+            // @ts-ignore
+            confidence: currentState.confidence || null,
+            // @ts-ignore
+            secondaryStates: currentState.secondaryStates || null,
+            // @ts-ignore
+            physicalIndicators: currentState.physicalIndicators || null,
+            // @ts-ignore
+            actionRequired: currentState.actionRequired || null,
+            // @ts-ignore
+            supportLevel: currentState.supportLevel || null,
           }
         });
       }
