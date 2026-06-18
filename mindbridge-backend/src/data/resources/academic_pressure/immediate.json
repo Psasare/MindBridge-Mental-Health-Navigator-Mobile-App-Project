@@ -1,0 +1,15 @@
+[
+  {
+    "title": "Effective Study Breaks",
+    "type": "coping_strategy",
+    "format": "text",
+    "urgency": "immediate",
+    "effectiveness": 4.6,
+    "campusAvailability": [],
+    "timeRequired": "5 min",
+    "languages": [
+      "English"
+    ],
+    "color": "#34D399"
+  }
+]

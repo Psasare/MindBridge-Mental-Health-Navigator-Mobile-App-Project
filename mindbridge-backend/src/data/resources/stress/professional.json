@@ -1,0 +1,19 @@
+[
+  {
+    "title": "Counselor Booking",
+    "type": "professional_help",
+    "format": "link",
+    "urgency": "short-term",
+    "effectiveness": 4.7,
+    "campusAvailability": [
+      "KNUST",
+      "UG"
+    ],
+    "timeRequired": "ongoing",
+    "languages": [
+      "English"
+    ],
+    "url": "https://counseling.example.com",
+    "color": "#10B981"
+  }
+]

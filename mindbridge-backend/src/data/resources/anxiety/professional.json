@@ -1,0 +1,19 @@
+[
+  {
+    "title": "University Clinic - Therapy",
+    "type": "professional_help",
+    "format": "contact",
+    "urgency": "short-term",
+    "effectiveness": 4.9,
+    "campusAvailability": [
+      "UG"
+    ],
+    "timeRequired": "ongoing",
+    "languages": [
+      "English",
+      "Twi"
+    ],
+    "url": "tel:0302500000",
+    "color": "#10B981"
+  }
+]

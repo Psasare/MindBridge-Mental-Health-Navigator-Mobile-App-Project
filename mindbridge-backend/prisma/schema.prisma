@@ -103,15 +103,22 @@ model AssessmentResult {
 }
 
 model Resource {
-  id        String   @id @default(uuid())
-  title     String
-  type      String
-  category  String?
-  duration  String?
-  author    String?
-  url       String?
-  color     String?
-  createdAt DateTime @default(now())
+  id                 String   @id @default(uuid())
+  title              String
+  type               String
+  category           String?
+  subcategory        String?
+  duration           String?
+  author             String?
+  url                String?
+  color              String?
+  urgency            String?
+  format             String?
+  effectiveness      Float?
+  campusAvailability String[]
+  timeRequired       String?
+  languages          String[]
+  createdAt          DateTime @default(now())
 }
 
 model ChatMessage {

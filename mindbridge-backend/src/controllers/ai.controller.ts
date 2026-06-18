@@ -17,48 +17,48 @@ export const getOracleContext = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
 
-    // Get latest mood log & total count sequentially to reduce concurrent DB connections
-    const latestMood = await prisma.moodLog.findFirst({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-    const moodCount = await prisma.moodLog.count({ where: { userId } });
-
-    // Get user name for fallback personalization
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true }
-    });
-
-    // Get 3 most recent journal entries & total count sequentially
-    const recentJournal = await prisma.journal.findMany({
-      where: { userId },
-      take: 3,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        title: true,
-        content: true,
-        mood: true,
-        createdAt: true,
-      }
-    });
-    const journalCount = await prisma.journal.count({ where: { userId } });
-
-    // Get onboarding data for personality matching
-    const onboarding = await prisma.onboarding.findUnique({
-      where: { userId }
-    });
-
-    // Get recent chat history
-    const history = await AiRepository.getChatHistory(userId, 15);
-
-    // Get clinical assessments
-    const assessments = await AiRepository.getLatestAssessments(userId);
-
-    // Get latest community post for dashboard snapshot
-    const latestCommunityPost = await prisma.communityPost.findFirst({
-      orderBy: { createdAt: 'desc' }
-    });
+    // Run independent database queries in parallel to significantly reduce latency
+    const [
+      latestMood,
+      moodCount,
+      user,
+      recentJournal,
+      journalCount,
+      onboarding,
+      history,
+      assessments,
+      latestCommunityPost
+    ] = await Promise.all([
+      prisma.moodLog.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.moodLog.count({ where: { userId } }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true }
+      }),
+      prisma.journal.findMany({
+        where: { userId },
+        take: 3,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          title: true,
+          content: true,
+          mood: true,
+          createdAt: true,
+        }
+      }),
+      prisma.journal.count({ where: { userId } }),
+      prisma.onboarding.findUnique({
+        where: { userId }
+      }),
+      AiRepository.getChatHistory(userId, 15),
+      AiRepository.getLatestAssessments(userId),
+      prisma.communityPost.findFirst({
+        orderBy: { createdAt: 'desc' }
+      })
+    ]);
 
     // Note: suggestedResources logic has been moved to getProactiveInsights for AI-driven personalization
     let suggestedResources: any[] = [];
@@ -114,40 +114,45 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       });
     }
 
-    // 2. Fetch Context
-    const latestMood = await prisma.moodLog.findFirst({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const recentMoods = await prisma.moodLog.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      select: { location: true, createdAt: true, score: true }
-    });
-
-    const recentJournal = await prisma.journal.findMany({
-      where: { userId },
-      take: 3,
-      orderBy: { createdAt: 'desc' },
-    });
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true }
-    });
+    // 2. Fetch Context in Parallel
+    const [
+      latestMood,
+      recentMoods,
+      recentJournal,
+      user,
+      onboarding,
+      history,
+      assessments
+    ] = await Promise.all([
+      prisma.moodLog.findFirst({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.moodLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: { location: true, createdAt: true, score: true }
+      }),
+      prisma.journal.findMany({
+        where: { userId },
+        take: 3,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true }
+      }),
+      prisma.onboarding.findUnique({
+        where: { userId }
+      }),
+      AiRepository.getChatHistory(userId, 10),
+      AiRepository.getLatestAssessments(userId)
+    ]);
 
     if (!user) {
       return res.status(401).json({ message: "Account not found. Please log out and back in." });
     }
-
-    const onboarding = await prisma.onboarding.findUnique({
-      where: { userId }
-    });
-
-    const history = await AiRepository.getChatHistory(userId, 10);
-    const assessments = await AiRepository.getLatestAssessments(userId);
 
     // 3. Save User Message
     await prisma.chatMessage.create({

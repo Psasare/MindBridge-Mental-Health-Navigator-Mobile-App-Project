@@ -1,0 +1,15 @@
+[
+  {
+    "title": "Anxiety Explained",
+    "type": "educational",
+    "format": "text",
+    "urgency": "ongoing",
+    "effectiveness": 4.4,
+    "campusAvailability": [],
+    "timeRequired": "10 min",
+    "languages": [
+      "English"
+    ],
+    "color": "#A78BFA"
+  }
+]

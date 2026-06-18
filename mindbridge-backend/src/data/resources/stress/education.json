@@ -1,0 +1,15 @@
+[
+  {
+    "title": "Stress Management 101",
+    "type": "educational",
+    "format": "text",
+    "urgency": "ongoing",
+    "effectiveness": 4.5,
+    "campusAvailability": [],
+    "timeRequired": "20 min",
+    "languages": [
+      "English"
+    ],
+    "color": "#A78BFA"
+  }
+]

@@ -1,0 +1,15 @@
+[
+  {
+    "title": "Understanding Depression",
+    "type": "educational",
+    "format": "text",
+    "urgency": "ongoing",
+    "effectiveness": 4.2,
+    "campusAvailability": [],
+    "timeRequired": "15 min",
+    "languages": [
+      "English"
+    ],
+    "color": "#8B5CF6"
+  }
+]

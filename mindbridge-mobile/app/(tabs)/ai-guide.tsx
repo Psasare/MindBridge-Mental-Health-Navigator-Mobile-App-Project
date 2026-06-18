@@ -286,11 +286,21 @@ export default function AIGuideScreen() {
         }));
 
         setHistory(historyMessages);
-        setMessages([
-          { id: 'welcome', isAi: true, text: greeting, time: 'Now', suggestCrisis: false }
-        ]);
+        setMessages(prev => {
+          const hasWelcome = prev.length > 0 && prev[0].id === 'welcome';
+          if (hasWelcome) {
+            const updated = [...prev];
+            updated[0] = { ...updated[0], text: greeting };
+            return updated;
+          }
+          return [{ id: 'welcome', isAi: true, text: greeting, time: 'Now', suggestCrisis: false }, ...prev];
+        });
       } catch {
-        setMessages([{ id: 'initial', text: t('ai.greetingWelcome').replace('{name}', authData?.name || 'Friend'), isAi: true, time: 'Now' }]);
+        setMessages(prev => {
+          const hasWelcome = prev.length > 0 && prev[0].id === 'welcome';
+          if (hasWelcome) return prev;
+          return [{ id: 'welcome', text: t('ai.greetingWelcome').replace('{name}', authData?.name || 'Friend'), isAi: true, time: 'Now' }, ...prev];
+        });
       }
     };
     fetchContext();

@@ -1,0 +1,15 @@
+[
+  {
+    "title": "Stress Relief Hangout",
+    "type": "peer_support",
+    "format": "link",
+    "urgency": "ongoing",
+    "effectiveness": 4.2,
+    "campusAvailability": [],
+    "timeRequired": "30 min",
+    "languages": [
+      "English"
+    ],
+    "color": "#FBBF24"
+  }
+]

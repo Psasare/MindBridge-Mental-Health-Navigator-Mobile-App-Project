@@ -1,0 +1,18 @@
+[
+  {
+    "title": "Depression Support Group",
+    "type": "peer_support",
+    "format": "contact",
+    "urgency": "ongoing",
+    "effectiveness": 4.6,
+    "campusAvailability": [
+      "KNUST",
+      "UG"
+    ],
+    "timeRequired": "60 min",
+    "languages": [
+      "English"
+    ],
+    "color": "#F59E0B"
+  }
+]

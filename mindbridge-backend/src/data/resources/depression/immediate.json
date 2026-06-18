@@ -1,0 +1,21 @@
+[
+  {
+    "title": "National Crisis Line",
+    "type": "emergency",
+    "format": "contact",
+    "urgency": "immediate",
+    "effectiveness": 4.9,
+    "campusAvailability": [
+      "KNUST",
+      "UG",
+      "UCC"
+    ],
+    "timeRequired": "ongoing",
+    "languages": [
+      "English",
+      "Twi"
+    ],
+    "url": "tel:112",
+    "color": "#E60000"
+  }
+]

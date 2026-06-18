@@ -40,10 +40,25 @@ Before deciding on the final state, you MUST perform this internal 7-step analys
 4. Cross-reference sensor data (sleep, energy, context).
 5. Compare to historical baseline (recent moods and history).
 6. Score each of the 6 core conditions from 0-10 based on evidence.
-7. Select the top 2-3 highest scoring states as the "primaryStates".
+7. Return top 2-3 states with severity.
 
-Output MUST be valid JSON and exactly match this schema:
+Output MUST be valid JSON and exactly match this schema, starting with the analysis steps to show your reasoning:
 {
+  "analysis": {
+    "step1_keywords": ["string"],
+    "step2_patterns": "string",
+    "step3_sentiment": "string",
+    "step4_sensorData": "string",
+    "step5_baselineComparison": "string",
+    "step6_scores": {
+      "Depression": number,
+      "Anxiety": number,
+      "Stress": number,
+      "Loneliness": number,
+      "Academic_Pressure": number,
+      "Burnout": number
+    }
+  },
   "primaryState": "string", // single dominant state from taxonomy
   "severity": number, // integer 0-10
   "confidence": number, // float 0.0-1.0
@@ -57,7 +72,7 @@ Output MUST be valid JSON and exactly match this schema:
     "heartRate": "string"
   },
   "actionRequired": "string", // e.g. "immediate_support", "check_in", "monitor"
-  "supportLevel": "string", // e.g. "high", "medium", "low"
+  "supportLevel": "string" // e.g. "high", "medium", "low"
 }
 Do not output any markdown formatting, just the raw JSON object.`;
 

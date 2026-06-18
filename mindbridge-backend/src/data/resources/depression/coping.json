@@ -1,0 +1,15 @@
+[
+  {
+    "title": "Sleep Hygiene Checklist",
+    "type": "coping_strategy",
+    "format": "text",
+    "urgency": "short-term",
+    "effectiveness": 4.5,
+    "campusAvailability": [],
+    "timeRequired": "5 min",
+    "languages": [
+      "English"
+    ],
+    "color": "#3B82F6"
+  }
+]

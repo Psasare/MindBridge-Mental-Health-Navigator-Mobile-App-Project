@@ -1,0 +1,17 @@
+[
+  {
+    "title": "Anxiety Warriors Peer Group",
+    "type": "peer_support",
+    "format": "contact",
+    "urgency": "ongoing",
+    "effectiveness": 4.5,
+    "campusAvailability": [
+      "KNUST"
+    ],
+    "timeRequired": "60 min",
+    "languages": [
+      "English"
+    ],
+    "color": "#FBBF24"
+  }
+]

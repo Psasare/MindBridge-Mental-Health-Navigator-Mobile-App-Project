@@ -1,0 +1,19 @@
+[
+  {
+    "title": "KNUST Counseling Center",
+    "type": "professional_help",
+    "format": "contact",
+    "urgency": "short-term",
+    "effectiveness": 4.8,
+    "campusAvailability": [
+      "KNUST"
+    ],
+    "timeRequired": "ongoing",
+    "languages": [
+      "English",
+      "Twi"
+    ],
+    "url": "tel:0322060021",
+    "color": "#10B981"
+  }
+]

@@ -1,0 +1,19 @@
+[
+  {
+    "title": "Academic Coaching Center",
+    "type": "professional_help",
+    "format": "contact",
+    "urgency": "short-term",
+    "effectiveness": 4.9,
+    "campusAvailability": [
+      "KNUST",
+      "UG"
+    ],
+    "timeRequired": "ongoing",
+    "languages": [
+      "English"
+    ],
+    "url": "tel:0322061234",
+    "color": "#10B981"
+  }
+]
