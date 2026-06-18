@@ -332,8 +332,10 @@ async function main() {
           const resources = JSON.parse(fileData);
           
           for (const res of resources) {
+            const resourceClient = prisma.resource as any;
+
             // Check if exists
-            const existing = await prisma.resource.findFirst({
+            const existing = await resourceClient.findFirst({
               where: {
                 title: res.title,
                 category: condition,
@@ -342,7 +344,7 @@ async function main() {
             });
 
             if (existing) {
-              await prisma.resource.update({
+              await resourceClient.update({
                 where: { id: existing.id },
                 data: {
                   type: res.type,
@@ -357,7 +359,7 @@ async function main() {
                 }
               });
             } else {
-              await prisma.resource.create({
+              await resourceClient.create({
                 data: {
                   title: res.title,
                   category: condition,

@@ -23,8 +23,9 @@ model User {
   communityPosts    CommunityPost[]
   journalEntries    Journal[]
   moodLogs          MoodLog[]
-  onboarding        Onboarding?
-  mentalStateLogs   MentalStateLog[]
+  onboarding          Onboarding?
+  mentalStateLogs     MentalStateLog[]
+  userResourceHistory UserResourceHistory[]
 }
 
 model Onboarding {
@@ -119,6 +120,7 @@ model Resource {
   timeRequired       String?
   languages          String[]
   createdAt          DateTime @default(now())
+  userHistory        UserResourceHistory[]
 }
 
 model ChatMessage {
@@ -147,4 +149,20 @@ model MentalStateLog {
   crisisAlert        Boolean  @default(false)
   createdAt          DateTime @default(now())
   user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserResourceHistory {
+  id              String   @id @default(uuid())
+  userId          String
+  resourceId      String
+  timesUsed       Int      @default(0)
+  userRating      Float?
+  lastUsedAt      DateTime?
+  condition       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource        Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resourceId])
 }

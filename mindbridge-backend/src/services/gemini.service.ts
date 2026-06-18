@@ -176,6 +176,48 @@ export const generateOracleResponse = async (userMessage: string, context: any, 
       }
       chatHistory = validHistory;
 
+      // Generate condition-specific instruction
+      let conditionInstruction = '';
+      const primaryState = (context.currentState?.primaryState || '').toLowerCase();
+      
+      if (primaryState.includes('depression')) {
+        conditionInstruction = `For Depression:
+- Validate hopelessness (don't dismiss)
+- Celebrate small wins
+- Normalize low energy
+- Gently encourage small actions
+- Encourage professional help
+- Focus on hope without toxic positivity`;
+      } else if (primaryState.includes('anxiety')) {
+        conditionInstruction = `For Anxiety:
+- Provide certainty when possible
+- Offer grounding techniques
+- Break problems into smaller parts
+- Validate physical symptoms
+- Breathing/calming techniques first
+- Then problem-solving
+- Reassurance (not false, but genuine)`;
+      } else if (primaryState.includes('stress')) {
+        conditionInstruction = `For Stress:
+- Acknowledge overwhelm
+- Prioritize (not everything urgent)
+- Quick wins (immediate relief)
+- Time management support
+- Boundary-setting coaching
+- Perspective ("This semester will end")`;
+      } else if (primaryState.includes('loneliness')) {
+        conditionInstruction = `For Loneliness:
+- Validate pain of isolation
+- Normalize loneliness in university
+- Reframe alone time positively
+- Focus on gradual social re-engagement`;
+      } else if (primaryState.includes('academic_pressure')) {
+        conditionInstruction = `For Academic Pressure:
+- Focus on helping them take control (planning, breaking into chunks)
+- Normalize feeling overwhelmed by thesis/exams
+- Quick wins to regain control`;
+      }
+
       const chat = model.startChat({
         history: [
           {
@@ -186,15 +228,18 @@ CURRENT USER CONTEXT (Confidential — for your use only)
 ═══════════════════════════════════════════
 
 CURRENT REAL-TIME STATE (Analyzed from this exact moment):
-  Primary States: ${context.currentState?.primaryStates?.join(', ') || 'Unknown'}
-  Sub-States (Symptoms): ${context.currentState?.subStates?.join(', ') || 'Unknown'}
+  Primary State: ${context.currentState?.primaryState || 'Unknown'}
+  Secondary States: ${context.currentState?.secondaryStates?.map((s:any)=>s.state).join(', ') || 'None'}
   Severity: ${context.currentState?.severity || 'Unknown'}
   Detected Emotions: ${context.currentState?.emotions?.join(', ') || 'Unknown'}
   Identified Triggers: ${context.currentState?.triggers?.join(', ') || 'Unknown'}
   
-  ADAPTATION INSTRUCTION: The system has detected this user is currently in a state of ${context.currentState?.severity || 'unknown'} ${context.currentState?.primaryStates?.join(' and ') || 'distress'}.
-  - If severity is "severe", provide gentle, highly structured, step-by-step guidance. Do not overwhelm them. Strongly encourage them to seek campus counseling without being alarmist.
-  - If severity is "mild" or "moderate", provide validating support and a brief in-app tool suggestion.
+  ADAPTATION INSTRUCTION: The system has detected this user is currently in a state of ${context.currentState?.severity || 'unknown'} ${context.currentState?.primaryState || 'distress'}.
+  - If severity is > 7, provide gentle, highly structured, step-by-step guidance. Do not overwhelm them. Strongly encourage them to seek campus counseling without being alarmist.
+  - If severity is < 5, provide validating support and a brief in-app tool suggestion.
+
+  CONDITION-SPECIFIC CONVERSATION STYLE (MUST FOLLOW):
+  ${conditionInstruction}
 
 PROFILE:
   Name: ${firstName} (use this to address them)
