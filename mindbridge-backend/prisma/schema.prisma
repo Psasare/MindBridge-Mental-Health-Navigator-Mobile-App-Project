@@ -29,6 +29,7 @@ model User {
   dailyGoalSets       DailyGoalSet[]
   goalCompletions     GoalCompletion[]
   gamification        UserGamification?
+  communityHugs       CommunityHug[]
 }
 
 model Onboarding {
@@ -87,13 +88,26 @@ model Journal {
 }
 
 model CommunityPost {
-  id        String   @id @default(uuid())
+  id          String         @id @default(uuid())
+  userId      String
+  group       String
+  content     String
+  hugs        Int            @default(0)
+  isAnonymous Boolean        @default(true)
+  createdAt   DateTime       @default(now())
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hugRecords  CommunityHug[]
+}
+
+model CommunityHug {
+  id        String        @id @default(uuid())
   userId    String
-  group     String
-  content   String
-  hugs      Int      @default(0)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId    String
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
 }
 
 model AssessmentResult {
