@@ -73,6 +73,7 @@ export default function TabLayout() {
       />
       
       {/* Hidden Utility Screens */}
+      <Tabs.Screen name="progress" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="insights" options={{ href: null }} />
       <Tabs.Screen name="crisis" options={{ href: null }} />
