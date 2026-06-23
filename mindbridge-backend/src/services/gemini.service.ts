@@ -296,7 +296,20 @@ INSTRUCTIONS:
         ]
       });
 
-      let result = await chat.sendMessage(userMessage);
+      let messageContent: any = userMessage;
+      if (context.audioBase64) {
+        messageContent = [
+          { text: userMessage },
+          {
+            inlineData: {
+              data: context.audioBase64,
+              mimeType: 'audio/m4a'
+            }
+          }
+        ];
+      }
+
+      let result = await chat.sendMessage(messageContent);
       let response = result.response;
 
       // Handle Function Calls (Tools) in a loop in parallel

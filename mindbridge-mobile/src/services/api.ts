@@ -22,8 +22,11 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       // Handle session expiry (e.g., clear token, redirect to login)
       await AsyncStorage.removeItem('userToken');
-      // A full implementation would dispatch an event or use a ref to navigate
+      // Dispatch an event so AuthContext can cleanly sign out
       console.warn('Session expired. Please log in again.');
+      import('react-native').then(({ DeviceEventEmitter }) => {
+        DeviceEventEmitter.emit('session_expired');
+      });
     }
     return Promise.reject(error);
   }

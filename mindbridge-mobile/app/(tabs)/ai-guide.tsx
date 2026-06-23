@@ -23,6 +23,7 @@ import Animated, { FadeInDown, FadeInUp, FadeIn } from 'react-native-reanimated'
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Clipboard from 'expo-clipboard';
+import * as FileSystem from 'expo-file-system';
 import {
   Bot,
   MessageCircle,
@@ -323,12 +324,20 @@ export default function AIGuideScreen() {
 
   const stopRecording = async () => {
     await recorder.stop();
-    handleSend("I'm feeling a bit exhausted today, but trying to keep my head up.");
+    const uri = recorder.uri;
+    if (uri) {
+      try {
+        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+        handleSend("🎙️ Voice Note", base64);
+      } catch (err) {
+        Alert.alert('Error reading audio file');
+      }
+    }
   };
 
-  const handleSend = async (textOverride?: string) => {
+  const handleSend = async (textOverride?: string, audioBase64?: string) => {
     const textToSend = textOverride || message;
-    if (!textToSend.trim()) return;
+    if (!textToSend.trim() && !audioBase64) return;
     
     const userMsg = { id: 'user_' + Date.now() + '_' + Math.random(), text: textToSend, isAi: false, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
     setMessages(prev => [...prev, userMsg]);
@@ -336,7 +345,11 @@ export default function AIGuideScreen() {
     setLoading(true);
 
     try {
-      const res = await api.post('/ai/chat', { message: textToSend });
+      const payload: any = { message: textToSend };
+      if (audioBase64) {
+        payload.audioBase64 = audioBase64;
+      }
+      const res = await api.post('/ai/chat', payload);
       const aiMsg = {
         id: 'ai_' + Date.now() + '_' + Math.random(),
         text: res.data.response,

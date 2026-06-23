@@ -39,6 +39,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     checkAuth();
   }, []);
 
+  useEffect(() => {
+    let subscription: { remove: () => void } | null = null;
+    import('react-native').then(({ DeviceEventEmitter }) => {
+      subscription = DeviceEventEmitter.addListener('session_expired', () => {
+        signOut();
+      });
+    });
+    
+    return () => {
+      if (subscription) {
+        subscription.remove();
+      }
+    };
+  }, []);
+
   const signIn = async (token: string, user?: any) => {
     await AsyncStorage.setItem('userToken', token);
     if (user) {

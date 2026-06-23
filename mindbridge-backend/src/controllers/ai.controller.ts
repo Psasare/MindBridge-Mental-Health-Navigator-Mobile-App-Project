@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { generateOracleResponse, generateProactiveInsights, analyzeVoiceAudio, generatePersonalizedAssessment, evaluatePersonalizedAssessment } from '../services/gemini.service.js';
 import { analyzeCurrentState } from '../services/ai/mental-state-analyzer.service.js';
 import { AiRepository } from '../repositories/ai.repository.js';
+import { recommendResources } from '../services/recommendation.service.js';
 
 const prisma = new PrismaClient();
 const proactiveInsightsCache = new Map<string, { time: number, data: any }>();
@@ -97,10 +98,10 @@ export const getOracleContext = async (req: Request, res: Response) => {
 export const chatWithOracle = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const { message } = req.body;
+    const { message, audioBase64 } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ error: 'Message is required' });
+    if (!message && !audioBase64) {
+      return res.status(400).json({ error: 'Message or audio is required' });
     }
 
     // 1. Safety Screening (Pre-LLM)
@@ -174,10 +175,11 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       weather: latestMood?.weather,
       steps: latestMood?.steps,
       location: latestMood?.location,
+      audioBase64,
     };
 
     // 4. Analyze Current State
-    const currentState = await analyzeCurrentState(message, contextForOracle);
+    const currentState = await analyzeCurrentState(message || "User sent a voice note", contextForOracle);
     
     // Save the Mental State Log to DB
     try {
@@ -333,7 +335,10 @@ export const getProactiveInsights = async (req: Request, res: Response) => {
     
     // Fetch actual resources for the recommended categories
     let suggestedResources: any[] = [];
-    if (insights.recommendedResourceCategories && Array.isArray(insights.recommendedResourceCategories)) {
+    if (insights.severity && insights.primaryState) {
+      const severityScore = insights.severity === 'severe' || insights.severity === 'critical' ? 8 : (insights.severity === 'moderate' ? 6 : 4);
+      suggestedResources = await recommendResources(userId, insights.primaryState, severityScore);
+    } else if (insights.recommendedResourceCategories && Array.isArray(insights.recommendedResourceCategories)) {
       for (const cat of insights.recommendedResourceCategories) {
         const resources = await AiRepository.searchResources(cat);
         if (resources && resources.length > 0) {
@@ -348,7 +353,9 @@ export const getProactiveInsights = async (req: Request, res: Response) => {
     }
     
     insights.suggestedResources = suggestedResources;
-    proactiveInsightsCache.set(userId, { time: now, data: insights });
+    
+    // Cache the result
+    proactiveInsightsCache.set(userId, { data: insights, time: now });
     res.json(insights);
   } catch (error) {
     console.error('Error fetching proactive insights:', error);
