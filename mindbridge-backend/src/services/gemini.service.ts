@@ -434,7 +434,11 @@ Do not output any markdown formatting, just the raw JSON object.`;
 
       return JSON.parse(jsonStr);
   } catch (error: any) {
-    console.error(`[BACKEND] Error generating insights:`, error);
+    if (error?.status === 503) {
+      console.warn(`[BACKEND] Gemini API is experiencing high demand (503). Using fallback insights.`);
+    } else {
+      console.error(`[BACKEND] Error generating insights:`, error);
+    }
     // Fallback if model fails
     return {
       severity: "mild",

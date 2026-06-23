@@ -391,7 +391,7 @@ export default function JournalScreen() {
             loading ? (
               <View style={styles.entriesList}>
                 {[1, 2, 3].map((_, i) => (
-                  <View style={[styles.entryCard, { marginTop: i === 0 ? 10 : 0 }]}>
+                  <View key={i} style={[styles.entryCard, { marginTop: i === 0 ? 10 : 0 }]}>
                     <View style={styles.entryHeader}>
                       <SkeletonLoader width={80} height={16} borderRadius={4} />
                       <SkeletonLoader width={32} height={32} borderRadius={16} />
@@ -459,6 +459,7 @@ export default function JournalScreen() {
                   <View style={styles.audioWaveform}>
                     {Array.from({ length: 12 }).map((_, i) => (
                       <View 
+                        key={i}
                         style={[
                           styles.waveBar, 
                           { height: Math.random() * 12 + 4, backgroundColor: isPlaying === entry.id ? theme.colors.plum : theme.colors.text.disabled }

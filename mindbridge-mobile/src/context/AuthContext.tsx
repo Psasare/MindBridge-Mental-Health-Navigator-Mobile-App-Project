@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DeviceEventEmitter } from 'react-native';
 import { router } from 'expo-router';
 
 interface AuthContextType {
@@ -41,10 +42,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let subscription: { remove: () => void } | null = null;
-    import('react-native').then(({ DeviceEventEmitter }) => {
-      subscription = DeviceEventEmitter.addListener('session_expired', () => {
-        signOut();
-      });
+    subscription = DeviceEventEmitter.addListener('session_expired', () => {
+      signOut();
     });
     
     return () => {

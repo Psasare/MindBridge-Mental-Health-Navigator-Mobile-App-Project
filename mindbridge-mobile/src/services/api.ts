@@ -1,5 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DeviceEventEmitter } from 'react-native';
 
 const api = axios.create({
   // For Android Emulator use: http://10.0.2.2:5000/api
@@ -24,9 +25,7 @@ api.interceptors.response.use(
       await AsyncStorage.removeItem('userToken');
       // Dispatch an event so AuthContext can cleanly sign out
       console.warn('Session expired. Please log in again.');
-      import('react-native').then(({ DeviceEventEmitter }) => {
-        DeviceEventEmitter.emit('session_expired');
-      });
+      DeviceEventEmitter.emit('session_expired');
     }
     return Promise.reject(error);
   }
