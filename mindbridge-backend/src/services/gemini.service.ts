@@ -374,7 +374,9 @@ INSTRUCTIONS:
 
       return finalText;
   } catch (error: any) {
-    console.error(`[BACKEND] Error in Oracle service:`, error);
+    if (error?.status !== 503) {
+      console.error(`[BACKEND] Error in Oracle service:`, error);
+    }
     throw error;
   }
 };

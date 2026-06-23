@@ -11,8 +11,10 @@ import {
   StatusBar,
   Pressable,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  Linking
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StreakManager } from '../../src/utils/StreakManager';
 import { AuthContext } from '../../src/context/AuthContext';
@@ -870,7 +872,20 @@ export default function DashboardScreen() {
                 <TouchableOpacity 
                   key={idx}
                   style={[styles.resourceCardWide, { backgroundColor: theme.colors.surface, marginRight: 16 }]}
-                  onPress={() => router.push('/(tabs)/explore')}
+                  onPress={async () => {
+                    if (res.url) {
+                      if (res.url.startsWith('tel:')) {
+                        Linking.openURL(res.url);
+                      } else {
+                        await WebBrowser.openBrowserAsync(res.url, {
+                          presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+                          toolbarColor: theme.colors.background,
+                        });
+                      }
+                    } else {
+                      router.push('/(tabs)/knowledge-hub');
+                    }
+                  }}
                 >
                   <View style={styles.resourceInfo}>
                     <View style={styles.resourceTag}><Text style={styles.resourceTagText}>{res.category}</Text></View>

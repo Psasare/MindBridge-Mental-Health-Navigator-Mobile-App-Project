@@ -50,3 +50,27 @@ export const createEntry = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Failed to save journal entry' });
   }
 };
+
+export const deleteEntry = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const id = req.params.id as string;
+
+    const existingEntry = await prisma.journal.findFirst({
+      where: { id, userId },
+    });
+
+    if (!existingEntry) {
+      return res.status(404).json({ error: 'Journal entry not found' });
+    }
+
+    await prisma.journal.delete({
+      where: { id },
+    });
+
+    res.json({ message: 'Journal entry deleted successfully' });
+  } catch (error) {
+    console.error('[BACKEND] Error deleting journal entry:', error);
+    res.status(500).json({ error: 'Failed to delete journal entry' });
+  }
+};

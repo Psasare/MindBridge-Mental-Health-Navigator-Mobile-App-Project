@@ -86,8 +86,12 @@ Do not output any markdown formatting, just the raw JSON object.`;
     
     const parsedState = JSON.parse(jsonStr);
     return parsedState;
-  } catch (error) {
-    console.error(`[BACKEND] Error in analyzeCurrentState:`, error);
+  } catch (error: any) {
+    if (error.status === 503) {
+      console.warn(`[BACKEND] Warning: Gemini AI 503 Service Unavailable during analyzeCurrentState. Using fallback.`);
+    } else {
+      console.error(`[BACKEND] Error in analyzeCurrentState:`, error);
+    }
     return {
       primaryState: "Unknown",
       severity: 0,

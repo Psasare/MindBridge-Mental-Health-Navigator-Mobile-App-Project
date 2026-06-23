@@ -240,9 +240,13 @@ export const chatWithOracle = async (req: Request, res: Response) => {
     });
 
     res.json({ response: aiResponse, state: currentState });
-  } catch (error) {
-    console.error('Error in Oracle chat:', error);
-    res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
+  } catch (error: any) {
+    if (error?.status === 503) {
+      console.warn('Warning: Gemini AI 503 Service Unavailable in Oracle chat.');
+    } else {
+      console.error('Error in Oracle chat:', error);
+    }
+    res.status(503).json({ message: 'The AI is currently experiencing high demand. Please try again in a moment.' });
   }
 };
 
