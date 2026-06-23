@@ -5,6 +5,24 @@ dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY || "");
 
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000): Promise<T> {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      if (error?.status === 503 && attempt < retries - 1) {
+        attempt++;
+        console.warn(`[BACKEND] Gemini 503 error in analyzer, retrying in ${delayMs}ms... (Attempt ${attempt}/${retries - 1})`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw new Error("Unreachable");
+}
+
 export const analyzeCurrentState = async (userMessage: string, context: any) => {
   try {
     const modelName = "gemini-2.5-flash";
@@ -76,7 +94,7 @@ Output MUST be valid JSON and exactly match this schema, starting with the analy
 }
 Do not output any markdown formatting, just the raw JSON object.`;
 
-    const result = await model.generateContent(prompt);
+    const result = await withRetry(() => model.generateContent(prompt));
     let jsonStr = result.response.text().trim();
     if (jsonStr.startsWith('\`\`\`json')) {
       jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();

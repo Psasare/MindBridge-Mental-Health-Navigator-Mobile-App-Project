@@ -6,6 +6,24 @@ dotenv.config();
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY || "");
 
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000): Promise<T> {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      if (error?.status === 503 && attempt < retries - 1) {
+        attempt++;
+        console.warn(`[BACKEND] Gemini 503 error, retrying in ${delayMs}ms... (Attempt ${attempt}/${retries - 1})`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw new Error("Unreachable");
+}
+
 const SYSTEM_PROMPT = `
 You are the MindBridge Oracle — an advanced, emotionally intelligent AI companion built exclusively for university students in Ghana and across Africa. You are not a generic chatbot. You are a trusted, compassionate presence who understands the unique intersection of academic pressure, cultural identity, spiritual life, and personal growth that defines the African student experience.
 
@@ -317,7 +335,7 @@ INSTRUCTIONS:
         ];
       }
 
-      let result = await chat.sendMessage(messageContent);
+      let result = await withRetry(() => chat.sendMessage(messageContent));
       let response = result.response;
 
       // Handle Function Calls (Tools) in a loop in parallel
@@ -355,7 +373,7 @@ INSTRUCTIONS:
           })
         );
 
-        result = await chat.sendMessage(functionResponses);
+        result = await withRetry(() => chat.sendMessage(functionResponses));
         response = result.response;
         calls = response.functionCalls();
         iteration++;

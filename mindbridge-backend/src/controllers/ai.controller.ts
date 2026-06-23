@@ -130,29 +130,29 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       prisma.moodLog.findFirst({
         where: { userId },
         orderBy: { createdAt: 'desc' },
-      }),
+      }).catch(() => null),
       prisma.moodLog.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
         take: 5,
         select: { location: true, createdAt: true, score: true }
-      }),
+      }).catch(() => []),
       prisma.journal.findMany({
         where: { userId },
         take: 3,
         orderBy: { createdAt: 'desc' },
-      }),
+      }).catch(() => []),
       prisma.user.findUnique({
         where: { id: userId },
         select: { name: true }
       }),
       prisma.onboarding.findUnique({
         where: { userId }
-      }),
-      AiRepository.getChatHistory(userId, 10),
-      AiRepository.getLatestAssessments(userId),
-      GoalService.getGamificationStatus(userId),
-      GoalService.getDailyStatus(userId)
+      }).catch(() => null),
+      AiRepository.getChatHistory(userId, 10).catch(() => []),
+      AiRepository.getLatestAssessments(userId).catch(() => []),
+      GoalService.getGamificationStatus(userId).catch(() => null),
+      GoalService.getDailyStatus(userId).catch(() => null)
     ]);
 
     if (!user) {
@@ -243,10 +243,11 @@ export const chatWithOracle = async (req: Request, res: Response) => {
   } catch (error: any) {
     if (error?.status === 503) {
       console.warn('Warning: Gemini AI 503 Service Unavailable in Oracle chat.');
+      res.status(503).json({ message: 'The AI is currently experiencing high demand. Please try again in a moment.' });
     } else {
       console.error('Error in Oracle chat:', error);
+      res.status(500).json({ message: error instanceof Error ? error.message : 'Unknown error' });
     }
-    res.status(503).json({ message: 'The AI is currently experiencing high demand. Please try again in a moment.' });
   }
 };
 
