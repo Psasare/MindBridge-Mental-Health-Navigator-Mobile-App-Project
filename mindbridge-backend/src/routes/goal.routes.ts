@@ -4,7 +4,7 @@ import { auth } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
-router.use(requireAuth);
+router.use(auth);
 
 router.get('/daily', getDailyGoals);
 router.post('/complete', completeGoal);
