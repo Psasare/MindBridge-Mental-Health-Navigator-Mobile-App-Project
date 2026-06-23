@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { GoalService } from '../services/goal.service.js';
 
 export const getDailyGoals = async (req: Request, res: Response) => {
