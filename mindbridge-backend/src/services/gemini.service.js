@@ -3,6 +3,25 @@ import { AiRepository } from "../repositories/ai.repository.js";
 import dotenv from 'dotenv';
 dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY || "");
+async function withRetry(fn, retries = 3, delayMs = 2000) {
+    let attempt = 0;
+    while (attempt < retries) {
+        try {
+            return await fn();
+        }
+        catch (error) {
+            if (error?.status === 503 && attempt < retries - 1) {
+                attempt++;
+                console.warn(`[BACKEND] Gemini 503 error, retrying in ${delayMs}ms... (Attempt ${attempt}/${retries - 1})`);
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+            else {
+                throw error;
+            }
+        }
+    }
+    throw new Error("Unreachable");
+}
 const SYSTEM_PROMPT = `
 You are the MindBridge Oracle — an advanced, emotionally intelligent AI companion built exclusively for university students in Ghana and across Africa. You are not a generic chatbot. You are a trusted, compassionate presence who understands the unique intersection of academic pressure, cultural identity, spiritual life, and personal growth that defines the African student experience.
 
@@ -53,12 +72,14 @@ Use the user's profile data to make the conversation feel hyper-personal:
 - If they mention exams and their level is 400, acknowledge final year pressure specifically.
 - Reference their INTERESTS as "glimmers" or coping tools: e.g., if they love music, suggest a mood playlist or creative journaling.
 - If they've journaled recently, reference themes gently (never quote directly without asking).
+- Acknowledge their PROGRESS: If they have a high streak or completed their daily goals, praise them! If they missed goals, normalize it and encourage them gently without pressure.
 
 ═══════════════════════════════════════════
 RESPONSE FORMAT & RHYTHM
 ═══════════════════════════════════════════
-- Keep responses concise but deeply meaningful. Aim for 2–4 sentences for most replies.
-- For heavy emotional moments, go longer and slower — lead with validation, then gentle exploration.
+- Keep responses extremely concise and to the point. Aim for 1-2 sentences for most replies.
+- Do not provide exhaustive explanations. If the person needs more information, they can query for it.
+- For heavy emotional moments, lead with validation, then gentle exploration, but still keep it brief.
 - Use white space and clear structure when giving advice or exercises (numbered steps, bullets).
 - Avoid excessive filler words ("certainly!", "of course!", "absolutely!") — sound natural.
 - End many responses with a single, powerful open-ended question to keep the dialogue flowing.
@@ -164,6 +185,50 @@ export const generateOracleResponse = async (userMessage, context, userId) => {
             validHistory.pop();
         }
         chatHistory = validHistory;
+        // Generate condition-specific instruction
+        let conditionInstruction = '';
+        const primaryState = (context.currentState?.primaryState || '').toLowerCase();
+        if (primaryState.includes('depression')) {
+            conditionInstruction = `For Depression:
+- Validate hopelessness (don't dismiss)
+- Celebrate small wins
+- Normalize low energy
+- Gently encourage small actions
+- Encourage professional help
+- Focus on hope without toxic positivity`;
+        }
+        else if (primaryState.includes('anxiety')) {
+            conditionInstruction = `For Anxiety:
+- Provide certainty when possible
+- Offer grounding techniques
+- Break problems into smaller parts
+- Validate physical symptoms
+- Breathing/calming techniques first
+- Then problem-solving
+- Reassurance (not false, but genuine)`;
+        }
+        else if (primaryState.includes('stress')) {
+            conditionInstruction = `For Stress:
+- Acknowledge overwhelm
+- Prioritize (not everything urgent)
+- Quick wins (immediate relief)
+- Time management support
+- Boundary-setting coaching
+- Perspective ("This semester will end")`;
+        }
+        else if (primaryState.includes('loneliness')) {
+            conditionInstruction = `For Loneliness:
+- Validate pain of isolation
+- Normalize loneliness in university
+- Reframe alone time positively
+- Focus on gradual social re-engagement`;
+        }
+        else if (primaryState.includes('academic_pressure')) {
+            conditionInstruction = `For Academic Pressure:
+- Focus on helping them take control (planning, breaking into chunks)
+- Normalize feeling overwhelmed by thesis/exams
+- Quick wins to regain control`;
+        }
         const chat = model.startChat({
             history: [
                 {
@@ -172,6 +237,20 @@ export const generateOracleResponse = async (userMessage, context, userId) => {
 ═══════════════════════════════════════════
 CURRENT USER CONTEXT (Confidential — for your use only)
 ═══════════════════════════════════════════
+
+CURRENT REAL-TIME STATE (Analyzed from this exact moment):
+  Primary State: ${context.currentState?.primaryState || 'Unknown'}
+  Secondary States: ${context.currentState?.secondaryStates?.map((s) => s.state).join(', ') || 'None'}
+  Severity: ${context.currentState?.severity || 'Unknown'}
+  Detected Emotions: ${context.currentState?.emotions?.join(', ') || 'Unknown'}
+  Identified Triggers: ${context.currentState?.triggers?.join(', ') || 'Unknown'}
+  
+  ADAPTATION INSTRUCTION: The system has detected this user is currently in a state of ${context.currentState?.severity || 'unknown'} ${context.currentState?.primaryState || 'distress'}.
+  - If severity is > 7, provide gentle, highly structured, step-by-step guidance. Do not overwhelm them. Strongly encourage them to seek campus counseling without being alarmist.
+  - If severity is < 5, provide validating support and a brief in-app tool suggestion.
+
+  CONDITION-SPECIFIC CONVERSATION STYLE (MUST FOLLOW):
+  ${conditionInstruction}
 
 PROFILE:
   Name: ${firstName} (use this to address them)
@@ -193,6 +272,13 @@ RECENT JOURNAL THEMES:
 
 CLINICAL ASSESSMENTS:
   ${assessmentSummary}
+
+GAMIFICATION & GOALS:
+  Current Streak: ${context.gamification?.currentStreak || 0} days
+  Total Points: ${context.gamification?.totalPoints || 0} pts
+  Badges Earned: ${context.gamification?.badges?.join(', ') || 'None'}
+  Today's Active Goals: ${context.dailyGoals?.goals?.map((g) => g.name).join(', ') || 'None generated'}
+  Goals Completed Today: ${context.dailyGoals?.completedIds?.length || 0} / 5
 
 ADVANCED VITALS (Current Check-in):
   Energy Level: ${context.energy}/10
@@ -227,7 +313,19 @@ INSTRUCTIONS:
                 ...chatHistory
             ]
         });
-        let result = await chat.sendMessage(userMessage);
+        let messageContent = userMessage;
+        if (context.audioBase64) {
+            messageContent = [
+                { text: userMessage },
+                {
+                    inlineData: {
+                        data: context.audioBase64,
+                        mimeType: 'audio/m4a'
+                    }
+                }
+            ];
+        }
+        let result = await withRetry(() => chat.sendMessage(messageContent));
         let response = result.response;
         // Handle Function Calls (Tools) in a loop in parallel
         let calls = response.functionCalls();
@@ -259,7 +357,7 @@ INSTRUCTIONS:
                     }
                 };
             }));
-            result = await chat.sendMessage(functionResponses);
+            result = await withRetry(() => chat.sendMessage(functionResponses));
             response = result.response;
             calls = response.functionCalls();
             iteration++;
@@ -277,7 +375,9 @@ INSTRUCTIONS:
         return finalText;
     }
     catch (error) {
-        console.error(`[BACKEND] Error in Oracle service:`, error);
+        if (error?.status !== 503) {
+            console.error(`[BACKEND] Error in Oracle service:`, error);
+        }
         throw error;
     }
 };
@@ -303,15 +403,21 @@ INSTRUCTIONS:
    - If they did a Video Check-in, cross-reference their stated Mood score with their facial expressions (e.g., "You noted you were feeling 'fine' (7/10), but your video check-in showed very low smile frequency.").
 2. Generate a 'dashboardPrompt': A 1-2 sentence gentle, contextual greeting or suggestion based on their current state (e.g., "I notice you haven't left your dorm in 2 days. Getting outside might help.").
 3. Generate a 'gardenInsight': A structured insight card containing a 'title', 'description', and an 'icon' name (choose one of: 'Users', 'Moon', 'Sun', 'Wind', 'Activity', 'Brain', 'Heart').
-4. Generate a 'recommendedResourceCategories' array containing 1 to 3 categories (e.g. "Anxiety", "Sleep", "Stress", "Mindfulness", "Depression", "Burnout", "Science", "Self-Care") that would best help the user right now.
-5. Output MUST be valid JSON and exactly match this schema:
+4. Generate 'microGoals': An array of 1 to 3 deeply meaningful, hyper-personalized, and achievable daily challenges. These MUST be tailored specifically to their university context, recent mood, social setting, and physical location. Avoid generic goals. (e.g., instead of "Drink water", use "Take a 5-minute walk outside the library to rest your eyes", or "Send a voice note to someone back home to feel connected").
+5. Generate an 'actionableCopingMechanisms' array: 1 to 2 very brief, immediate coping strategies they can do right now (e.g., "5-4-3-2-1 Grounding", "Box Breathing").
+6. Generate a 'recommendedResourceCategories' array containing 1 to 3 categories (e.g. "Anxiety", "Sleep", "Stress", "Mindfulness", "Depression", "Burnout", "Science", "Self-Care") that would best help the user right now.
+7. Evaluate the 'severity' of the user's recent state (MUST be one of: "mild", "moderate", "severe", "critical").
+8. Output MUST be valid JSON and exactly match this schema:
 {
+  "severity": "string",
   "dashboardPrompt": "string",
   "gardenInsight": {
     "title": "string",
     "description": "string",
     "icon": "string"
   },
+  "microGoals": ["string"],
+  "actionableCopingMechanisms": ["string"],
   "recommendedResourceCategories": ["string"]
 }
 Do not output any markdown formatting, just the raw JSON object.`;
@@ -328,15 +434,24 @@ Do not output any markdown formatting, just the raw JSON object.`;
         return JSON.parse(jsonStr);
     }
     catch (error) {
-        console.error(`[BACKEND] Error generating insights:`, error);
+        if (error?.status === 503) {
+            console.warn(`[BACKEND] Gemini API is experiencing high demand (503). Using fallback insights.`);
+        }
+        else {
+            console.error(`[BACKEND] Error generating insights:`, error);
+        }
         // Fallback if model fails
         return {
+            severity: "mild",
             dashboardPrompt: "How are you feeling right now?",
             gardenInsight: {
                 title: "Emotional Reservoir Stable",
                 description: "Keep checking in to build a clearer picture of your wellness trends.",
                 icon: "Heart"
-            }
+            },
+            microGoals: ["Take 3 deep breaths before your next class"],
+            actionableCopingMechanisms: ["5-4-3-2-1 Grounding"],
+            recommendedResourceCategories: ["Self-Care"]
         };
     }
 };
@@ -384,12 +499,39 @@ Return a JSON object exactly matching this structure (no markdown, just valid JS
         };
     }
 };
-export const generatePersonalizedAssessment = async (userId, context) => {
+export const generatePersonalizedAssessment = async (userId, context, testType) => {
     try {
         const modelName = "gemini-2.5-flash";
         const model = genAI.getGenerativeModel({ model: modelName });
+        // Map testType to clinical focus and question count
+        let clinicalFocus = "general well-being";
+        let questionCount = 3; // Default short check-in
+        if (testType === 'phq9') {
+            clinicalFocus = "depression, lack of interest, and mood";
+            questionCount = 9;
+        }
+        if (testType === 'gad7') {
+            clinicalFocus = "anxiety, worry, and nervous tension";
+            questionCount = 7;
+        }
+        if (testType === 'pss') {
+            clinicalFocus = "perceived stress and feeling overwhelmed";
+            questionCount = 10;
+        }
+        if (testType === 'brs') {
+            clinicalFocus = "resilience and ability to bounce back from stress";
+            questionCount = 6;
+        }
+        if (testType === 'burnout') {
+            clinicalFocus = "academic exhaustion and academic stress";
+            questionCount = 10;
+        }
+        if (testType === 'cssrs') {
+            clinicalFocus = "suicidal ideation and severe emotional pain";
+            questionCount = 6;
+        }
         const prompt = `
-You are a compassionate clinical AI. Generate a personalized 3-question check-in for the user based on their recent mental state.
+You are a compassionate clinical AI. Generate a personalized ${questionCount}-question check-in for the user focusing heavily on **${clinicalFocus}**.
 
 USER CONTEXT:
 Name: ${context.onboarding?.firstName || 'Friend'}
@@ -399,7 +541,7 @@ Recent Journals:
 ${context.recentJournal?.map((j) => `- Title: ${j.title || 'Untitled'}, Content: ${j.content}`).join('\n') || 'None.'}
 
 INSTRUCTIONS:
-1. Generate exactly 3 multiple-choice questions to check in on their current state.
+1. Generate exactly ${questionCount} multiple-choice questions to check in on their current state regarding ${clinicalFocus}.
 2. Tailor the questions to their recent struggles (e.g., if they had poor sleep, ask about their rest; if they were stressed, ask about their tension).
 3. Provide 4 options for each question, ranging from positive/healthy to negative/struggling.
 4. Output MUST be valid JSON and exactly match this schema:
@@ -432,12 +574,12 @@ Do not output any markdown formatting, just the raw JSON object.`;
         ];
     }
 };
-export const evaluatePersonalizedAssessment = async (userId, context, answers) => {
+export const evaluatePersonalizedAssessment = async (userId, context, answers, testType) => {
     try {
         const modelName = "gemini-2.5-flash";
         const model = genAI.getGenerativeModel({ model: modelName });
         const prompt = `
-You are a compassionate clinical AI. Evaluate the user's answers to a personalized check-in and provide a short, supportive insight.
+You are a compassionate clinical AI. Evaluate the user's answers to a personalized check-in and provide structured, design-friendly feedback.
 
 USER CONTEXT:
 Name: ${context.onboarding?.firstName || 'Friend'}
@@ -446,13 +588,19 @@ Q&A:
 ${answers.map((a, i) => `Q: ${a.question}\nA: ${a.answer}`).join('\n\n')}
 
 INSTRUCTIONS:
-1. Provide a 'feedbackMessage' (2-3 sentences) offering encouragement, validation, and a gentle recommendation based on their answers.
-2. Determine an overall 'severity' level: "Low Risk", "Moderate Risk", or "High Risk" (if they chose the most negative options consistently).
-3. If they are "High Risk", provide a 'crisisAlert' boolean as true.
-4. Output MUST be valid JSON and exactly match this schema:
+1. Provide an 'insight' (2-3 sentences) explaining exactly what you have noticed about their mental state based on their answers, and what their assessment risk means in a compassionate way.
+2. Provide a 'recommendation' (1-2 sentences) explaining exactly how you can help them right now by prescribing specific types of resources or tools available in the app.
+3. Determine an overall 'severity' level: "Low Risk", "Moderate Risk", or "High Risk".
+4. Calculate a 'score' out of 100 based on how positive/healthy their answers were (100 = excellent, 0 = severe distress).
+5. Provide an 'explanation' (1-2 sentences) explaining exactly what their score and severity level mean in plain, non-clinical language so they understand their result.
+6. If they are "High Risk", provide a 'crisisAlert' boolean as true.
+7. Output MUST be valid JSON exactly matching this schema:
 {
-  "feedbackMessage": "string",
+  "insight": "string",
+  "recommendation": "string",
   "severity": "string",
+  "score": number,
+  "explanation": "string",
   "crisisAlert": boolean
 }
 Do not output any markdown formatting, just the raw JSON object.`;
@@ -469,8 +617,56 @@ Do not output any markdown formatting, just the raw JSON object.`;
     catch (error) {
         console.error(`[BACKEND] Error evaluating personalized assessment:`, error);
         return {
-            feedbackMessage: "Thank you for checking in. Remember that it's okay to take things one step at a time.",
+            insight: "Thank you for checking in and sharing how you're feeling.",
+            recommendation: "Take a moment to breathe and rest. We're here for you.",
             severity: "Moderate Risk",
+            score: 50,
+            explanation: "A moderate risk score indicates you are experiencing some difficulties, but they are manageable with the right support.",
+            crisisAlert: false
+        };
+    }
+};
+export const analyzeJournalEntry = async (content) => {
+    try {
+        const modelName = "gemini-2.5-flash";
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const prompt = `
+You are the MindBridge Oracle, a compassionate clinical AI. The user has just submitted a private journal entry.
+Analyze their journal entry to detect underlying mental states, cognitive distortions, and their primary emotional tone.
+Provide empathetic, constructive feedback that helps them process what they wrote.
+
+JOURNAL ENTRY:
+"${content}"
+
+INSTRUCTIONS:
+1. Provide an 'analysis' (2-3 sentences) explaining what emotional themes or cognitive distortions you detect in their writing.
+2. Provide an 'empatheticResponse' (2-3 sentences) directly addressing the user, offering warmth, validation, and a gentle perspective shift.
+3. Determine their 'primaryEmotion' based on the text.
+4. If the entry contains severe hopelessness or self-harm, set 'crisisAlert' to true.
+5. Output MUST be valid JSON exactly matching this schema:
+{
+  "analysis": "string",
+  "empatheticResponse": "string",
+  "primaryEmotion": "string",
+  "crisisAlert": boolean
+}
+Do not output any markdown formatting, just the raw JSON object.`;
+        const result = await model.generateContent(prompt);
+        let jsonStr = result.response.text().trim();
+        if (jsonStr.startsWith('\`\`\`json')) {
+            jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+        }
+        else if (jsonStr.startsWith('\`\`\`')) {
+            jsonStr = jsonStr.replace(/\`\`\`/g, '').trim();
+        }
+        return JSON.parse(jsonStr);
+    }
+    catch (error) {
+        console.error(`[BACKEND] Error analyzing journal entry:`, error);
+        return {
+            analysis: "The journal entry indicates a complex mix of emotions that are currently being processed.",
+            empatheticResponse: "Thank you for trusting your space with these thoughts. Taking the time to write them out is a powerful step.",
+            primaryEmotion: "Reflective",
             crisisAlert: false
         };
     }

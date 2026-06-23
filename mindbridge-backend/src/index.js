@@ -11,6 +11,8 @@ import onboardingRoutes from './routes/onboarding.routes.js';
 import profileRoutes from './routes/profile.routes.js';
 import groupsRoutes from './routes/groups.routes.js';
 import peersRoutes from './routes/peers.routes.js';
+import selfHelpRoutes from './routes/self-help.routes.js';
+import goalRoutes from './routes/goal.routes.js';
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -35,6 +37,8 @@ app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/groups', groupsRoutes);
 app.use('/api/peers', peersRoutes);
+app.use('/api/self-help', selfHelpRoutes);
+app.use('/api/goals', goalRoutes);
 app.get('/', (req, res) => {
     res.send('MindBridge API is running');
 });

@@ -68,10 +68,17 @@ export declare class AiRepository {
         title: string;
         type: string;
         category: string | null;
+        subcategory: string | null;
         duration: string | null;
         author: string | null;
         url: string | null;
         color: string | null;
+        urgency: string | null;
+        format: string | null;
+        effectiveness: number | null;
+        campusAvailability: string[];
+        timeRequired: string | null;
+        languages: string[];
     }[]>;
 }
 //# sourceMappingURL=ai.repository.d.ts.map

@@ -47,7 +47,7 @@ export const GoalService = {
 
     // 4. Group by category and pick 1 per category
     const categories = ['grounding', 'planning', 'connection', 'movement', 'nutrition', 'getting_up', 'self_care', 'accomplishment'];
-    const selectedGoals = [];
+    const selectedGoals: any[] = [];
 
     // Shuffle helper
     const shuffleArray = (array: any[]) => {
@@ -74,13 +74,13 @@ export const GoalService = {
 
     // If we still don't have 5, fill with random ones
     if (selectedGoals.length < 5) {
-      const remainingGoals = availableGoals.filter(g => !selectedGoals.find(sg => sg.id === g.id));
+      const remainingGoals = availableGoals.filter(g => !selectedGoals.find((sg: any) => sg.id === g.id));
       shuffleArray(remainingGoals);
       selectedGoals.push(...remainingGoals.slice(0, 5 - selectedGoals.length));
     }
 
     // 5. Save the daily set
-    const goalIds = selectedGoals.map(g => g.id);
+    const goalIds = selectedGoals.map((g: any) => g.id);
     await prisma.dailyGoalSet.create({
       data: {
         userId,
@@ -130,8 +130,8 @@ export const GoalService = {
         goalId,
         rating,
         timeSpent,
-        stateBefore,
-        stateAfter
+        stateBefore: stateBefore || null,
+        stateAfter: stateAfter || null
       }
     });
 

@@ -37,4 +37,35 @@ export const getResources = async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+import { recommendResources, updateUserPersonalization } from '../services/recommendation.service.js';
+export const getRecommendedResources = async (req, res) => {
+    try {
+        const userId = req.user?.userId;
+        const { state, severity } = req.query;
+        if (!userId || !state) {
+            return res.status(400).json({ message: "userId and state are required" });
+        }
+        const recommendations = await recommendResources(userId, state, parseInt(severity) || 5);
+        res.json(recommendations);
+    }
+    catch (error) {
+        console.error('Error in getRecommendedResources:', error);
+        res.status(500).json({ error: 'Server error fetching recommendations' });
+    }
+};
+export const trackResourceInteraction = async (req, res) => {
+    try {
+        const userId = req.user?.userId;
+        const { resourceId, outcomeRating, mentalState } = req.body;
+        if (!userId || !resourceId || outcomeRating === undefined) {
+            return res.status(400).json({ message: "userId, resourceId, and outcomeRating are required" });
+        }
+        await updateUserPersonalization(userId, { resourceId, outcomeRating, mentalState });
+        res.json({ success: true, message: "Interaction tracked successfully" });
+    }
+    catch (error) {
+        console.error('Error in trackResourceInteraction:', error);
+        res.status(500).json({ error: 'Server error tracking interaction' });
+    }
+};
 //# sourceMappingURL=resources.controller.js.map
