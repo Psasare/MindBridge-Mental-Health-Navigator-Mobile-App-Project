@@ -63,7 +63,7 @@ export const createPost = async (req: Request, res: Response) => {
 export const toggleHug = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const { postId } = req.params;
+    const postId = req.params.postId as string;
 
     const existingHug = await prisma.communityHug.findUnique({
       where: {
