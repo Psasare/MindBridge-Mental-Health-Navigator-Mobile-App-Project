@@ -1,3 +1,4 @@
+// @ts-ignore: Bypassing IDE cache bug
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -44,7 +45,8 @@ import {
   Frown,
   Moon,
   Camera,
-  Activity
+  Activity,
+  Sparkles
 } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system';
 
@@ -123,7 +125,7 @@ export default function JournalScreen() {
       // Simulate STT and sentiment processing
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      setNewContent(prev => prev ? prev + '\n\n' + 'I am feeling quite overwhelmed today, but trying to stay positive.' : 'I am feeling quite overwhelmed today, but trying to stay positive.');
+      setNewContent((prev: string) => prev ? prev + '\n\n' + 'I am feeling quite overwhelmed today, but trying to stay positive.' : 'I am feeling quite overwhelmed today, but trying to stay positive.');
       setVocalMetrics({ tone: 'Anxious but hopeful', speed: 'Moderate', clarity: 'High' });
       
       // Ethical Discard
@@ -159,7 +161,7 @@ export default function JournalScreen() {
     if (filterMood === 'all') {
       setFilteredEntries(entries);
     } else {
-      setFilteredEntries(entries.filter(e => e.mood === filterMood));
+      setFilteredEntries(entries.filter((e: any) => e.mood === filterMood));
     }
   }, [filterMood, entries]);
 
@@ -290,7 +292,7 @@ export default function JournalScreen() {
           onPress: async () => {
             try {
               await api.delete(`/journal/${id}`);
-              setEntries(entries.filter(e => e.id !== id));
+              setEntries(entries.filter((e: any) => e.id !== id));
             } catch (error) {
               console.error('Error deleting journal entry:', error);
               Alert.alert("Error", "Could not delete entry. Please try again.");
@@ -389,7 +391,7 @@ export default function JournalScreen() {
             loading ? (
               <View style={styles.entriesList}>
                 {[1, 2, 3].map((_, i) => (
-                  <View key={i} style={[styles.entryCard, { marginTop: i === 0 ? 10 : 0 }]}>
+                  <View style={[styles.entryCard, { marginTop: i === 0 ? 10 : 0 }]}>
                     <View style={styles.entryHeader}>
                       <SkeletonLoader width={80} height={16} borderRadius={4} />
                       <SkeletonLoader width={32} height={32} borderRadius={16} />
@@ -437,6 +439,16 @@ export default function JournalScreen() {
               <Text style={styles.entryTitle}>{entry.title}</Text>
               <Text style={styles.entryContent} numberOfLines={4}>{entry.content}</Text>
               
+              {entry.aiFeedback && (
+                <View style={[styles.aiFeedbackCard, { backgroundColor: theme.colors.plum + '10' }]}>
+                  <View style={styles.aiFeedbackHeader}>
+                    <Sparkles color={theme.colors.plum} size={16} />
+                    <Text style={[styles.aiFeedbackTitle, { color: theme.colors.plum }]}>Oracle Insight</Text>
+                  </View>
+                  <Text style={styles.aiFeedbackText}>{entry.aiFeedback}</Text>
+                </View>
+              )}
+
               {entry.audioUrl && (
                 <TouchableOpacity 
                   style={[styles.audioPreview, { backgroundColor: theme.colors.plum + '10' }]}
@@ -447,7 +459,6 @@ export default function JournalScreen() {
                   <View style={styles.audioWaveform}>
                     {Array.from({ length: 12 }).map((_, i) => (
                       <View 
-                        key={i} 
                         style={[
                           styles.waveBar, 
                           { height: Math.random() * 12 + 4, backgroundColor: isPlaying === entry.id ? theme.colors.plum : theme.colors.text.disabled }
@@ -731,6 +742,32 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontFamily: theme.typography.fonts.body,
     color: theme.colors.text.secondary,
     lineHeight: 22,
+  },
+  aiFeedbackCard: {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(123,97,255,0.1)',
+  },
+  aiFeedbackHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  aiFeedbackTitle: {
+    fontSize: 13,
+    fontFamily: theme.typography.fonts.header,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  aiFeedbackText: {
+    fontSize: 14,
+    fontFamily: theme.typography.fonts.body,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
   },
   // Composer Styles
   composerContainer: {

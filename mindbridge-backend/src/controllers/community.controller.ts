@@ -1,9 +1,11 @@
-import { Request, Response } from 'express';
-import prisma from '../index.js';
+import type { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export const getFeed = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = (req as any).userId;
 
     const posts = await prisma.communityPost.findMany({
       orderBy: { createdAt: 'desc' },
@@ -16,7 +18,7 @@ export const getFeed = async (req: Request, res: Response) => {
     });
 
     // Map posts to include a boolean hasHugged
-    const feed = posts.map(post => ({
+    const feed = posts.map((post: any) => ({
       id: post.id,
       content: post.content,
       group: post.group,
@@ -35,7 +37,7 @@ export const getFeed = async (req: Request, res: Response) => {
 
 export const createPost = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = (req as any).userId;
     const { content, group = 'General', isAnonymous = true } = req.body;
 
     if (!content) {
@@ -60,7 +62,7 @@ export const createPost = async (req: Request, res: Response) => {
 
 export const toggleHug = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user.userId;
+    const userId = (req as any).userId;
     const { postId } = req.params;
 
     const existingHug = await prisma.communityHug.findUnique({

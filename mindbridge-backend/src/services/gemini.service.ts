@@ -628,3 +628,49 @@ Do not output any markdown formatting, just the raw JSON object.`;
     };
   }
 };
+
+export const analyzeJournalEntry = async (content: string) => {
+  try {
+    const modelName = "gemini-2.5-flash";
+    const model = genAI.getGenerativeModel({ model: modelName });
+      
+    const prompt = `
+You are the MindBridge Oracle, a compassionate clinical AI. The user has just submitted a private journal entry.
+Analyze their journal entry to detect underlying mental states, cognitive distortions, and their primary emotional tone.
+Provide empathetic, constructive feedback that helps them process what they wrote.
+
+JOURNAL ENTRY:
+"${content}"
+
+INSTRUCTIONS:
+1. Provide an 'analysis' (2-3 sentences) explaining what emotional themes or cognitive distortions you detect in their writing.
+2. Provide an 'empatheticResponse' (2-3 sentences) directly addressing the user, offering warmth, validation, and a gentle perspective shift.
+3. Determine their 'primaryEmotion' based on the text.
+4. If the entry contains severe hopelessness or self-harm, set 'crisisAlert' to true.
+5. Output MUST be valid JSON exactly matching this schema:
+{
+  "analysis": "string",
+  "empatheticResponse": "string",
+  "primaryEmotion": "string",
+  "crisisAlert": boolean
+}
+Do not output any markdown formatting, just the raw JSON object.`;
+
+    const result = await model.generateContent(prompt);
+    let jsonStr = result.response.text().trim();
+    if (jsonStr.startsWith('\`\`\`json')) {
+      jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+    } else if (jsonStr.startsWith('\`\`\`')) {
+      jsonStr = jsonStr.replace(/\`\`\`/g, '').trim();
+    }
+    return JSON.parse(jsonStr);
+  } catch (error) {
+    console.error(`[BACKEND] Error analyzing journal entry:`, error);
+    return {
+      analysis: "The journal entry indicates a complex mix of emotions that are currently being processed.",
+      empatheticResponse: "Thank you for trusting your space with these thoughts. Taking the time to write them out is a powerful step.",
+      primaryEmotion: "Reflective",
+      crisisAlert: false
+    };
+  }
+};

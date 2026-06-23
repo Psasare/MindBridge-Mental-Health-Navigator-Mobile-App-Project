@@ -83,6 +83,8 @@ model Journal {
   mood      String?
   audioUrl  String?
   vocalMetrics Json?
+  aiAnalysis String?
+  aiFeedback String?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
