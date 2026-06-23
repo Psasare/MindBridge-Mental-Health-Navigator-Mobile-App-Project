@@ -11,10 +11,20 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000): 
     try {
       return await fn();
     } catch (error: any) {
-      if (error?.status === 503 && attempt < retries - 1) {
+      if ((error?.status === 503 || error?.status === 429) && attempt < retries - 1) {
         attempt++;
-        console.warn(`[BACKEND] Gemini 503 error in analyzer, retrying in ${delayMs}ms... (Attempt ${attempt}/${retries - 1})`);
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        let waitTime = delayMs * Math.pow(2, attempt - 1);
+        
+        // Extract retryDelay from errorDetails if present
+        if (error?.errorDetails && Array.isArray(error.errorDetails)) {
+          const retryInfo = error.errorDetails.find((d: any) => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo');
+          if (retryInfo?.retryDelay && typeof retryInfo.retryDelay === 'string' && retryInfo.retryDelay.endsWith('s')) {
+            waitTime = parseFloat(retryInfo.retryDelay.replace('s', '')) * 1000 + 1000; // Add 1s buffer
+          }
+        }
+
+        console.warn(`[BACKEND] Gemini ${error.status} error in analyzer, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
       } else {
         throw error;
       }
@@ -105,8 +115,8 @@ Do not output any markdown formatting, just the raw JSON object.`;
     const parsedState = JSON.parse(jsonStr);
     return parsedState;
   } catch (error: any) {
-    if (error.status === 503) {
-      console.warn(`[BACKEND] Warning: Gemini AI 503 Service Unavailable during analyzeCurrentState. Using fallback.`);
+    if (error?.status === 503 || error?.status === 429) {
+      console.warn(`[BACKEND] Warning: Gemini API rate limited or unavailable (${error.status}) during analyzeCurrentState. Using fallback.`);
     } else {
       console.error(`[BACKEND] Error in analyzeCurrentState:`, error);
     }

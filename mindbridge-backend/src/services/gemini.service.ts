@@ -12,10 +12,20 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000): 
     try {
       return await fn();
     } catch (error: any) {
-      if (error?.status === 503 && attempt < retries - 1) {
+      if ((error?.status === 503 || error?.status === 429) && attempt < retries - 1) {
         attempt++;
-        console.warn(`[BACKEND] Gemini 503 error, retrying in ${delayMs}ms... (Attempt ${attempt}/${retries - 1})`);
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        let waitTime = delayMs * Math.pow(2, attempt - 1);
+        
+        // Extract retryDelay from errorDetails if present
+        if (error?.errorDetails && Array.isArray(error.errorDetails)) {
+          const retryInfo = error.errorDetails.find((d: any) => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo');
+          if (retryInfo?.retryDelay && typeof retryInfo.retryDelay === 'string' && retryInfo.retryDelay.endsWith('s')) {
+            waitTime = parseFloat(retryInfo.retryDelay.replace('s', '')) * 1000 + 1000; // Add 1s buffer
+          }
+        }
+
+        console.warn(`[BACKEND] Gemini ${error.status} error, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
       } else {
         throw error;
       }
@@ -442,7 +452,7 @@ INSTRUCTIONS:
 }
 Do not output any markdown formatting, just the raw JSON object.`;
 
-      const result = await model.generateContent(prompt);
+      const result = await withRetry(() => model.generateContent(prompt), 3, 3000);
       const text = result.response.text().trim();
       
       // Clean up markdown code blocks if the model included them
@@ -455,8 +465,8 @@ Do not output any markdown formatting, just the raw JSON object.`;
 
       return JSON.parse(jsonStr);
   } catch (error: any) {
-    if (error?.status === 503) {
-      console.warn(`[BACKEND] Gemini API is experiencing high demand (503). Using fallback insights.`);
+    if (error?.status === 503 || error?.status === 429) {
+      console.warn(`[BACKEND] Gemini API rate limited or unavailable (${error.status}). Using fallback insights.`);
     } else {
       console.error(`[BACKEND] Error generating insights:`, error);
     }
@@ -492,7 +502,7 @@ Return a JSON object exactly matching this structure (no markdown, just valid JS
 }`;
 
   try {
-    const result = await model.generateContent([
+    const result = await withRetry(() => model.generateContent([
       prompt,
       {
         inlineData: {
@@ -500,7 +510,7 @@ Return a JSON object exactly matching this structure (no markdown, just valid JS
           mimeType: mimeType
         }
       }
-    ]);
+    ]), 3, 2000);
 
     const text = result.response.text().trim();
     let jsonStr = text;
@@ -582,7 +592,7 @@ INSTRUCTIONS:
 }
 Do not output any markdown formatting, just the raw JSON object.`;
 
-    const result = await model.generateContent(prompt);
+    const result = await withRetry(() => model.generateContent(prompt), 3, 2000);
     let jsonStr = result.response.text().trim();
     if (jsonStr.startsWith('\`\`\`json')) {
       jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
@@ -633,7 +643,7 @@ INSTRUCTIONS:
 }
 Do not output any markdown formatting, just the raw JSON object.`;
 
-    const result = await model.generateContent(prompt);
+    const result = await withRetry(() => model.generateContent(prompt), 3, 2000);
     let jsonStr = result.response.text().trim();
     if (jsonStr.startsWith('\`\`\`json')) {
       jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
@@ -681,7 +691,7 @@ INSTRUCTIONS:
 }
 Do not output any markdown formatting, just the raw JSON object.`;
 
-    const result = await model.generateContent(prompt);
+    const result = await withRetry(() => model.generateContent(prompt), 3, 2000);
     let jsonStr = result.response.text().trim();
     if (jsonStr.startsWith('\`\`\`json')) {
       jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
