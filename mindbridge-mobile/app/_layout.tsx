@@ -127,6 +127,7 @@ const InitialLayout = () => {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="+not-found" />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="goal-execution" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
       </Stack>
     </NavigationProvider>
   );

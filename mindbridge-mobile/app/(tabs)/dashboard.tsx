@@ -436,7 +436,13 @@ export default function DashboardScreen() {
   const [microGoals, setMicroGoals] = useState<string[]>([]);
   const [actionableCopingMechanisms, setActionableCopingMechanisms] = useState<string[]>([]);
   const [insightSeverity, setInsightSeverity] = useState<string>('mild');
-  const completedCount = Object.values(rituals).filter(Boolean).length;
+  
+  // Gamification States
+  const [dailyGoals, setDailyGoals] = useState<any[]>([]);
+  const [completedGoalIds, setCompletedGoalIds] = useState<string[]>([]);
+  const [gamification, setGamification] = useState({ totalPoints: 0, currentStreak: 0 });
+
+  const completedCount = completedGoalIds.length;
   
   // Modals state
   const [showIntervention, setShowIntervention] = useState(false);
@@ -498,6 +504,23 @@ export default function DashboardScreen() {
           setMicroGoals(uniqueGoals);
         }
       }).catch(err => console.warn('Failed to fetch proactive insights'));
+
+      // Fetch Gamification Goals and Status
+      api.get('/goals/gamification').then(gamificationRes => {
+        if (gamificationRes.data) {
+          setGamification({
+            totalPoints: gamificationRes.data.totalPoints || 0,
+            currentStreak: gamificationRes.data.currentStreak || 0
+          });
+        }
+      }).catch(err => console.warn('Failed to fetch gamification'));
+
+      api.get('/goals/daily').then(goalsRes => {
+        if (goalsRes.data) {
+          setDailyGoals(goalsRes.data.goals || []);
+          setCompletedGoalIds(goalsRes.data.completedIds || []);
+        }
+      }).catch(err => console.warn('Failed to fetch daily goals'));
 
       setRituals({
         garden: res.data.latestMood && new Date(res.data.latestMood.createdAt).toDateString() === todayStr,
@@ -628,7 +651,7 @@ export default function DashboardScreen() {
           <View style={{ flex: 1 }}>
             <ScreenHeader title={`${getGreeting()}, ${userData.name}`} subtitle={t('dashboard.nurturePeaceToday')} noPadding />
           </View>
-          <ProgressRings completed={completedCount} total={3} theme={theme} styles={styles} t={t} />
+          <ProgressRings completed={completedCount} total={5} theme={theme} styles={styles} t={t} />
         </View>
 
         <Animated.View entering={FadeInUp.delay(100).duration(800)} style={styles.section}>
@@ -640,25 +663,27 @@ export default function DashboardScreen() {
               </View>
               <View style={styles.streakBadge}>
                 <Flame size={14} color="#FF9800" />
-                <Text style={[styles.streakText, { color: "#FF9800" }]}>{Math.max(userData.streak, completedCount > 0 ? 1 : 0)}</Text>
+                <Text style={[styles.streakText, { color: "#FF9800" }]}>{gamification.currentStreak}</Text>
               </View>
             </View>
-            <StreakJourney streak={userData.streak} theme={theme} styles={styles} completedCount={completedCount} />
+            <StreakJourney streak={gamification.currentStreak} theme={theme} styles={styles} completedCount={completedCount} />
           </View>
         </Animated.View>
 
         <View style={styles.section}><QuoteSlideshow theme={theme} styles={styles} t={t} /></View>
 
-        {/* ── Personalized Actionable Insights (Hidden for now) ── */}
-        {/*
-        {(actionableCopingMechanisms.length > 0) && (
+        {/* ── Daily Personalized Goals ── */}
+        {(dailyGoals.length > 0) && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View>
-                <Text style={[styles.sectionTitleText, { color: theme.colors.text.primary }]}>Your Action Plan</Text>
-                <Text style={styles.sectionSubtitleText}>Immediate strategies for right now</Text>
+                <Text style={[styles.sectionTitleText, { color: theme.colors.text.primary }]}>Your Daily Goals</Text>
+                <Text style={styles.sectionSubtitleText}>Curated for your current mental state</Text>
               </View>
-              <Flame size={20} color="#FF9800" fill="#FF9800" />
+              <TouchableOpacity onPress={() => router.push('/(tabs)/progress')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Text style={{ color: theme.colors.plum, fontSize: 13, fontWeight: '700' }}>Gamification</Text>
+                <Flame size={20} color="#FF9800" fill={completedCount >= 3 ? "#FF9800" : "transparent"} />
+              </TouchableOpacity>
             </View>
             
             <View style={styles.questsCard}>
@@ -675,23 +700,32 @@ export default function DashboardScreen() {
                   isLast={false}
                 />
               )}
-              {actionableCopingMechanisms.map((coping: string, idx: number) => (
-                <QuestItem 
-                  key={`coping-${idx}`}
-                  theme={theme} 
-                  icon={Activity} 
-                  title={coping} 
-                  subtitle="Immediate Coping Strategy" 
-                  done={false} 
-                  onPress={() => {}}
-                  styles={styles}
-                  isLast={idx === actionableCopingMechanisms.length - 1}
-                />
-              ))}
+              {dailyGoals.map((goal: any, idx: number) => {
+                const isDone = completedGoalIds.includes(goal.id);
+                return (
+                  <QuestItem 
+                    key={goal.id}
+                    theme={theme} 
+                    icon={Activity} 
+                    title={goal.name} 
+                    subtitle={`${goal.duration} min • ${goal.points} pts`} 
+                    done={isDone} 
+                    onPress={() => {
+                      if (!isDone) {
+                        router.push({
+                          pathname: '/goal-execution',
+                          params: { goalStr: JSON.stringify(goal) }
+                        });
+                      }
+                    }}
+                    styles={styles}
+                    isLast={idx === dailyGoals.length - 1}
+                  />
+                );
+              })}
             </View>
           </View>
         )}
-        */}
 
         {/* ── Mood Garden Snapshot ── */}
         {journalHistory.length > 0 && (

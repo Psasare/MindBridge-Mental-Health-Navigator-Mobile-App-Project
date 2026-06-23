@@ -56,6 +56,7 @@ Use the user's profile data to make the conversation feel hyper-personal:
 - If they mention exams and their level is 400, acknowledge final year pressure specifically.
 - Reference their INTERESTS as "glimmers" or coping tools: e.g., if they love music, suggest a mood playlist or creative journaling.
 - If they've journaled recently, reference themes gently (never quote directly without asking).
+- Acknowledge their PROGRESS: If they have a high streak or completed their daily goals, praise them! If they missed goals, normalize it and encourage them gently without pressure.
 
 ═══════════════════════════════════════════
 RESPONSE FORMAT & RHYTHM
@@ -261,6 +262,13 @@ RECENT JOURNAL THEMES:
 
 CLINICAL ASSESSMENTS:
   ${assessmentSummary}
+
+GAMIFICATION & GOALS:
+  Current Streak: ${context.gamification?.currentStreak || 0} days
+  Total Points: ${context.gamification?.totalPoints || 0} pts
+  Badges Earned: ${context.gamification?.badges?.join(', ') || 'None'}
+  Today's Active Goals: ${context.dailyGoals?.goals?.map((g:any) => g.name).join(', ') || 'None generated'}
+  Goals Completed Today: ${context.dailyGoals?.completedIds?.length || 0} / 5
 
 ADVANCED VITALS (Current Check-in):
   Energy Level: ${context.energy}/10

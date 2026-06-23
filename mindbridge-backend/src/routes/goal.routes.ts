@@ -1,0 +1,13 @@
+import express from 'express';
+import { getDailyGoals, completeGoal, getGamificationStatus } from '../controllers/goal.controller.js';
+import { requireAuth } from '../middleware/auth.middleware.js';
+
+const router = express.Router();
+
+router.use(requireAuth);
+
+router.get('/daily', getDailyGoals);
+router.post('/complete', completeGoal);
+router.get('/gamification', getGamificationStatus);
+
+export default router;

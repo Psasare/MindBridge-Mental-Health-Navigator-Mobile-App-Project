@@ -341,40 +341,43 @@ export default function ActivityScreen() {
           style={{ flex: 1 }}
         >
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
-              <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.colors.text.primary }]}>Activity Goals</Text>
-              <TouchableOpacity onPress={() => {
-                setShowSettings(false);
-                setTempGoalSteps(goalSteps);
-                setTempGoalCalories(goalCalories);
-              }} style={styles.modalClose}>
-                <X color={theme.colors.text.primary} size={24} />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.modalBody}>
-              <Text style={[styles.modalLabel, { color: theme.colors.text.secondary }]}>Daily Step Goal</Text>
-              <TextInput 
-                style={[styles.modalInput, { color: theme.colors.text.primary, borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
-                keyboardType="numeric"
-                value={tempGoalSteps.toString()}
-                onChangeText={(val) => setTempGoalSteps(parseInt(val) || 0)}
-              />
-              
-              <Text style={[styles.modalLabel, { color: theme.colors.text.secondary, marginTop: 16 }]}>Daily Calorie Goal (kcal)</Text>
-              <TextInput 
-                style={[styles.modalInput, { color: theme.colors.text.primary, borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
-                keyboardType="numeric"
-                value={tempGoalCalories.toString()}
-                onChangeText={(val) => setTempGoalCalories(parseInt(val) || 0)}
-              />
-              
-              <TouchableOpacity onPress={saveGoals} style={[styles.saveBtn, { backgroundColor: theme.colors.plum }]}>
-                <Check color="#FFF" size={20} />
-                <Text style={styles.saveBtnText}>Save Goals</Text>
-              </TouchableOpacity>
-            </View>
+            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled">
+              <View style={[styles.modalContent, { backgroundColor: theme.colors.surface, alignSelf: 'center', width: '90%' }]}>
+                <View style={styles.modalHeader}>
+                  <Text style={[styles.modalTitle, { color: theme.colors.text.primary }]}>Activity Goals</Text>
+                  <TouchableOpacity onPress={() => {
+                    setShowSettings(false);
+                    setTempGoalSteps(goalSteps);
+                    setTempGoalCalories(goalCalories);
+                  }} style={styles.modalClose}>
+                    <X color={theme.colors.text.primary} size={24} />
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.modalBody}>
+                  <Text style={[styles.modalLabel, { color: theme.colors.text.secondary }]}>Daily Step Goal</Text>
+                  <TextInput 
+                    style={[styles.modalInput, { color: theme.colors.text.primary, borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
+                    keyboardType="numeric"
+                    value={tempGoalSteps.toString()}
+                    onChangeText={(val) => setTempGoalSteps(parseInt(val) || 0)}
+                  />
+                  
+                  <Text style={[styles.modalLabel, { color: theme.colors.text.secondary, marginTop: 16 }]}>Daily Calorie Goal (kcal)</Text>
+                  <TextInput 
+                    style={[styles.modalInput, { color: theme.colors.text.primary, borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
+                    keyboardType="numeric"
+                    value={tempGoalCalories.toString()}
+                    onChangeText={(val) => setTempGoalCalories(parseInt(val) || 0)}
+                  />
+                  
+                  <TouchableOpacity onPress={saveGoals} style={[styles.saveBtn, { backgroundColor: theme.colors.plum }]}>
+                    <Check color="#FFF" size={20} />
+                    <Text style={styles.saveBtnText}>Save Goals</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
           </View>
         </KeyboardAvoidingView>
       </Modal>

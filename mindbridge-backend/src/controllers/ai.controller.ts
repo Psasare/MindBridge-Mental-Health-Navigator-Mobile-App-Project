@@ -4,6 +4,7 @@ import { generateOracleResponse, generateProactiveInsights, analyzeVoiceAudio, g
 import { analyzeCurrentState } from '../services/ai/mental-state-analyzer.service.js';
 import { AiRepository } from '../repositories/ai.repository.js';
 import { recommendResources } from '../services/recommendation.service.js';
+import { GoalService } from '../services/goal.service.js';
 
 const prisma = new PrismaClient();
 const proactiveInsightsCache = new Map<string, { time: number, data: any }>();
@@ -115,7 +116,6 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       });
     }
 
-    // 2. Fetch Context in Parallel
     const [
       latestMood,
       recentMoods,
@@ -123,7 +123,9 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       user,
       onboarding,
       history,
-      assessments
+      assessments,
+      gamification,
+      dailyGoals
     ] = await Promise.all([
       prisma.moodLog.findFirst({
         where: { userId },
@@ -148,7 +150,9 @@ export const chatWithOracle = async (req: Request, res: Response) => {
         where: { userId }
       }),
       AiRepository.getChatHistory(userId, 10),
-      AiRepository.getLatestAssessments(userId)
+      AiRepository.getLatestAssessments(userId),
+      GoalService.getGamificationStatus(userId),
+      GoalService.getDailyStatus(userId)
     ]);
 
     if (!user) {
@@ -168,6 +172,8 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       userName: user?.name || 'Friend',
       history,
       assessments,
+      gamification,
+      dailyGoals,
       energy: latestMood?.energyLevel,
       sleep: { hours: latestMood?.sleepHours, quality: latestMood?.sleepQuality },
       social: latestMood?.socialSetting,
