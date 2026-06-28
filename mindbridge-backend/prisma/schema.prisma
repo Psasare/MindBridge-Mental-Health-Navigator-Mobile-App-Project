@@ -8,21 +8,21 @@ datasource db {
 }
 
 model User {
-  id                String             @id @default(uuid())
-  email             String             @unique
-  password          String
-  name              String
-  studentId         String?
-  phoneNumber       String?
-  profileImage      String?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  username          String?            @unique
-  assessmentResults AssessmentResult[]
-  chatMessages      ChatMessage[]
-  communityPosts    CommunityPost[]
-  journalEntries    Journal[]
-  moodLogs          MoodLog[]
+  id                  String                @id @default(uuid())
+  email               String                @unique
+  password            String
+  name                String
+  studentId           String?
+  phoneNumber         String?
+  profileImage        String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  username            String?               @unique
+  assessmentResults   AssessmentResult[]
+  chatMessages        ChatMessage[]
+  communityPosts      CommunityPost[]
+  journalEntries      Journal[]
+  moodLogs            MoodLog[]
   onboarding          Onboarding?
   mentalStateLogs     MentalStateLog[]
   userResourceHistory UserResourceHistory[]
@@ -73,20 +73,24 @@ model MoodLog {
   vocalMetrics     Json?
   createdAt        DateTime @default(now())
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model Journal {
-  id        String   @id @default(uuid())
-  userId    String
-  title     String?
-  content   String
-  mood      String?
-  audioUrl  String?
+  id           String   @id @default(uuid())
+  userId       String
+  title        String?
+  content      String
+  mood         String?
+  audioUrl     String?
   vocalMetrics Json?
-  aiAnalysis String?
-  aiFeedback String?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  aiAnalysis   String?
+  aiFeedback   String?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model CommunityPost {
@@ -99,6 +103,8 @@ model CommunityPost {
   createdAt   DateTime       @default(now())
   user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   hugRecords  CommunityHug[]
+
+  @@index([createdAt(sort: Desc)])
 }
 
 model CommunityHug {
@@ -120,10 +126,12 @@ model AssessmentResult {
   severity  String
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model Resource {
-  id                 String   @id @default(uuid())
+  id                 String                @id @default(uuid())
   title              String
   type               String
   category           String?
@@ -138,7 +146,7 @@ model Resource {
   campusAvailability String[]
   timeRequired       String?
   languages          String[]
-  createdAt          DateTime @default(now())
+  createdAt          DateTime              @default(now())
   userHistory        UserResourceHistory[]
 }
 
@@ -149,6 +157,8 @@ model ChatMessage {
   content   String
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model MentalStateLog {
@@ -168,72 +178,76 @@ model MentalStateLog {
   crisisAlert        Boolean  @default(false)
   createdAt          DateTime @default(now())
   user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model UserResourceHistory {
-  id              String   @id @default(uuid())
-  userId          String
-  resourceId      String
-  timesUsed       Int      @default(0)
-  userRating      Float?
-  lastUsedAt      DateTime?
-  condition       String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resource        Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  id         String    @id @default(uuid())
+  userId     String
+  resourceId String
+  timesUsed  Int       @default(0)
+  userRating Float?
+  lastUsedAt DateTime?
+  condition  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource   Resource  @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, resourceId])
 }
 
 model Goal {
-  id              String   @id @default(uuid())
-  condition       String   // anxiety, depression, stress, loneliness, academic_pressure
-  category        String   // grounding, planning, connection, etc.
-  variant         String   // identifier for the variant
-  name            String
-  description     String
-  duration        Int      // typical duration in minutes
-  difficulty      Int      // 1-5 scale
-  whyItHelps      String
-  points          Int      @default(10)
-  badgeUnlock     String?
-  createdAt       DateTime @default(now())
-  completions     GoalCompletion[]
+  id          String           @id @default(uuid())
+  condition   String // anxiety, depression, stress, loneliness, academic_pressure
+  category    String // grounding, planning, connection, etc.
+  variant     String // identifier for the variant
+  name        String
+  description String
+  duration    Int // typical duration in minutes
+  difficulty  Int // 1-5 scale
+  whyItHelps  String
+  points      Int              @default(10)
+  badgeUnlock String?
+  createdAt   DateTime         @default(now())
+  completions GoalCompletion[]
 }
 
 model DailyGoalSet {
-  id              String   @id @default(uuid())
-  userId          String
-  date            DateTime @default(dbgenerated("CURRENT_DATE"))
-  goalIds         String[]
-  completedIds    String[]
-  createdAt       DateTime @default(now())
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(uuid())
+  userId       String
+  date         DateTime @default(dbgenerated("CURRENT_DATE"))
+  goalIds      String[]
+  completedIds String[]
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model GoalCompletion {
-  id              String   @id @default(uuid())
-  userId          String
-  goalId          String
-  timeSpent       Int      // in seconds
-  rating          Int?     // 1-5
-  stateBefore     String?
-  stateAfter      String?
-  createdAt       DateTime @default(now())
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  goal            Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  userId      String
+  goalId      String
+  timeSpent   Int // in seconds
+  rating      Int? // 1-5
+  stateBefore String?
+  stateAfter  String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  goal        Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
 }
 
 model UserGamification {
-  id              String   @id @default(uuid())
-  userId          String   @unique
-  totalPoints     Int      @default(0)
-  currentStreak   Int      @default(0)
-  longestStreak   Int      @default(0)
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  totalPoints     Int       @default(0)
+  currentStreak   Int       @default(0)
+  longestStreak   Int       @default(0)
   badges          String[]
   lastCompletedAt DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
