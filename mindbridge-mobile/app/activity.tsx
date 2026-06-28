@@ -39,7 +39,9 @@ export default function ActivityScreen() {
   const router = useRouter();
   
   const [steps, setSteps] = useState(0);
+  const [liveSteps, setLiveSteps] = useState(0);
   const [isAvailable, setIsAvailable] = useState(true);
+  const [permissionGranted, setPermissionGranted] = useState(true);
   const [weeklySteps, setWeeklySteps] = useState<any[]>([]);
   
   // Goals
@@ -56,9 +58,10 @@ export default function ActivityScreen() {
   const progressCalories = useSharedValue(0);
   const progressDistance = useSharedValue(0);
 
-  // Derived metrics
-  const calories = Math.round(steps * 0.04);
-  const distanceKm = (steps * 0.000762).toFixed(2);
+  // Derived metrics (combine historical + live steps)
+  const totalSteps = steps + liveSteps;
+  const calories = Math.round(totalSteps * 0.04);
+  const distanceKm = (totalSteps * 0.000762).toFixed(2);
 
   const saveGoals = async () => {
     setGoalSteps(tempGoalSteps);
@@ -68,7 +71,7 @@ export default function ActivityScreen() {
     setShowSettings(false);
     
     // Re-animate rings based on new goals
-    const currentSteps = steps;
+    const currentSteps = totalSteps;
     const calculatedCals = Math.round(currentSteps * 0.04);
     const calculatedDist = currentSteps * 0.000762;
     const currentGoalDistance = tempGoalSteps * 0.000762;
@@ -79,6 +82,8 @@ export default function ActivityScreen() {
   };
 
   useEffect(() => {
+    let stepSubscription: any;
+    
     const initAndFetch = async () => {
       // 1. Init Goals
       let gSteps = 10000;
@@ -105,8 +110,12 @@ export default function ActivityScreen() {
 
       // 3. Fetch Pedometer Data
       try {
+        const { status } = await Pedometer.requestPermissionsAsync();
         const available = await Pedometer.isAvailableAsync();
+        const canUseSensors = available && status === 'granted';
+        
         setIsAvailable(available);
+        setPermissionGranted(status === 'granted');
         
         const end = new Date();
         const start = new Date();
@@ -115,10 +124,15 @@ export default function ActivityScreen() {
         let todaySteps = 0;
         
         // Fetch Today's Real Steps
-        if (available) {
+        if (canUseSensors) {
           try {
             const todayRes = await Pedometer.getStepCountAsync(start, end);
             if (todayRes) todaySteps = todayRes.steps;
+            
+            // Start watching real-time steps
+            stepSubscription = Pedometer.watchStepCount(result => {
+              setLiveSteps(result.steps);
+            });
           } catch (e) {}
         }
         
@@ -154,7 +168,7 @@ export default function ActivityScreen() {
           if (i === 0) dEnd.setTime(end.getTime());
 
           let dailySteps = 0;
-          if (available) {
+          if (canUseSensors) {
             try {
               const res = await Pedometer.getStepCountAsync(dStart, dEnd);
               if (res && res.steps > 0) dailySteps = res.steps;
@@ -258,7 +272,7 @@ export default function ActivityScreen() {
               <Footprints color={COLOR_STEPS} size={18} style={{ marginRight: 6 }} />
               <Text style={[styles.statLabel, { color: theme.colors.text.secondary }]}>Steps</Text>
             </View>
-            <Text style={[styles.statValue, { color: theme.colors.text.primary }]}>{steps.toLocaleString()}</Text>
+            <Text style={[styles.statValue, { color: theme.colors.text.primary }]}>{totalSteps.toLocaleString()}</Text>
             <Text style={[styles.statSub, { color: theme.colors.text.tertiary }]}>Goal: {goalSteps}</Text>
           </View>
           
@@ -322,7 +336,7 @@ export default function ActivityScreen() {
           </Animated.View>
         )}
 
-        {!isAvailable && (
+        {(!permissionGranted || !isAvailable) && (
           <Animated.View entering={FadeInUp.delay(500).duration(800)}>
             <View style={[styles.errorCard, { backgroundColor: theme.colors.semantic.danger + '15' }]}>
               <Text style={[styles.errorText, { color: theme.colors.semantic.danger }]}>

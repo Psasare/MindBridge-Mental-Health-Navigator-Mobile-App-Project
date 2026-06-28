@@ -641,8 +641,9 @@ export default function DashboardScreen() {
   useEffect(() => {
     const checkSteps = async () => {
       try {
+        const { status } = await Pedometer.requestPermissionsAsync();
         const isAvailable = await Pedometer.isAvailableAsync();
-        if (isAvailable) {
+        if (isAvailable && status === 'granted') {
           const end = new Date();
           const start = new Date();
           start.setHours(0, 0, 0, 0);

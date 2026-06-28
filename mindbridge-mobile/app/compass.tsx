@@ -30,6 +30,7 @@ export default function CompassScreen() {
   const [heading, setHeading] = useState(0);
   const [phase, setPhase] = useState<Phase>('TURN');
   const [targetIndex, setTargetIndex] = useState(0);
+  const [isAvailable, setIsAvailable] = useState(true);
 
   const targets = [
     { label: 'North', angle: 0, prompt: 'Take one deep, slow breath in... and out.', icon: Wind },
@@ -51,16 +52,20 @@ export default function CompassScreen() {
 
   useEffect(() => {
     let subscription: any;
-    Magnetometer.setUpdateInterval(50); // Faster updates for smoother animation
-
+    
     const subscribe = async () => {
-      subscription = Magnetometer.addListener((data) => {
-        let angle = Math.atan2(data.y, data.x) * (180 / Math.PI);
-        angle = angle - 90; 
-        if (angle < 0) angle += 360;
-        
-        const roundedAngle = Math.round(angle);
-        setHeading(roundedAngle);
+      const available = await Magnetometer.isAvailableAsync();
+      setIsAvailable(available);
+      
+      if (available) {
+        Magnetometer.setUpdateInterval(50);
+        subscription = Magnetometer.addListener((data) => {
+          let angle = Math.atan2(data.y, data.x) * (180 / Math.PI);
+          angle = angle - 90; 
+          if (angle < 0) angle += 360;
+          
+          const roundedAngle = Math.round(angle);
+          setHeading(roundedAngle);
         
         // Find shortest path for rotation animation
         let diff = roundedAngle - rotation.value;
@@ -68,6 +73,7 @@ export default function CompassScreen() {
         if (diff < -180) diff += 360;
         rotation.value = withTiming(rotation.value + diff, { duration: 150 });
       });
+      }
     };
 
     subscribe();
@@ -179,6 +185,16 @@ export default function CompassScreen() {
               <Text style={styles.btnText}>Return to Tools</Text>
             </TouchableOpacity>
           </Animated.View>
+        ) : !isAvailable ? (
+          <View style={styles.centerBox}>
+            <View style={[styles.compassWrapper, { backgroundColor: theme.colors.semantic.danger + '15', marginBottom: 20 }]}>
+              <X color={theme.colors.semantic.danger} size={60} />
+            </View>
+            <Text style={[styles.title, { color: theme.colors.text.primary }]}>Sensor Unavailable</Text>
+            <Text style={[styles.subtitle, { color: theme.colors.text.secondary }]}>
+              Your device does not have a compass sensor, or permission was denied.
+            </Text>
+          </View>
         ) : (
           <View style={styles.centerBox}>
             <View style={styles.compassContainer}>

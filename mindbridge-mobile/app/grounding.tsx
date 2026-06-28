@@ -19,6 +19,8 @@ import Animated, { FadeIn, FadeInDown, Layout } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { X, Eye, Hand, Volume2, Smile, Award } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import api from '../src/services/api';
 import { easeOut, DURATIONS } from '../src/constants/animations';
 
 const { width } = Dimensions.get('window');
@@ -86,7 +88,7 @@ export default function GroundingScreen() {
   };
 
   const handleNext = () => {
-    Vibration.vibrate(30);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     
     // Check if at least some inputs are filled (optional warning but keep it smooth)
     if (currentStepIndex < STEPS.length - 1) {
@@ -100,12 +102,19 @@ export default function GroundingScreen() {
   };
 
   const handleComplete = async () => {
-    Vibration.vibrate([0, 100, 50, 150]);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setIsCompleted(true);
 
     try {
       const today = new Date().toDateString();
       await AsyncStorage.setItem(`grounding_${today}`, 'true');
+      
+      // Attempt to sync with gamification/goal backend
+      try {
+        await api.post('/goals/log', { type: 'SENSORY_GROUNDING' });
+      } catch (e) {
+        // Silently fail if offline, the experience is what matters
+      }
     } catch (e) {
       console.error('Failed to log grounding completion:', e);
     }

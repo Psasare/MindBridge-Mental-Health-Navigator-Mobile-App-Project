@@ -1155,7 +1155,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#FFF',
+    backgroundColor: theme.isDark ? theme.colors.text.primary : '#FFF',
   },
   optionText: {
     fontSize: 16,
