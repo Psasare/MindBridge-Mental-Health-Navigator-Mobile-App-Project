@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { GoalService } from '../services/goal.service';
+import { GoalService } from '../services/goal.service.js';
 
 const prisma = new PrismaClient();
 
@@ -64,21 +64,21 @@ export const createMoodLog = async (req: Request, res: Response) => {
 
     const newLog = await prisma.moodLog.create({
       data: {
-        userId,
+        userId: userId as string,
         score,
         emotions,
-        energyLevel,
-        sleepHours,
-        sleepQuality,
-        socialSetting,
-        physicalSymptoms,
-        weather,
-        location,
-        audioUrl,
-        note,
-        steps,
-        facialMetrics,
-        vocalMetrics
+        energyLevel: energyLevel ?? undefined,
+        sleepHours: sleepHours ?? undefined,
+        sleepQuality: sleepQuality ?? undefined,
+        socialSetting: socialSetting ?? undefined,
+        physicalSymptoms: physicalSymptoms ?? undefined,
+        weather: weather ?? undefined,
+        location: location ?? undefined,
+        audioUrl: audioUrl ?? undefined,
+        note: note ?? undefined,
+        steps: steps ?? undefined,
+        facialMetrics: facialMetrics ?? undefined,
+        vocalMetrics: vocalMetrics ?? undefined
       },
     });
 
