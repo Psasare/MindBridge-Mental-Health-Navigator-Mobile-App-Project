@@ -199,8 +199,8 @@ export const chatWithOracle = async (req, res) => {
         res.json({ response: aiResponse, state: currentState });
     }
     catch (error) {
-        if (error?.status === 503) {
-            console.warn('Warning: Gemini AI 503 Service Unavailable in Oracle chat.');
+        if (error?.status === 503 || error?.status === 429) {
+            console.warn(`Warning: Gemini API rate limited or unavailable (${error.status}) in Oracle chat.`);
             res.status(503).json({ message: 'The AI is currently experiencing high demand. Please try again in a moment.' });
         }
         else {

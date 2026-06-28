@@ -10,10 +10,18 @@ async function withRetry(fn, retries = 3, delayMs = 2000) {
             return await fn();
         }
         catch (error) {
-            if (error?.status === 503 && attempt < retries - 1) {
+            if ((error?.status === 503 || error?.status === 429) && attempt < retries - 1) {
                 attempt++;
-                console.warn(`[BACKEND] Gemini 503 error, retrying in ${delayMs}ms... (Attempt ${attempt}/${retries - 1})`);
-                await new Promise(resolve => setTimeout(resolve, delayMs));
+                let waitTime = delayMs * Math.pow(2, attempt - 1);
+                // Extract retryDelay from errorDetails if present
+                if (error?.errorDetails && Array.isArray(error.errorDetails)) {
+                    const retryInfo = error.errorDetails.find((d) => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo');
+                    if (retryInfo?.retryDelay && typeof retryInfo.retryDelay === 'string' && retryInfo.retryDelay.endsWith('s')) {
+                        waitTime = parseFloat(retryInfo.retryDelay.replace('s', '')) * 1000 + 1000; // Add 1s buffer
+                    }
+                }
+                console.warn(`[BACKEND] Gemini ${error.status} error, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
             }
             else {
                 throw error;
@@ -141,7 +149,7 @@ const tools = [
 ];
 export const generateOracleResponse = async (userMessage, context, userId) => {
     try {
-        const modelName = "gemini-2.5-flash";
+        const modelName = "gemini-1.5-flash";
         console.log(`[BACKEND] [Oracle] Attempting generateOracleResponse using model: ${modelName}`);
         const model = genAI.getGenerativeModel({
             model: modelName,
@@ -383,7 +391,7 @@ INSTRUCTIONS:
 };
 export const generateProactiveInsights = async (userId, context) => {
     try {
-        const modelName = "gemini-2.5-flash";
+        const modelName = "gemini-1.5-flash";
         console.log(`[BACKEND] Attempting to generate insights using model: ${modelName}`);
         const model = genAI.getGenerativeModel({ model: modelName });
         const prompt = `
@@ -421,7 +429,7 @@ INSTRUCTIONS:
   "recommendedResourceCategories": ["string"]
 }
 Do not output any markdown formatting, just the raw JSON object.`;
-        const result = await model.generateContent(prompt);
+        const result = await withRetry(() => model.generateContent(prompt), 3, 3000);
         const text = result.response.text().trim();
         // Clean up markdown code blocks if the model included them
         let jsonStr = text;
@@ -434,8 +442,8 @@ Do not output any markdown formatting, just the raw JSON object.`;
         return JSON.parse(jsonStr);
     }
     catch (error) {
-        if (error?.status === 503) {
-            console.warn(`[BACKEND] Gemini API is experiencing high demand (503). Using fallback insights.`);
+        if (error?.status === 503 || error?.status === 429) {
+            console.warn(`[BACKEND] Gemini API rate limited or unavailable (${error.status}). Using fallback insights.`);
         }
         else {
             console.error(`[BACKEND] Error generating insights:`, error);
@@ -457,7 +465,7 @@ Do not output any markdown formatting, just the raw JSON object.`;
 };
 export const analyzeVoiceAudio = async (base64Audio, mimeType) => {
     const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
     });
     const prompt = `You are a vocal acoustic analyzer. Do not transcribe or analyze the speech content. Listen strictly to the vocal tone, pitch variability, speech rate, and pause duration. 
 
@@ -469,7 +477,7 @@ Return a JSON object exactly matching this structure (no markdown, just valid JS
   "pauseDuration": number // Estimated average pause duration in seconds
 }`;
     try {
-        const result = await model.generateContent([
+        const result = await withRetry(() => model.generateContent([
             prompt,
             {
                 inlineData: {
@@ -477,7 +485,7 @@ Return a JSON object exactly matching this structure (no markdown, just valid JS
                     mimeType: mimeType
                 }
             }
-        ]);
+        ]), 3, 2000);
         const text = result.response.text().trim();
         let jsonStr = text;
         if (jsonStr.startsWith('\`\`\`json')) {
@@ -501,7 +509,7 @@ Return a JSON object exactly matching this structure (no markdown, just valid JS
 };
 export const generatePersonalizedAssessment = async (userId, context, testType) => {
     try {
-        const modelName = "gemini-2.5-flash";
+        const modelName = "gemini-1.5-flash";
         const model = genAI.getGenerativeModel({ model: modelName });
         // Map testType to clinical focus and question count
         let clinicalFocus = "general well-being";
@@ -554,7 +562,7 @@ INSTRUCTIONS:
   ]
 }
 Do not output any markdown formatting, just the raw JSON object.`;
-        const result = await model.generateContent(prompt);
+        const result = await withRetry(() => model.generateContent(prompt), 3, 2000);
         let jsonStr = result.response.text().trim();
         if (jsonStr.startsWith('\`\`\`json')) {
             jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
@@ -576,7 +584,7 @@ Do not output any markdown formatting, just the raw JSON object.`;
 };
 export const evaluatePersonalizedAssessment = async (userId, context, answers, testType) => {
     try {
-        const modelName = "gemini-2.5-flash";
+        const modelName = "gemini-1.5-flash";
         const model = genAI.getGenerativeModel({ model: modelName });
         const prompt = `
 You are a compassionate clinical AI. Evaluate the user's answers to a personalized check-in and provide structured, design-friendly feedback.
@@ -604,7 +612,7 @@ INSTRUCTIONS:
   "crisisAlert": boolean
 }
 Do not output any markdown formatting, just the raw JSON object.`;
-        const result = await model.generateContent(prompt);
+        const result = await withRetry(() => model.generateContent(prompt), 3, 2000);
         let jsonStr = result.response.text().trim();
         if (jsonStr.startsWith('\`\`\`json')) {
             jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
@@ -628,7 +636,7 @@ Do not output any markdown formatting, just the raw JSON object.`;
 };
 export const analyzeJournalEntry = async (content) => {
     try {
-        const modelName = "gemini-2.5-flash";
+        const modelName = "gemini-1.5-flash";
         const model = genAI.getGenerativeModel({ model: modelName });
         const prompt = `
 You are the MindBridge Oracle, a compassionate clinical AI. The user has just submitted a private journal entry.
@@ -651,7 +659,7 @@ INSTRUCTIONS:
   "crisisAlert": boolean
 }
 Do not output any markdown formatting, just the raw JSON object.`;
-        const result = await model.generateContent(prompt);
+        const result = await withRetry(() => model.generateContent(prompt), 3, 2000);
         let jsonStr = result.response.text().trim();
         if (jsonStr.startsWith('\`\`\`json')) {
             jsonStr = jsonStr.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();

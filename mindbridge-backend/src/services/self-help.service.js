@@ -4,7 +4,7 @@ dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY || "");
 export const generateCBTReframe = async (negativeThought, context) => {
     try {
-        const modelName = "gemini-2.5-flash";
+        const modelName = "gemini-1.5-flash";
         const model = genAI.getGenerativeModel({ model: modelName });
         const prompt = `
 You are a compassionate CBT (Cognitive Behavioral Therapy) assistant.

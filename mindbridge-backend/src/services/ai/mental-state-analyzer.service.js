@@ -9,10 +9,18 @@ async function withRetry(fn, retries = 3, delayMs = 2000) {
             return await fn();
         }
         catch (error) {
-            if (error?.status === 503 && attempt < retries - 1) {
+            if ((error?.status === 503 || error?.status === 429) && attempt < retries - 1) {
                 attempt++;
-                console.warn(`[BACKEND] Gemini 503 error in analyzer, retrying in ${delayMs}ms... (Attempt ${attempt}/${retries - 1})`);
-                await new Promise(resolve => setTimeout(resolve, delayMs));
+                let waitTime = delayMs * Math.pow(2, attempt - 1);
+                // Extract retryDelay from errorDetails if present
+                if (error?.errorDetails && Array.isArray(error.errorDetails)) {
+                    const retryInfo = error.errorDetails.find((d) => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo');
+                    if (retryInfo?.retryDelay && typeof retryInfo.retryDelay === 'string' && retryInfo.retryDelay.endsWith('s')) {
+                        waitTime = parseFloat(retryInfo.retryDelay.replace('s', '')) * 1000 + 1000; // Add 1s buffer
+                    }
+                }
+                console.warn(`[BACKEND] Gemini ${error.status} error in analyzer, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
+                await new Promise(resolve => setTimeout(resolve, waitTime));
             }
             else {
                 throw error;
@@ -23,7 +31,7 @@ async function withRetry(fn, retries = 3, delayMs = 2000) {
 }
 export const analyzeCurrentState = async (userMessage, context) => {
     try {
-        const modelName = "gemini-2.5-flash";
+        const modelName = "gemini-1.5-flash";
         const model = genAI.getGenerativeModel({ model: modelName });
         // Convert history for context
         const recentHistory = context.history?.slice(0, 10).map((m) => `${m.role}: ${m.content}`).join('\n') || 'None';
@@ -101,8 +109,8 @@ Do not output any markdown formatting, just the raw JSON object.`;
         return parsedState;
     }
     catch (error) {
-        if (error.status === 503) {
-            console.warn(`[BACKEND] Warning: Gemini AI 503 Service Unavailable during analyzeCurrentState. Using fallback.`);
+        if (error?.status === 503 || error?.status === 429) {
+            console.warn(`[BACKEND] Warning: Gemini API rate limited or unavailable (${error.status}) during analyzeCurrentState. Using fallback.`);
         }
         else {
             console.error(`[BACKEND] Error in analyzeCurrentState:`, error);
