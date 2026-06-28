@@ -22,6 +22,7 @@ interface ButtonProps {
   disabled?: boolean;
   fullWidth?: boolean;
   icon?: React.ReactNode;
+  iconPosition?: 'left' | 'right';
   style?: any;
 }
 
@@ -36,6 +37,7 @@ export const Button: React.FC<ButtonProps> = ({
   disabled = false,
   fullWidth = true,
   icon,
+  iconPosition = 'left',
   style,
 }) => {
   const actualLoading = isLoading || loading;
@@ -104,7 +106,7 @@ export const Button: React.FC<ButtonProps> = ({
           borderWidth: variant === 'outline' ? 1.5 : 0,
           paddingVertical,
           width: fullWidth ? '100%' : 'auto',
-          borderRadius: theme.borderRadius.md,
+          borderRadius: 16, // Apple HIG styling
         },
         animatedStyle,
         style,
@@ -115,10 +117,11 @@ export const Button: React.FC<ButtonProps> = ({
           <ActivityIndicator color={textColor} size="small" />
         ) : (
           <>
-            {icon && <View style={styles.iconContainer}>{icon}</View>}
+            {icon && iconPosition === 'left' && <View style={[styles.iconContainer, { marginRight: theme.spacing.sm }]}>{icon}</View>}
             <Typography variant={typographyVariant} color={textColor}>
               {children || title}
             </Typography>
+            {icon && iconPosition === 'right' && <View style={[styles.iconContainer, { marginLeft: theme.spacing.sm }]}>{icon}</View>}
           </>
         )}
       </View>
@@ -139,6 +142,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconContainer: {
-    marginRight: theme.spacing.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

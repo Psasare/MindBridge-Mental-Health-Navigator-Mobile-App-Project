@@ -235,9 +235,9 @@ export default function WelcomeScreen() {
                     <Illustration color={s.accentColor} theme={theme} />
                   </View>
                   <View style={styles.copyBlock}>
-                    <Typography variant="label" color={s.accentColor} style={{ marginBottom: 16 }}>{s.overline}</Typography>
-                    <Typography variant="h1" color={theme.colors.plum} style={styles.headline}>{s.headline}</Typography>
-                    <Typography variant="body" color={theme.colors.text.primary} style={styles.body}>{s.body}</Typography>
+                    <Typography variant="label" color={s.accentColor} style={{ marginBottom: 12, letterSpacing: 1.5, fontWeight: '700' }}>{s.overline}</Typography>
+                    <Typography variant="h1" color={theme.colors.plum} style={[styles.headline, { color: theme.isDark ? '#FFFFFF' : theme.colors.text.primary }]}>{s.headline}</Typography>
+                    <Typography variant="body" color={theme.colors.text.secondary} style={styles.body}>{s.body}</Typography>
                   </View>
                 </View>
               );
@@ -305,10 +305,10 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   slideArea: { flex: 1 },
   slide: { width, flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
-  illustrationContainer: { marginBottom: 50, alignItems: 'center' },
-  copyBlock: { alignItems: 'center', width: '100%' },
-  headline: { textAlign: 'center', marginBottom: 16 },
-  body: { textAlign: 'center', maxWidth: width * 0.8 },
+  illustrationContainer: { marginBottom: 40, alignItems: 'center' },
+  copyBlock: { alignItems: 'center', width: '100%', paddingHorizontal: 16 },
+  headline: { textAlign: 'center', marginBottom: 16, fontSize: 36, lineHeight: 42, letterSpacing: -0.5, fontWeight: '800' },
+  body: { textAlign: 'center', maxWidth: width * 0.85, fontSize: 17, lineHeight: 24 },
   dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, paddingVertical: 24 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.text.disabled, opacity: 0.6 },
   dotActive: { width: 24, height: 8, borderRadius: 4, opacity: 1 },
