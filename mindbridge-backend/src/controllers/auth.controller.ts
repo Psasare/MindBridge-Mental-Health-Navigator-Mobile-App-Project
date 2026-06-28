@@ -4,19 +4,36 @@ import type { AuthRequest } from '../middleware/auth.middleware.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import { z } from 'zod';
+
+const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  name: z.string().min(2),
+  studentId: z.string().optional(),
+  username: z.string().min(3).optional(),
+  phoneNumber: z.string().optional(),
+});
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+});
+
+const updatePasswordSchema = z.object({
+  currentPassword: z.string(),
+  newPassword: z.string().min(6),
+});
 
 const prisma = new PrismaClient();
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { email, password, name, studentId, username, phoneNumber } = req.body as {
-      email: string;
-      password: string;
-      name: string;
-      studentId?: string;
-      username?: string;
-      phoneNumber?: string;
-    };
+    const parsed = registerSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.format() });
+    }
+    const { email, password, name, studentId, username, phoneNumber } = parsed.data;
 
     console.log('[AUTH] Registration attempt for:', email, username);
 
@@ -79,7 +96,11 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body as { email: string; password: string };
+    const parsed = loginSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.format() });
+    }
+    const { email, password } = parsed.data;
 
     const user = await prisma.user.findUnique({ 
       where: { email },
@@ -140,7 +161,11 @@ export const getMe = async (req: AuthRequest, res: Response) => {
 };
 export const updatePassword = async (req: AuthRequest, res: Response) => {
   try {
-    const { currentPassword, newPassword } = req.body;
+    const parsed = updatePasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.format() });
+    }
+    const { currentPassword, newPassword } = parsed.data;
     if (!req.userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const user = await prisma.user.findUnique({ where: { id: req.userId } });

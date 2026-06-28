@@ -1,7 +1,25 @@
 import type { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { z } from 'zod';
 
 const prisma = new PrismaClient();
+
+const createMoodLogSchema = z.object({
+  score: z.number().min(1).max(10),
+  emotions: z.array(z.string()).min(1),
+  energyLevel: z.number().min(1).max(5).optional().nullable(),
+  sleepHours: z.number().min(0).max(24).optional().nullable(),
+  sleepQuality: z.string().optional().nullable(),
+  socialSetting: z.string().optional().nullable(),
+  physicalSymptoms: z.array(z.string()).optional().nullable(),
+  weather: z.string().optional().nullable(),
+  location: z.string().optional().nullable(),
+  audioUrl: z.string().optional().nullable(),
+  note: z.string().optional().nullable(),
+  steps: z.number().optional().nullable(),
+  facialMetrics: z.any().optional().nullable(),
+  vocalMetrics: z.any().optional().nullable(),
+});
 
 export const getMoodLogs = async (req: Request, res: Response) => {
   try {
@@ -21,6 +39,11 @@ export const getMoodLogs = async (req: Request, res: Response) => {
 export const createMoodLog = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
+    const parsed = createMoodLogSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.format() });
+    }
+
     const { 
       score, 
       emotions, 
@@ -36,11 +59,7 @@ export const createMoodLog = async (req: Request, res: Response) => {
       steps,
       facialMetrics,
       vocalMetrics
-    } = req.body;
-    
-    if (score === undefined || !emotions) {
-      return res.status(400).json({ error: 'Score and emotions are required' });
-    }
+    } = parsed.data;
 
     const newLog = await prisma.moodLog.create({
       data: {

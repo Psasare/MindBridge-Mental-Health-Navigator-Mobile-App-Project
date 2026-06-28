@@ -23,6 +23,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, EyeOff, Mail, ChevronLeft, AlertCircle, Ghost } from 'lucide-react-native';
 import AuthCharacters, { AuthField } from '../../src/components/AuthCharacters';
+import { Typography } from '../../src/components/ui/Typography';
+import { Button } from '../../src/components/ui/Button';
 
 const { height, width } = Dimensions.get('window');
 
@@ -32,7 +34,7 @@ const ErrorMessage = ({ message, theme }: { message: string, theme: any }) => {
   return (
     <Animated.View entering={FadeInUp.duration(300)} style={styles.errorRow}>
       <AlertCircle color={theme.colors.semantic.danger} size={14} style={{ marginRight: 4 }} />
-      <Text style={styles.errorText}>{message}</Text>
+      <Typography variant="captionMedium" color={theme.colors.semantic.danger}>{message}</Typography>
     </Animated.View>
   );
 };
@@ -197,13 +199,13 @@ export default function LoginScreen() {
           {/* Form */}
           <Animated.View entering={FadeInUp.duration(800).duration(500)} style={styles.formContainer}>
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>Welcome back</Text>
-              <Text style={styles.subtitle}>Sign in to your account.</Text>
+              <Typography variant="h1" style={{ marginBottom: 8 }}>Welcome back</Typography>
+              <Typography variant="body" color={themeContext.colors.text.secondary}>Sign in to your account.</Typography>
             </View>
 
             <View style={styles.inputGroup}>
               <Animated.View style={[styles.inputWrapper, emailStyle]}>
-                <Text style={styles.label}>Email Address</Text>
+                <Typography variant="label" style={styles.label}>Email Address</Typography>
                 <TextInput
                   style={[
                     styles.input, 
@@ -229,7 +231,7 @@ export default function LoginScreen() {
               </Animated.View>
 
               <Animated.View style={[styles.inputWrapper, passwordStyle]}>
-                <Text style={styles.label}>Password</Text>
+                <Typography variant="label" style={styles.label}>Password</Typography>
                 <View style={[
                   styles.passwordContainer, 
                   focusedField === 'password' && styles.inputFocused,
@@ -266,46 +268,44 @@ export default function LoginScreen() {
               </Animated.View>
 
               <TouchableOpacity style={styles.forgotPasswordBtn} onPress={() => Alert.alert('Reset Password', 'Instructions have been sent to your email.')}>
-                <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+                <Typography variant="ui" color={themeContext.colors.plum}>Forgot password?</Typography>
               </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={styles.primaryButton}
+            <Button
+              variant="primary"
+              size="large"
               onPress={handleLogin}
               disabled={loading}
-              activeOpacity={0.8}
+              loading={loading}
             >
-              {loading
-                ? <ActivityIndicator color={themeContext.colors.text.onPrimary || '#FFF'} />
-                : <Text style={styles.primaryButtonText}>Log In</Text>}
-            </TouchableOpacity>
+              Log In
+            </Button>
 
             <View style={styles.dividerRow}>
               <View style={styles.divider} />
-              <Text style={styles.dividerText}>OR</Text>
+              <Typography variant="captionMedium" color={themeContext.colors.text.secondary}>OR</Typography>
               <View style={styles.divider} />
             </View>
 
-            <TouchableOpacity 
-              style={styles.anonymousButton} 
+            <Button
+              variant="outline"
+              size="large"
               onPress={handleAnonymousLogin}
               disabled={loading}
-              activeOpacity={0.7}
+              loading={loading}
+              icon={<Ghost color={themeContext.colors.plum} size={20} />}
             >
-              <Ghost color={themeContext.colors.plum} size={20} style={{ marginRight: 12 }} />
-              <Text style={styles.anonymousButtonText}>
-                {loading ? 'Starting Session...' : 'Continue Anonymously'}
-              </Text>
-            </TouchableOpacity>
+              Continue Anonymously
+            </Button>
 
             <TouchableOpacity 
               onPress={() => router.push('/(auth)/register')}
               style={styles.signUpContainer}
             >
-              <Text style={styles.signUpText}>
-                Don't have an account? <Text style={styles.signUpLink}>Sign Up</Text>
-              </Text>
+              <Typography variant="body" color={themeContext.colors.text.secondary}>
+                Don't have an account? <Typography variant="bodyBold" color={themeContext.colors.plum}>Sign Up</Typography>
+              </Typography>
             </TouchableOpacity>
           </Animated.View>
         </ScrollView>
@@ -364,36 +364,20 @@ const createStyles = (theme: any) => StyleSheet.create({
   titleContainer: { 
     marginBottom: 32,
   },
-  title: { 
-    color: theme.colors.text.primary, 
-    fontSize: 34, 
-    fontWeight: '800', 
-    letterSpacing: -1, 
-    marginBottom: 8 
-  },
-  subtitle: { 
-    color: theme.colors.text.secondary, 
-    fontSize: 16, 
-    fontWeight: '500',
-  },
   inputGroup: { 
     gap: 20,
     marginBottom: 32,
   },
   inputWrapper: { gap: 8 },
   label: { 
-    color: theme.colors.text.primary, 
-    fontSize: 14, 
-    fontWeight: '700', 
     marginLeft: 4,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   input: { 
     backgroundColor: theme.colors.surface, 
     color: theme.colors.text.primary, 
     fontSize: 16, 
-    fontWeight: '600', 
+    fontFamily: theme.typography.fonts.ui,
     height: 60, 
     borderRadius: 20, 
     paddingHorizontal: 20,
@@ -425,7 +409,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     paddingHorizontal: 20,
     fontSize: 16,
     color: theme.colors.text.primary,
-    fontWeight: '600',
+    fontFamily: theme.typography.fonts.ui,
   },
   inputFocused: {
     borderColor: theme.colors.plum,
@@ -440,38 +424,9 @@ const createStyles = (theme: any) => StyleSheet.create({
     borderColor: theme.colors.semantic.danger 
   },
   errorRow: { flexDirection: 'row', alignItems: 'center', marginLeft: 4, marginTop: 4 },
-  errorText: { color: theme.colors.semantic.danger, fontSize: 13, fontWeight: '600' },
   eyeIcon: { padding: 16 },
   forgotPasswordBtn: { alignSelf: 'flex-end' },
-  forgotPasswordText: { color: theme.colors.plum, fontSize: 14, fontWeight: '700' },
-  primaryButton: { 
-    backgroundColor: theme.colors.plum, 
-    height: 60, 
-    borderRadius: 20, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    shadowColor: theme.colors.plum,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: theme.isDark ? 0.4 : 0.2,
-    shadowRadius: 16,
-    elevation: 6,
-  },
-  primaryButtonText: { color: theme.colors.text.onPrimary || '#FFF', fontWeight: '800', fontSize: 17, letterSpacing: 0.2 },
   dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 24, gap: 12 },
   divider: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.1)' },
-  dividerText: { color: theme.colors.text.secondary, fontSize: 13, fontWeight: '700' },
-  anonymousButton: { 
-    flexDirection: 'row', 
-    backgroundColor: theme.isDark ? 'rgba(140, 160, 185, 0.1)' : 'rgba(123, 97, 255, 0.08)', 
-    height: 60, 
-    borderRadius: 20, 
-    borderWidth: 1.5, 
-    borderColor: theme.isDark ? 'rgba(140, 160, 185, 0.15)' : 'rgba(123, 97, 255, 0.15)', 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-  anonymousButtonText: { color: theme.colors.plum, fontWeight: '700', fontSize: 16 },
   signUpContainer: { marginTop: 32, alignItems: 'center', marginBottom: 20 },
-  signUpText: { color: theme.colors.text.secondary, fontSize: 15, fontWeight: '500' },
-  signUpLink: { color: theme.colors.plum, fontWeight: '800' },
 });

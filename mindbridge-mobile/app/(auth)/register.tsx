@@ -25,6 +25,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Eye, EyeOff, ChevronLeft, GraduationCap, Heart, User, AlertCircle, Search, Check, X } from 'lucide-react-native';
 import AuthCharacters, { AuthField } from '../../src/components/AuthCharacters';
+import { Typography } from '../../src/components/ui/Typography';
+import { Button } from '../../src/components/ui/Button';
 
 const { height, width } = Dimensions.get('window');
 
@@ -77,7 +79,7 @@ const ErrorMessage = ({ message, theme }: { message: string | undefined, theme: 
   return (
     <Animated.View entering={FadeInUp.duration(300)} style={styles.errorRow}>
       <AlertCircle color={theme.colors.semantic.danger} size={14} style={{ marginRight: 4 }} />
-      <Text style={styles.errorText}>{message}</Text>
+      <Typography variant="captionMedium" color={theme.colors.semantic.danger}>{message}</Typography>
     </Animated.View>
   );
 };
@@ -90,7 +92,7 @@ const FormSection = ({ title, icon: Icon, theme, children }: { title: string; ic
         <View style={styles.sectionIconWrap}>
           <Icon color={theme.colors.plum} size={20} />
         </View>
-        <Text style={styles.sectionTitle}>{title}</Text>
+        <Typography variant="h3">{title}</Typography>
       </View>
       <View style={styles.sectionCard}>
         {children}
@@ -116,7 +118,9 @@ const SelectGroup = ({ label, options, selectedValues, onToggle, theme, multiple
               style={[styles.chip, isSelected && styles.chipActive]}
               onPress={() => onToggle(opt)}
             >
-              <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>{opt}</Text>
+              <Typography variant="ui" color={isSelected ? (theme.colors.text.onPrimary || '#FFF') : theme.colors.text.secondary}>
+                {opt}
+              </Typography>
             </TouchableOpacity>
           );
         })}
@@ -137,7 +141,7 @@ const InstitutionPicker = ({ value, onSelect, error, theme }: { value: string; o
 
   return (
     <View style={styles.inputWrapper}>
-      <Text style={styles.label}>Institution / University</Text>
+      <Typography variant="label" style={styles.label}>Institution / University</Typography>
       <TouchableOpacity
         style={[styles.input, styles.pickerTrigger, error && styles.inputError]}
         onPress={() => setVisible(true)}
@@ -375,13 +379,13 @@ export default function RegisterScreen() {
 
           <Animated.View entering={FadeInUp.duration(800).duration(500)} style={styles.formContainer}>
             <View style={styles.titleContainer}>
-              <Text style={styles.title}>Join MindBridge</Text>
-              <Text style={styles.subtitle}>Let's personalize your experience.</Text>
+              <Typography variant="h1" style={{ marginBottom: 8 }}>Join MindBridge</Typography>
+              <Typography variant="body" color={themeContext.colors.text.secondary}>Let's personalize your experience.</Typography>
             </View>
 
             <FormSection title="Account Details" icon={User} theme={themeContext}>
               <View style={styles.inputWrapper}>
-                <Text style={styles.label}>Full Name (Optional)</Text>
+                <Typography variant="label" style={styles.label}>Full Name (Optional)</Typography>
                 <TextInput
                   style={[styles.input, focusedField === 'name' && styles.inputFocused]}
                   placeholder="Prosper Shaibu Asare"
@@ -394,7 +398,7 @@ export default function RegisterScreen() {
               </View>
 
               <Animated.View style={[styles.inputWrapper, usernameStyle]}>
-                <Text style={styles.label}>Username</Text>
+                <Typography variant="label" style={styles.label}>Username</Typography>
                 <TextInput
                   style={[
                     styles.input, 
@@ -413,7 +417,7 @@ export default function RegisterScreen() {
               </Animated.View>
 
               <Animated.View style={[styles.inputWrapper, emailStyle]}>
-                <Text style={styles.label}>Email Address</Text>
+                <Typography variant="label" style={styles.label}>Email Address</Typography>
                 <TextInput
                   style={[
                     styles.input, 
@@ -433,7 +437,7 @@ export default function RegisterScreen() {
               </Animated.View>
 
               <Animated.View style={[styles.inputWrapper, phoneStyle]}>
-                <Text style={styles.label}>Phone Number</Text>
+                <Typography variant="label" style={styles.label}>Phone Number</Typography>
                 <TextInput
                   style={[
                     styles.input, 
@@ -452,7 +456,7 @@ export default function RegisterScreen() {
               </Animated.View>
 
               <Animated.View style={[styles.inputWrapper, passwordStyle]}>
-                <Text style={styles.label}>Password</Text>
+                <Typography variant="label" style={styles.label}>Password</Typography>
                 <View style={[
                   styles.passwordContainer, 
                   focusedField === 'password' && styles.inputFocused,
@@ -476,7 +480,7 @@ export default function RegisterScreen() {
               </Animated.View>
 
               <Animated.View style={[styles.inputWrapper, confirmPasswordStyle]}>
-                <Text style={styles.label}>Confirm Password</Text>
+                <Typography variant="label" style={styles.label}>Confirm Password</Typography>
                 <TextInput
                   style={[
                     styles.input, 
@@ -504,7 +508,7 @@ export default function RegisterScreen() {
               />
 
               <View style={styles.inputWrapper}>
-                <Text style={styles.label}>Faculty / Department</Text>
+                <Typography variant="label" style={styles.label}>Faculty / Department</Typography>
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. Computer Science"
@@ -567,26 +571,26 @@ export default function RegisterScreen() {
 
             <View style={styles.personalizationNote}>
               <Heart color={themeContext.colors.plum} size={20} style={{ opacity: 0.7 }} />
-              <Text style={styles.personalizationText}>
+              <Typography variant="bodyBold" color={themeContext.colors.plum} style={{ flex: 1, lineHeight: 20 }}>
                 This information helps us shape a supportive experience tailored just for you.
-              </Text>
+              </Typography>
             </View>
 
-            <TouchableOpacity
-              style={styles.primaryButton}
+            <Button
+              variant="primary"
+              size="large"
               onPress={handleRegister}
               disabled={loading}
-              activeOpacity={0.8}
+              loading={loading}
+              style={{ marginTop: 16 }}
             >
-              {loading ? (
-                <ActivityIndicator color={themeContext.colors.text.onPrimary || '#FFF'} />
-              ) : (
-                <Text style={styles.primaryButtonText}>Create Account</Text>
-              )}
-            </TouchableOpacity>
+              Create Account
+            </Button>
 
             <TouchableOpacity onPress={() => router.push('/(auth)/login')} style={styles.signUpContainer}>
-              <Text style={styles.signUpText}>Already have an account? <Text style={styles.signUpLink}>Log In</Text></Text>
+              <Typography variant="body" color={themeContext.colors.text.secondary}>
+                Already have an account? <Typography variant="bodyBold" color={themeContext.colors.plum}>Log In</Typography>
+              </Typography>
             </TouchableOpacity>
           </Animated.View>
         </ScrollView>
@@ -635,8 +639,8 @@ const createStyles = (theme: any) => StyleSheet.create({
   sectionCard: { backgroundColor: theme.colors.surface, borderRadius: 24, padding: 20, gap: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0.2 : 0.04, shadowRadius: 12, elevation: 2, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)' },
   
   inputWrapper: { gap: 8 },
-  label: { color: theme.colors.text.primary, fontSize: 13, fontWeight: '700', marginLeft: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { backgroundColor: theme.colors.background, color: theme.colors.text.primary, fontSize: 16, fontWeight: '600', height: 60, borderRadius: 16, paddingHorizontal: 20, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
+  label: { marginLeft: 4, textTransform: 'uppercase' },
+  input: { backgroundColor: theme.colors.background, color: theme.colors.text.primary, fontSize: 16, fontFamily: theme.typography.fonts.ui, height: 60, borderRadius: 16, paddingHorizontal: 20, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
   inputFocused: {
     borderColor: theme.colors.plum,
     borderWidth: 1.5,
@@ -650,7 +654,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   errorText: { color: theme.colors.semantic.danger, fontSize: 13, fontWeight: '600' },
   
   passwordContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.background, borderRadius: 16, height: 60, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
-  passwordInput: { flex: 1, height: '100%', paddingHorizontal: 20, fontSize: 16, color: theme.colors.text.primary, fontWeight: '600' },
+  passwordInput: { flex: 1, height: '100%', paddingHorizontal: 20, fontSize: 16, color: theme.colors.text.primary, fontFamily: theme.typography.fonts.ui },
   eyeIcon: { padding: 16 },
   
   chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
@@ -677,11 +681,6 @@ const createStyles = (theme: any) => StyleSheet.create({
   listItemTextActive: { color: theme.colors.plum, fontWeight: '700' },
 
   personalizationNote: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.isDark ? 'rgba(140, 160, 185, 0.1)' : 'rgba(123, 97, 255, 0.05)', padding: 16, borderRadius: 20, marginTop: 8, gap: 16, borderWidth: 1, borderColor: theme.isDark ? 'rgba(140, 160, 185, 0.15)' : 'rgba(123, 97, 255, 0.1)' },
-  personalizationText: { flex: 1, fontSize: 14, color: theme.colors.plum, fontWeight: '600', lineHeight: 20 },
   
-  primaryButton: { backgroundColor: theme.colors.plum, height: 60, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginTop: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: theme.isDark ? 0.3 : 0.2, shadowRadius: 16, elevation: 6 },
-  primaryButtonText: { color: theme.colors.text.onPrimary || '#FFF', fontWeight: '800', fontSize: 17, letterSpacing: 0.2 },
   signUpContainer: { marginTop: 16, alignItems: 'center', marginBottom: 20 },
-  signUpText: { color: theme.colors.text.secondary, fontSize: 15, fontWeight: '500' },
-  signUpLink: { color: theme.colors.plum, fontWeight: '800' },
 });

@@ -1,8 +1,15 @@
 import type { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { analyzeJournalEntry } from '../services/gemini.service.js';
+import { z } from 'zod';
 
 const prisma = new PrismaClient();
+
+const createEntrySchema = z.object({
+  title: z.string().optional().nullable(),
+  content: z.string().min(1, 'Journal content is required'),
+  mood: z.string().optional().nullable(),
+});
 
 export const getEntries = async (req: Request, res: Response) => {
   try {
@@ -23,11 +30,12 @@ export const getEntries = async (req: Request, res: Response) => {
 export const createEntry = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const { title, content, mood } = req.body;
-
-    if (!content) {
-      return res.status(400).json({ error: 'Journal content is required' });
+    const parsed = createEntrySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.format() });
     }
+
+    const { title, content, mood } = parsed.data;
 
     // Process the journal entry through the MindBridge Oracle
     const analysis = await analyzeJournalEntry(content);
