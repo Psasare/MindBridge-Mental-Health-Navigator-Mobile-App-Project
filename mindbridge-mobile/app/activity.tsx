@@ -43,6 +43,7 @@ export default function ActivityScreen() {
   const [isAvailable, setIsAvailable] = useState(true);
   const [permissionGranted, setPermissionGranted] = useState(true);
   const [weeklySteps, setWeeklySteps] = useState<any[]>([]);
+  const [showConsentModal, setShowConsentModal] = useState(false);
   
   // Goals
   const [goalSteps, setGoalSteps] = useState(10000);
@@ -81,11 +82,81 @@ export default function ActivityScreen() {
     progressDistance.value = withTiming(Math.min(calculatedDist / currentGoalDistance, 1), { duration: 1000 });
   };
 
+  const fetchPedometerData = async (gSteps: number, gCals: number) => {
+    try {
+      const { status } = await Pedometer.requestPermissionsAsync();
+      const available = await Pedometer.isAvailableAsync();
+      const canUseSensors = available && status === 'granted';
+      
+      setIsAvailable(available);
+      setPermissionGranted(status === 'granted');
+      
+      const end = new Date();
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      
+      let todaySteps = 0;
+      
+      if (canUseSensors) {
+        try {
+          const todayRes = await Pedometer.getStepCountAsync(start, end);
+          if (todayRes) todaySteps = todayRes.steps;
+          
+          Pedometer.watchStepCount(result => {
+            setLiveSteps(result.steps);
+          });
+        } catch (e) {}
+      }
+      
+      setSteps(todaySteps);
+      
+      const calculatedCals = Math.round(todaySteps * 0.04);
+      const calculatedDist = todaySteps * 0.000762;
+      const gDist = gSteps * 0.000762;
+
+      progressSteps.value = withDelay(300, withTiming(Math.min(todaySteps / gSteps, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
+      progressCalories.value = withDelay(400, withTiming(Math.min(calculatedCals / gCals, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
+      progressDistance.value = withDelay(500, withTiming(Math.min(calculatedDist / gDist, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
+
+      const weekData = [];
+      for (let i = 6; i >= 0; i--) {
+        const dStart = new Date();
+        dStart.setDate(dStart.getDate() - i);
+        dStart.setHours(0, 0, 0, 0);
+        
+        const dEnd = new Date(dStart);
+        dEnd.setHours(23, 59, 59, 999);
+        if (i === 0) dEnd.setTime(end.getTime());
+
+        let dailySteps = 0;
+        if (canUseSensors) {
+          try {
+            const res = await Pedometer.getStepCountAsync(dStart, dEnd);
+            if (res && res.steps > 0) dailySteps = res.steps;
+          } catch (e) {}
+        }
+
+        weekData.push({
+          value: dailySteps,
+          label: dStart.toLocaleDateString('en-US', { weekday: 'narrow' }),
+          frontColor: dailySteps >= gSteps ? COLOR_STEPS : COLOR_STEPS + '50',
+          topLabelComponent: () => (
+            <Text style={{ color: theme.colors.text.tertiary, fontSize: 10, marginBottom: 4, fontWeight: '600' }}>
+              {dailySteps > 0 ? (dailySteps > 999 ? (dailySteps/1000).toFixed(1)+'k' : dailySteps) : ''}
+            </Text>
+          )
+        });
+      }
+      setWeeklySteps(weekData);
+
+    } catch (e) {
+      setIsAvailable(false);
+      console.log('Pedometer error:', e);
+    }
+  };
+
   useEffect(() => {
-    let stepSubscription: any;
-    
     const initAndFetch = async () => {
-      // 1. Init Goals
       let gSteps = 10000;
       let gCals = 400;
       try {
@@ -94,119 +165,34 @@ export default function ActivityScreen() {
         if (savedSteps) gSteps = parseInt(savedSteps);
         if (savedCals) gCals = parseInt(savedCals);
       } catch (e) {}
+      
       setGoalSteps(gSteps);
       setGoalCalories(gCals);
       setTempGoalSteps(gSteps);
       setTempGoalCalories(gCals);
 
-      // 2. Fetch DB History as Fallback
-      let moodHistory: any[] = [];
-      try {
-        const dbRes = await api.get('/mood');
-        moodHistory = dbRes.data || [];
-      } catch (e) {
-        console.log('Failed to fetch mood history fallback', e);
+      const hasConsented = await AsyncStorage.getItem('@activity_consent_granted');
+      if (hasConsented !== 'true') {
+        setShowConsentModal(true);
+        return; // Wait for user to grant consent
       }
 
-      // 3. Fetch Pedometer Data
-      try {
-        const { status } = await Pedometer.requestPermissionsAsync();
-        const available = await Pedometer.isAvailableAsync();
-        const canUseSensors = available && status === 'granted';
-        
-        setIsAvailable(available);
-        setPermissionGranted(status === 'granted');
-        
-        const end = new Date();
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
-        
-        let todaySteps = 0;
-        
-        // Fetch Today's Real Steps
-        if (canUseSensors) {
-          try {
-            const todayRes = await Pedometer.getStepCountAsync(start, end);
-            if (todayRes) todaySteps = todayRes.steps;
-            
-            // Start watching real-time steps
-            stepSubscription = Pedometer.watchStepCount(result => {
-              setLiveSteps(result.steps);
-            });
-          } catch (e) {}
-        }
-        
-        // Fallback for today's steps
-        if (todaySteps === 0 && moodHistory && moodHistory.length > 0) {
-          const logForToday = moodHistory.find(m => {
-            const md = new Date(m.createdAt);
-            return md >= start && md <= end;
-          });
-          if (logForToday && logForToday.steps) todaySteps = logForToday.steps;
-        }
-
-        setSteps(todaySteps);
-        
-        const calculatedCals = Math.round(todaySteps * 0.04);
-        const calculatedDist = todaySteps * 0.000762;
-        const gDist = gSteps * 0.000762;
-
-        // Animate the 3 rings
-        progressSteps.value = withDelay(300, withTiming(Math.min(todaySteps / gSteps, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
-        progressCalories.value = withDelay(400, withTiming(Math.min(calculatedCals / gCals, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
-        progressDistance.value = withDelay(500, withTiming(Math.min(calculatedDist / gDist, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
-
-        // Fetch Last 7 Days of Real Steps for Chart
-        const weekData = [];
-        for (let i = 6; i >= 0; i--) {
-          const dStart = new Date();
-          dStart.setDate(dStart.getDate() - i);
-          dStart.setHours(0, 0, 0, 0);
-          
-          const dEnd = new Date(dStart);
-          dEnd.setHours(23, 59, 59, 999);
-          if (i === 0) dEnd.setTime(end.getTime());
-
-          let dailySteps = 0;
-          if (canUseSensors) {
-            try {
-              const res = await Pedometer.getStepCountAsync(dStart, dEnd);
-              if (res && res.steps > 0) dailySteps = res.steps;
-            } catch (e) {}
-          }
-
-          // Fallback to moodHistory if dailySteps is 0
-          if (dailySteps === 0 && moodHistory && moodHistory.length > 0) {
-            const logForDay = moodHistory.find(m => {
-              const md = new Date(m.createdAt);
-              return md >= dStart && md <= dEnd;
-            });
-            if (logForDay && logForDay.steps) {
-              dailySteps = logForDay.steps;
-            }
-          }
-
-          weekData.push({
-            value: dailySteps,
-            label: dStart.toLocaleDateString('en-US', { weekday: 'narrow' }),
-            frontColor: dailySteps >= gSteps ? COLOR_STEPS : COLOR_STEPS + '50',
-            topLabelComponent: () => (
-              <Text style={{ color: theme.colors.text.tertiary, fontSize: 10, marginBottom: 4, fontWeight: '600' }}>
-                {dailySteps > 0 ? (dailySteps > 999 ? (dailySteps/1000).toFixed(1)+'k' : dailySteps) : ''}
-              </Text>
-            )
-          });
-        }
-        setWeeklySteps(weekData);
-
-      } catch (e) {
-        setIsAvailable(false);
-        console.log('Pedometer error:', e);
-      }
+      await fetchPedometerData(gSteps, gCals);
     };
     
     initAndFetch();
   }, []);
+
+  const handleConsentAllow = async () => {
+    await AsyncStorage.setItem('@activity_consent_granted', 'true');
+    setShowConsentModal(false);
+    await fetchPedometerData(goalSteps, goalCalories);
+  };
+
+  const handleConsentDecline = () => {
+    setShowConsentModal(false);
+    // Continue without tracking real steps
+  };
 
   const animatedPropsSteps = useAnimatedProps(() => ({ strokeDashoffset: CIRCUMFERENCE_STEPS - (CIRCUMFERENCE_STEPS * progressSteps.value) }));
   const animatedPropsCalories = useAnimatedProps(() => ({ strokeDashoffset: CIRCUMFERENCE_CALORIES - (CIRCUMFERENCE_CALORIES * progressCalories.value) }));
@@ -396,6 +382,29 @@ export default function ActivityScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Consent Modal */}
+      <Modal visible={showConsentModal} animationType="fade" transparent>
+        <View style={styles.consentOverlay}>
+          <Animated.View entering={FadeInUp.duration(600).springify()} style={[styles.consentCard, { backgroundColor: theme.colors.surface }]}>
+            <View style={[styles.consentIconWrapper, { backgroundColor: COLOR_STEPS + '20' }]}>
+              <Footprints color={COLOR_STEPS} size={32} />
+            </View>
+            <Text style={[styles.consentTitle, { color: theme.colors.text.primary }]}>Activity Tracking</Text>
+            <Text style={[styles.consentBody, { color: theme.colors.text.secondary }]}>
+              MindBridge uses your phone's sensors to securely track your steps, calculate active calories, and measure your distance to give you holistic insights connecting your physical health to your mental well-being.
+            </Text>
+            
+            <TouchableOpacity onPress={handleConsentAllow} style={[styles.consentBtnPrimary, { backgroundColor: theme.colors.plum }]} activeOpacity={0.8}>
+              <Text style={styles.consentBtnPrimaryText}>Allow Tracking</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={handleConsentDecline} style={styles.consentBtnSecondary} activeOpacity={0.7}>
+              <Text style={[styles.consentBtnSecondaryText, { color: theme.colors.text.tertiary }]}>Not Now</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -562,5 +571,68 @@ const createStyles = (theme: any) => StyleSheet.create({
     fontFamily: theme.typography.fonts.ui,
     fontWeight: '700',
     marginLeft: 8,
+  },
+  consentOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  consentCard: {
+    width: '100%',
+    borderRadius: 32,
+    padding: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  consentIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  consentTitle: {
+    fontSize: 24,
+    fontFamily: theme.typography.fonts.header,
+    fontWeight: '800',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  consentBody: {
+    fontSize: 15,
+    fontFamily: theme.typography.fonts.body,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  consentBtnPrimary: {
+    width: '100%',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  consentBtnPrimaryText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontFamily: theme.typography.fonts.ui,
+    fontWeight: '700',
+  },
+  consentBtnSecondary: {
+    width: '100%',
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  consentBtnSecondaryText: {
+    fontSize: 15,
+    fontFamily: theme.typography.fonts.ui,
+    fontWeight: '600',
   }
 });

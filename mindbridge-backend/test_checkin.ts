@@ -8,6 +8,7 @@ async function run() {
   if (users.length === 0) { console.log('no users'); return; }
   
   const user = users[0];
+  if (!user) { console.log('no users'); return; }
   console.log(`Recording check-in for user ${user.id}...`);
   const result = await GoalService.recordDailyCheckIn(user.id);
   console.log('Result:', result);
