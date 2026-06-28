@@ -234,15 +234,6 @@ export interface TranslationSchema {
     support_connection: string;
     app_preferences: string;
   };
-  journey: {
-    title: string;
-    subtitle: string;
-    daily_plan: string;
-    progress_label: string;
-    streak: string;
-    points: string;
-    done: string;
-  };
 }
 
 export const translations: Record<Language, TranslationSchema> = {
@@ -491,15 +482,6 @@ export const translations: Record<Language, TranslationSchema> = {
       support_connection: 'Support & Connection',
       app_preferences: 'App Preferences',
     },
-    journey: {
-      title: 'Wellness Journey',
-      subtitle: 'Your progress for today',
-      daily_plan: 'Daily Care Plan',
-      progress_label: 'of daily care plan',
-      streak: 'Streak',
-      points: 'Points',
-      done: 'Done',
-    },
   },
   Twi: {
 
@@ -745,15 +727,6 @@ export const translations: Record<Language, TranslationSchema> = {
       knowledge_checks: 'Nunyanya & Nhwehwɛmu',
       support_connection: 'Mmoa & Nkitaho',
       app_preferences: 'App Nhyehyɛe',
-    },
-    journey: {
-      title: 'Apɔwmuden Kwantu',
-      subtitle: 'Wo nkɔsoɔ nnɛ',
-      daily_plan: 'Da biara Banbɔ Nhyehyɛe',
-      progress_label: 'wɔ da biara nhyehyɛe mu',
-      streak: 'Nna Streak',
-      points: 'Points',
-      done: 'Awie',
     },
   },
   French: {
@@ -1001,15 +974,6 @@ export const translations: Record<Language, TranslationSchema> = {
       support_connection: 'Soutien & connexion',
       app_preferences: 'Préférences de l\'application',
     },
-    journey: {
-      title: 'Voyage de bien-être',
-      subtitle: 'Votre progression pour aujourd\'hui',
-      daily_plan: 'Plan de soins quotidien',
-      progress_label: 'du plan de soins quotidien',
-      streak: 'Série',
-      points: 'Points',
-      done: 'Terminé',
-    },
   },
   Ga: {
 
@@ -1255,15 +1219,6 @@ export const translations: Record<Language, TranslationSchema> = {
       knowledge_checks: 'Nunyanya & Nhwehwɛmu',
       support_connection: 'Mmoa & Nkitaho',
       app_preferences: 'App Nhyehyɛe',
-    },
-    journey: {
-      title: 'Apɔwmuden Kwantu',
-      subtitle: 'O-nkɔsoɔ bianɛ',
-      daily_plan: 'Daa Banbɔ Nhyehyɛe',
-      progress_label: 'yɛ daa nhyehyɛe mli',
-      streak: 'Nna Streak',
-      points: 'Points',
-      done: 'Egbe naa',
     },
   },
   Ewe: {
@@ -1511,15 +1466,6 @@ export const translations: Record<Language, TranslationSchema> = {
       support_connection: 'Kpedenanu & Kpekpeɖeŋu',
       app_preferences: 'App ƒe Ðoɖowo',
     },
-    journey: {
-      title: 'Lãmesẽ ƒe Mɔzɔzɔ',
-      subtitle: 'Wò ŋgɔyiyi na egbe',
-      daily_plan: 'Gbesiagbe Lãmesẽ Ðoɖo',
-      progress_label: 'le gbesiagbe ɖoɖoa me',
-      streak: 'Ŋkeke ƒe Streak',
-      points: 'Points',
-      done: 'Wowu enu',
-    },
   },
   Hausa: {
 
@@ -1765,15 +1711,6 @@ export const translations: Record<Language, TranslationSchema> = {
       knowledge_checks: 'Ilimi & Gwaji',
       support_connection: 'Taimako & Haɗin kai',
       app_preferences: 'Saitunan App',
-    },
-    journey: {
-      title: 'Tafiyar Lafiya',
-      subtitle: 'Ci gaban ku na yau',
-      daily_plan: 'Tsarin Kula na Kullum',
-      progress_label: 'na tsarin kula na yau da kullun',
-      streak: 'Streak',
-      points: 'Points',
-      done: 'An yi',
     },
   },
 };

@@ -14,6 +14,14 @@ import {
   Montserrat_700Bold,
   Montserrat_800ExtraBold,
 } from '@expo-google-fonts/montserrat';
+import {
+  Poppins_400Regular,
+  Poppins_500Medium,
+  Poppins_600SemiBold,
+} from '@expo-google-fonts/poppins';
+import {
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
 import { NotificationService } from '../src/services/NotificationService';
 import { Accelerometer } from 'expo-sensors';
@@ -28,7 +36,15 @@ const InitialLayout = () => {
   const router = useRouter();
 
   const [fontsLoaded] = useFonts({
-    // Montserrat — unified for all texts
+    // Product Sans fallback (Inter)
+    'ProductSans-Bold':      Inter_700Bold,
+    
+    // Poppins
+    'Poppins-Regular':       Poppins_400Regular,
+    'Poppins-Medium':        Poppins_500Medium,
+    'Poppins-SemiBold':      Poppins_600SemiBold,
+
+    // Montserrat
     'Montserrat-Regular':    Montserrat_400Regular,
     'Montserrat-Medium':     Montserrat_500Medium,
     'Montserrat-SemiBold':   Montserrat_600SemiBold,
