@@ -6,7 +6,7 @@ const api = axios.create({
   // For Android Emulator use: http://10.0.2.2:5000/api
   // For iOS Simulator or Web use: http://localhost:5000/api
   // For Physical Device, use your computer's local IP (e.g., http://192.168.1.X:5000/api)
-  baseURL: 'http://172.20.10.3:5000/api', 
+  baseURL: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api', 
 });
 
 api.interceptors.request.use(async (config) => {
