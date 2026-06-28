@@ -4,13 +4,11 @@ import {
   TextInput, 
   TouchableOpacity, 
   Alert, 
-  ActivityIndicator, 
   StyleSheet, 
   KeyboardAvoidingView, 
   Platform,
   ScrollView,
   Dimensions,
-  Image,
   StatusBar
 } from 'react-native';
 import { useState, useContext } from 'react';
@@ -20,9 +18,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import api from '../../src/services/api';
 import Animated, { FadeInUp, FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Eye, EyeOff, Mail, ChevronLeft, AlertCircle, Ghost } from 'lucide-react-native';
-import AuthCharacters, { AuthField } from '../../src/components/AuthCharacters';
+import { Eye, EyeOff, ChevronLeft, AlertCircle, Ghost } from 'lucide-react-native';
 import { Typography } from '../../src/components/ui/Typography';
 import { Button } from '../../src/components/ui/Button';
 
@@ -51,7 +47,6 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [focusedField, setFocusedField] = useState<AuthField>('none');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const emailShake = useSharedValue(0);
@@ -68,13 +63,8 @@ export default function LoginScreen() {
     );
   };
 
-  const emailStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: emailShake.value }]
-  }));
-
-  const passwordStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: passwordShake.value }]
-  }));
+  const emailStyle = useAnimatedStyle(() => ({ transform: [{ translateX: emailShake.value }] }));
+  const passwordStyle = useAnimatedStyle(() => ({ transform: [{ translateX: passwordShake.value }] }));
 
   const validateField = (field: 'email' | 'password') => {
     let newErrors = { ...errors };
@@ -153,14 +143,6 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={themeContext.isDark ? "light-content" : "dark-content"} />
-      <LinearGradient 
-        colors={themeContext.isDark 
-          ? ['rgba(123, 97, 255, 0.15)', themeContext.colors.background, themeContext.colors.backgroundSecondary]
-          : ['rgba(123, 97, 255, 0.12)', themeContext.colors.background, themeContext.colors.backgroundSecondary]
-        } 
-        locations={[0, 0.3, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
 
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
@@ -176,42 +158,23 @@ export default function LoginScreen() {
           <Animated.View entering={FadeIn.duration(800)} style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
               <ChevronLeft color={themeContext.colors.plum} size={32} />
+              <Typography variant="ui" color={themeContext.colors.plum}>Back</Typography>
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Graphics / Character */}
-          <Animated.View entering={FadeIn.duration(800)} style={styles.characterContainer}>
-            <View style={styles.logoCircle}>
-              <Image 
-                source={require('../../assets/images/logo.png')} 
-                style={styles.logoImage} 
-                resizeMode="cover"
-              />
-            </View>
-            <View style={styles.characterPos}>
-              <AuthCharacters 
-                focusedField={focusedField} 
-                showPassword={showPassword} 
-              />
-            </View>
-          </Animated.View>
-
-          {/* Form */}
-          <Animated.View entering={FadeInUp.duration(800).duration(500)} style={styles.formContainer}>
+          {/* Form Content */}
+          <Animated.View entering={FadeInUp.duration(800)} style={styles.formContainer}>
             <View style={styles.titleContainer}>
-              <Typography variant="h1" style={{ marginBottom: 8 }}>Welcome back</Typography>
-              <Typography variant="body" color={themeContext.colors.text.secondary}>Sign in to your account.</Typography>
+              <Typography variant="h1" style={{ marginBottom: 8 }}>Sign In</Typography>
+              <Typography variant="body" color={themeContext.colors.text.secondary}>Enter your credentials to continue.</Typography>
             </View>
 
-            <View style={styles.inputGroup}>
-              <Animated.View style={[styles.inputWrapper, emailStyle]}>
-                <Typography variant="label" style={styles.label}>Email Address</Typography>
+            {/* HIG Grouped List for Inputs */}
+            <View style={styles.groupedList}>
+              <Animated.View style={[styles.inputRow, emailStyle]}>
+                <Typography variant="body" style={styles.inputLabel}>Email</Typography>
                 <TextInput
-                  style={[
-                    styles.input, 
-                    focusedField === 'email' && styles.inputFocused,
-                    errors.email ? styles.inputError : null
-                  ]}
+                  style={styles.input}
                   placeholder="anna@example.com"
                   placeholderTextColor={themeContext.colors.text.disabled}
                   autoCapitalize="none"
@@ -221,83 +184,73 @@ export default function LoginScreen() {
                     setEmail(txt);
                     if (errors.email) setErrors({ ...errors, email: undefined });
                   }}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => {
-                    setFocusedField('none');
-                    validateField('email');
-                  }}
+                  onBlur={() => validateField('email')}
                 />
+              </Animated.View>
+              <View style={styles.separator} />
+              <Animated.View style={[styles.inputRow, passwordStyle]}>
+                <Typography variant="body" style={styles.inputLabel}>Password</Typography>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Required"
+                  placeholderTextColor={themeContext.colors.text.disabled}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={(txt) => {
+                    setPassword(txt);
+                    if (errors.password) setErrors({ ...errors, password: undefined });
+                  }}
+                  onBlur={() => validateField('password')}
+                />
+                <TouchableOpacity 
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={styles.eyeIcon}
+                >
+                  {showPassword ? (
+                    <EyeOff color={themeContext.colors.text.tertiary} size={20} />
+                  ) : (
+                    <Eye color={themeContext.colors.text.tertiary} size={20} />
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+            
+            {/* Errors */}
+            {(errors.email || errors.password) && (
+              <View style={styles.errorContainer}>
                 <ErrorMessage message={errors.email || ''} theme={themeContext} />
-              </Animated.View>
-
-              <Animated.View style={[styles.inputWrapper, passwordStyle]}>
-                <Typography variant="label" style={styles.label}>Password</Typography>
-                <View style={[
-                  styles.passwordContainer, 
-                  focusedField === 'password' && styles.inputFocused,
-                  errors.password ? styles.inputError : null
-                ]}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    placeholder="••••••••"
-                    placeholderTextColor={themeContext.colors.text.disabled}
-                    secureTextEntry={!showPassword}
-                    value={password}
-                    onChangeText={(txt) => {
-                      setPassword(txt);
-                      if (errors.password) setErrors({ ...errors, password: undefined });
-                    }}
-                    onFocus={() => setFocusedField('password')}
-                    onBlur={() => {
-                      setFocusedField('none');
-                      validateField('password');
-                    }}
-                  />
-                  <TouchableOpacity 
-                    onPress={() => setShowPassword(!showPassword)}
-                    style={styles.eyeIcon}
-                  >
-                    {showPassword ? (
-                      <EyeOff color={themeContext.colors.text.disabled} size={22} />
-                    ) : (
-                      <Eye color={themeContext.colors.text.disabled} size={22} />
-                    )}
-                  </TouchableOpacity>
-                </View>
                 <ErrorMessage message={errors.password || ''} theme={themeContext} />
-              </Animated.View>
+              </View>
+            )}
 
-              <TouchableOpacity style={styles.forgotPasswordBtn} onPress={() => Alert.alert('Reset Password', 'Instructions have been sent to your email.')}>
-                <Typography variant="ui" color={themeContext.colors.plum}>Forgot password?</Typography>
-              </TouchableOpacity>
+            <TouchableOpacity style={styles.forgotPasswordBtn} onPress={() => Alert.alert('Reset Password', 'Instructions have been sent to your email.')}>
+              <Typography variant="ui" color={themeContext.colors.plum}>Forgot password?</Typography>
+            </TouchableOpacity>
+
+            <View style={styles.actionsContainer}>
+              <Button
+                variant="primary"
+                size="large"
+                onPress={handleLogin}
+                disabled={loading}
+                loading={loading}
+                style={styles.actionBtn}
+              >
+                Log In
+              </Button>
+
+              <Button
+                variant="outline"
+                size="large"
+                onPress={handleAnonymousLogin}
+                disabled={loading}
+                loading={loading}
+                style={styles.actionBtn}
+                icon={<Ghost color={themeContext.colors.plum} size={20} />}
+              >
+                Continue Anonymously
+              </Button>
             </View>
-
-            <Button
-              variant="primary"
-              size="large"
-              onPress={handleLogin}
-              disabled={loading}
-              loading={loading}
-            >
-              Log In
-            </Button>
-
-            <View style={styles.dividerRow}>
-              <View style={styles.divider} />
-              <Typography variant="captionMedium" color={themeContext.colors.text.secondary}>OR</Typography>
-              <View style={styles.divider} />
-            </View>
-
-            <Button
-              variant="outline"
-              size="large"
-              onPress={handleAnonymousLogin}
-              disabled={loading}
-              loading={loading}
-              icon={<Ghost color={themeContext.colors.plum} size={20} />}
-            >
-              Continue Anonymously
-            </Button>
 
             <TouchableOpacity 
               onPress={() => router.push('/(auth)/register')}
@@ -317,116 +270,82 @@ export default function LoginScreen() {
 const createStyles = (theme: any) => StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: theme.colors.backgroundSecondary 
+    backgroundColor: theme.isDark ? '#000000' : '#F2F2F7', 
   },
   scrollContent: { 
-    paddingHorizontal: 24, 
+    paddingHorizontal: 20, 
     minHeight: height,
   },
   header: { 
     marginTop: 10,
-    marginBottom: 20,
+    marginBottom: 40,
   },
   backButton: { 
-    width: 44, 
-    height: 44, 
-    justifyContent: 'center',
-    marginLeft: -8,
-  },
-  characterContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 40,
-    marginTop: 10,
-    height: 140,
-  },
-  logoCircle: { 
-    width: 80, 
-    height: 80, 
-    borderRadius: 40, 
-    overflow: 'hidden', 
-    backgroundColor: theme.colors.surface, 
-    shadowColor: theme.colors.plum, 
-    shadowOffset: { width: 0, height: 8 }, 
-    shadowOpacity: theme.isDark ? 0.3 : 0.1, 
-    shadowRadius: 16, 
-    elevation: 8 
-  },
-  logoImage: { width: '100%', height: '100%' },
-  characterPos: {
-    position: 'absolute',
-    bottom: -10,
-    right: '25%',
+    marginLeft: -8,
   },
   formContainer: { 
     flex: 1,
   },
   titleContainer: { 
     marginBottom: 32,
+    alignItems: 'flex-start',
   },
-  inputGroup: { 
-    gap: 20,
-    marginBottom: 32,
+  groupedList: {
+    backgroundColor: theme.isDark ? '#1C1C1E' : '#FFFFFF',
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  inputWrapper: { gap: 8 },
-  label: { 
-    marginLeft: 4,
-    textTransform: 'uppercase',
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    height: 56,
+  },
+  inputLabel: {
+    width: 90,
+    color: theme.colors.text.primary,
   },
   input: { 
-    backgroundColor: theme.colors.surface, 
+    flex: 1,
     color: theme.colors.text.primary, 
-    fontSize: 16, 
-    fontFamily: theme.typography.fonts.ui,
-    height: 60, 
-    borderRadius: 20, 
-    paddingHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: theme.isDark ? 0.2 : 0.04,
-    shadowRadius: 12,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)',
+    fontSize: 17, 
+    fontFamily: theme.typography.fonts.body,
+    height: '100%', 
   },
-  passwordContainer: { 
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+    marginLeft: 16,
+  },
+  eyeIcon: { 
+    padding: 10,
+    marginLeft: 8,
+  },
+  errorContainer: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+  },
+  errorRow: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    backgroundColor: theme.colors.surface, 
-    borderRadius: 20,
-    height: 60,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: theme.isDark ? 0.2 : 0.04,
-    shadowRadius: 12,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)',
+    marginTop: 4 
   },
-  passwordInput: {
-    flex: 1,
-    height: '100%',
-    paddingHorizontal: 20,
-    fontSize: 16,
-    color: theme.colors.text.primary,
-    fontFamily: theme.typography.fonts.ui,
+  forgotPasswordBtn: { 
+    alignSelf: 'center',
+    marginTop: 24,
+    marginBottom: 32,
   },
-  inputFocused: {
-    borderColor: theme.colors.plum,
-    borderWidth: 1.5,
-    shadowColor: theme.colors.plum,
-    shadowOpacity: theme.isDark ? 0.3 : 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+  actionsContainer: {
+    gap: 16,
   },
-  inputError: { 
-    borderWidth: 2,
-    borderColor: theme.colors.semantic.danger 
+  actionBtn: {
+    borderRadius: 14,
   },
-  errorRow: { flexDirection: 'row', alignItems: 'center', marginLeft: 4, marginTop: 4 },
-  eyeIcon: { padding: 16 },
-  forgotPasswordBtn: { alignSelf: 'flex-end' },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 24, gap: 12 },
-  divider: { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.1)' },
-  signUpContainer: { marginTop: 32, alignItems: 'center', marginBottom: 20 },
+  signUpContainer: { 
+    marginTop: 32, 
+    alignItems: 'center', 
+    marginBottom: 20 
+  },
 });

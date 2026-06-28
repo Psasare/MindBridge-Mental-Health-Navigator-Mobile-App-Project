@@ -20,6 +20,8 @@ import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { useTheme } from '../../src/context/ThemeContext';
 import { Ghost, ShieldCheck } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
+import { Typography } from '../../src/components/ui/Typography';
+import { Button } from '../../src/components/ui/Button';
 
 const { width, height } = Dimensions.get('window');
 
@@ -233,9 +235,9 @@ export default function WelcomeScreen() {
                     <Illustration color={s.accentColor} theme={theme} />
                   </View>
                   <View style={styles.copyBlock}>
-                    <Text style={[styles.overline, { color: s.accentColor }]}>{s.overline}</Text>
-                    <Text style={styles.headline}>{s.headline}</Text>
-                    <Text style={styles.body}>{s.body}</Text>
+                    <Typography variant="label" color={s.accentColor} style={{ marginBottom: 16 }}>{s.overline}</Typography>
+                    <Typography variant="h1" color={theme.colors.plum} style={styles.headline}>{s.headline}</Typography>
+                    <Typography variant="body" color={theme.colors.text.primary} style={styles.body}>{s.body}</Typography>
                   </View>
                 </View>
               );
@@ -250,46 +252,41 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.ctaSection}>
-          <TouchableOpacity onPress={goNext} activeOpacity={0.9} style={styles.primaryWrap}>
-            <LinearGradient
-              colors={activeSlide < SLIDES.length - 1
-                ? [theme.colors.surface, theme.isDark ? theme.colors.backgroundSecondary : '#F2E0D0']
-                : [theme.colors.plum, theme.isDark ? '#3D4C5D' : '#4A3E4F']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.primaryBtn, activeSlide < SLIDES.length - 1 && styles.primaryBtnOutline]}
-            >
-              <Text style={[styles.primaryLabel, activeSlide < SLIDES.length - 1 ? { color: theme.colors.plum } : { color: theme.colors.text.onPrimary || '#FFF' }]}>
-                {activeSlide < SLIDES.length - 1 ? 'Continue' : 'Get Started'}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
+          <Button
+            variant={activeSlide < SLIDES.length - 1 ? 'secondary' : 'primary'}
+            size="large"
+            onPress={goNext}
+            style={{ marginBottom: 12 }}
+          >
+            {activeSlide < SLIDES.length - 1 ? 'Continue' : 'Get Started'}
+          </Button>
 
           {/* Anonymous/Guest Option */}
           {activeSlide === SLIDES.length - 1 && (
-            <TouchableOpacity 
-              onPress={() => router.push('/(auth)/login?anonymous=true')} 
-              activeOpacity={0.7} 
-              style={styles.guestBtn}
+            <Button
+              variant="outline"
+              size="large"
+              onPress={() => router.push('/(auth)/login?anonymous=true')}
+              style={{ marginBottom: 16 }}
+              icon={<Ghost color={theme.colors.plum} size={20} />}
             >
-              <BlurView intensity={40} tint={theme.isDark ? "dark" : "light"} style={styles.guestBtnBlur}>
-                <Ghost color={theme.colors.plum} size={20} style={{ marginRight: 8 }} />
-                <Text style={styles.guestBtnText}>Explore Anonymously</Text>
-              </BlurView>
-            </TouchableOpacity>
+              Explore Anonymously
+            </Button>
           )}
 
           <TouchableOpacity onPress={() => router.push('/(auth)/login')} activeOpacity={0.65} style={styles.signInRow}>
-            <Text style={styles.signInText}>
+            <Typography variant="body" color={theme.colors.text.primary}>
               I already have an account{'  '}
-              <Text style={styles.signInAccent}>Sign In</Text>
-            </Text>
+              <Typography variant="bodyBold" color={theme.colors.plum}>Sign In</Typography>
+            </Typography>
           </TouchableOpacity>
 
           {/* Trust Badge */}
           <View style={styles.trustRow}>
             <ShieldCheck color={theme.colors.text.tertiary} size={14} />
-            <Text style={styles.trustText}>Secured with hospital-grade encryption & confidentiality</Text>
+            <Typography variant="captionMedium" color={theme.colors.text.tertiary} style={styles.trustText}>
+              Secured with hospital-grade encryption & confidentiality
+            </Typography>
           </View>
         </View>
       </View>
@@ -310,39 +307,13 @@ const createStyles = (theme: any) => StyleSheet.create({
   slide: { width, flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   illustrationContainer: { marginBottom: 50, alignItems: 'center' },
   copyBlock: { alignItems: 'center', width: '100%' },
-  overline: { fontSize: 12, fontFamily: 'Montserrat-Bold', letterSpacing: 2.5, marginBottom: 16, textTransform: 'uppercase' },
-  headline: { fontSize: 42, fontFamily: 'Montserrat-ExtraBold', color: theme.colors.plum, letterSpacing: -1.5, lineHeight: 48, textAlign: 'center', marginBottom: 16 },
-  body: { fontSize: 17, color: theme.colors.text.primary, lineHeight: 28, textAlign: 'center', fontFamily: 'Montserrat-Medium', maxWidth: width * 0.8 },
+  headline: { textAlign: 'center', marginBottom: 16 },
+  body: { textAlign: 'center', maxWidth: width * 0.8 },
   dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8, paddingVertical: 24 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.text.disabled, opacity: 0.6 },
   dotActive: { width: 24, height: 8, borderRadius: 4, opacity: 1 },
   ctaSection: { paddingHorizontal: 28, paddingBottom: 8 },
-  primaryWrap: { borderRadius: 20, overflow: 'hidden', marginBottom: 12, shadowColor: theme.colors.plum, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 },
-  primaryBtn: { height: 64, alignItems: 'center', justifyContent: 'center', borderRadius: 20 },
-  primaryBtnOutline: { borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)', shadowOpacity: 0, elevation: 0 },
-  primaryLabel: { fontSize: 18, fontFamily: 'Montserrat-Bold', letterSpacing: -0.2 },
-  guestBtn: {
-    height: 64,
-    borderRadius: 20,
-    marginBottom: 16,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(123, 97, 255, 0.2)',
-  },
-  guestBtnBlur: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  guestBtnText: {
-    color: theme.colors.plum,
-    fontSize: 17,
-    fontFamily: 'Montserrat-Bold',
-  },
   signInRow: { height: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
-  signInText: { fontSize: 16, color: theme.colors.text.primary, fontFamily: 'Montserrat-Medium' },
-  signInAccent: { color: theme.colors.plum, fontFamily: 'Montserrat-Bold' },
   trustRow: {
     flexDirection: 'row',
     alignItems: 'center',

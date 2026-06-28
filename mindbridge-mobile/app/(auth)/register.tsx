@@ -4,13 +4,11 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Dimensions,
-  Image,
   Modal,
   FlatList,
   StatusBar
@@ -22,9 +20,7 @@ import { useRouter } from 'expo-router';
 import api from '../../src/services/api';
 import Animated, { FadeInUp, FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Eye, EyeOff, ChevronLeft, GraduationCap, Heart, User, AlertCircle, Search, Check, X } from 'lucide-react-native';
-import AuthCharacters, { AuthField } from '../../src/components/AuthCharacters';
+import { Eye, EyeOff, ChevronLeft, AlertCircle, Search, Check, X, Heart } from 'lucide-react-native';
 import { Typography } from '../../src/components/ui/Typography';
 import { Button } from '../../src/components/ui/Button';
 
@@ -71,8 +67,6 @@ const GHANA_INSTITUTIONS = [
   "Others"
 ].sort();
 
-// ─── Custom Components ───────────────────────────────────────────────────────
-
 const ErrorMessage = ({ message, theme }: { message: string | undefined, theme: any }) => {
   if (!message) return null;
   const styles = createStyles(theme);
@@ -84,52 +78,49 @@ const ErrorMessage = ({ message, theme }: { message: string | undefined, theme: 
   );
 };
 
-const FormSection = ({ title, icon: Icon, theme, children }: { title: string; icon: any; theme: any; children: React.ReactNode }) => {
+const FormSection = ({ title, theme, children }: { title: string; theme: any; children: React.ReactNode }) => {
   const styles = createStyles(theme);
   return (
     <View style={styles.sectionContainer}>
-      <View style={styles.sectionHeader}>
-        <View style={styles.sectionIconWrap}>
-          <Icon color={theme.colors.plum} size={20} />
-        </View>
-        <Typography variant="h3">{title}</Typography>
-      </View>
-      <View style={styles.sectionCard}>
+      <Typography variant="label" style={styles.sectionTitle}>{title}</Typography>
+      <View style={styles.groupedList}>
         {children}
       </View>
     </View>
   );
 };
 
-const SelectGroup = ({ label, options, selectedValues, onToggle, theme, multiple = false }: { label: string; options: string[]; selectedValues: string | string[]; onToggle: (val: string) => void; theme: any; multiple?: boolean }) => {
+const SelectGroup = ({ label, options, selectedValues, onToggle, theme, multiple = false, isLast = false }: { label: string; options: string[]; selectedValues: string | string[]; onToggle: (val: string) => void; theme: any; multiple?: boolean; isLast?: boolean }) => {
   const styles = createStyles(theme);
   return (
-    <View style={styles.inputWrapper}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.chipContainer}>
-        {options.map((opt) => {
-          const isSelected = multiple 
-            ? (selectedValues as string[]).includes(opt)
-            : selectedValues === opt;
-          
-          return (
-            <TouchableOpacity
-              key={opt}
-              style={[styles.chip, isSelected && styles.chipActive]}
-              onPress={() => onToggle(opt)}
-            >
-              <Typography variant="ui" color={isSelected ? (theme.colors.text.onPrimary || '#FFF') : theme.colors.text.secondary}>
-                {opt}
-              </Typography>
-            </TouchableOpacity>
-          );
-        })}
+    <View>
+      <View style={styles.selectGroupRow}>
+        <Typography variant="body" style={styles.inputLabelStack}>{label}</Typography>
+        <View style={styles.chipContainer}>
+          {options.map((opt) => {
+            const isSelected = multiple 
+              ? (selectedValues as string[]).includes(opt)
+              : selectedValues === opt;
+            
+            return (
+              <TouchableOpacity
+                key={opt}
+                style={[styles.chip, isSelected && styles.chipActive]}
+                onPress={() => onToggle(opt)}
+              >
+                <Typography variant="ui" color={isSelected ? (theme.colors.text.onPrimary || '#FFF') : theme.colors.text.secondary}>
+                  {opt}
+                </Typography>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
+      {!isLast && <View style={styles.separator} />}
     </View>
   );
 };
 
-// Searchable Dropdown Modal
 const InstitutionPicker = ({ value, onSelect, error, theme }: { value: string; onSelect: (val: string) => void; error?: string; theme: any }) => {
   const [visible, setVisible] = useState(false);
   const [search, setSearch] = useState('');
@@ -140,24 +131,26 @@ const InstitutionPicker = ({ value, onSelect, error, theme }: { value: string; o
   );
 
   return (
-    <View style={styles.inputWrapper}>
-      <Typography variant="label" style={styles.label}>Institution / University</Typography>
-      <TouchableOpacity
-        style={[styles.input, styles.pickerTrigger, error && styles.inputError]}
-        onPress={() => setVisible(true)}
-      >
-        <Text style={[styles.pickerValue, !value && { color: theme.colors.text.disabled }]} numberOfLines={1}>
-          {value || "Select your institution"}
-        </Text>
-        <ChevronLeft color={theme.colors.plum} size={20} style={{ transform: [{ rotate: '-90deg' }] }} />
-      </TouchableOpacity>
+    <View>
+      <View style={styles.inputRow}>
+        <Typography variant="body" style={styles.inputLabel}>Institution</Typography>
+        <TouchableOpacity
+          style={styles.pickerTrigger}
+          onPress={() => setVisible(true)}
+        >
+          <Text style={[styles.pickerValue, !value && { color: theme.colors.text.disabled }]} numberOfLines={1}>
+            {value || "Select..."}
+          </Text>
+          <ChevronLeft color={theme.colors.text.tertiary} size={20} style={{ transform: [{ rotate: '-90deg' }] }} />
+        </TouchableOpacity>
+      </View>
       <ErrorMessage message={error} theme={theme} />
 
       <Modal visible={visible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Institution</Text>
+              <Typography variant="h3">Select Institution</Typography>
               <TouchableOpacity onPress={() => setVisible(false)} style={styles.closeBtn}>
                 <X color={theme.colors.plum} size={24} />
               </TouchableOpacity>
@@ -226,7 +219,6 @@ export default function RegisterScreen() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [focusedField, setFocusedField] = useState<AuthField | 'name' | 'username' | 'phoneNumber' | 'confirmPassword'>('none');
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
 
   const usernameShake = useSharedValue(0);
@@ -263,20 +255,20 @@ export default function RegisterScreen() {
   const validateField = (field: string) => {
     let newErrors = { ...errors };
     if (field === 'username') {
-      if (!username) newErrors.username = 'Username is required';
+      if (!username) newErrors.username = 'Required';
       else delete newErrors.username;
     }
     if (field === 'email') {
-      if (!email) newErrors.email = 'Email is required';
-      else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Enter a valid email';
+      if (!email) newErrors.email = 'Required';
+      else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Invalid email';
       else delete newErrors.email;
     }
     if (field === 'phoneNumber') {
-      if (!phoneNumber) newErrors.phoneNumber = 'Phone number is required';
+      if (!phoneNumber) newErrors.phoneNumber = 'Required';
       else delete newErrors.phoneNumber;
     }
     if (field === 'password') {
-      if (!password) newErrors.password = 'Password is required';
+      if (!password) newErrors.password = 'Required';
       else if (password.length < 6) newErrors.password = 'Min 6 characters';
       else delete newErrors.password;
     }
@@ -295,18 +287,18 @@ export default function RegisterScreen() {
     let newErrors: Record<string, string> = {};
     let valid = true;
 
-    if (!username) { newErrors.username = 'Username is required'; valid = false; }
-    if (!email) { newErrors.email = 'Email is required'; valid = false; }
-    else if (!/\S+@\S+\.\S+/.test(email)) { newErrors.email = 'Enter a valid email'; valid = false; }
+    if (!username) { newErrors.username = 'Required'; valid = false; }
+    if (!email) { newErrors.email = 'Required'; valid = false; }
+    else if (!/\S+@\S+\.\S+/.test(email)) { newErrors.email = 'Invalid email'; valid = false; }
 
-    if (!phoneNumber) { newErrors.phoneNumber = 'Phone number is required'; valid = false; }
+    if (!phoneNumber) { newErrors.phoneNumber = 'Required'; valid = false; }
 
-    if (!password) { newErrors.password = 'Password is required'; valid = false; }
+    if (!password) { newErrors.password = 'Required'; valid = false; }
     else if (password.length < 6) { newErrors.password = 'Min 6 characters'; valid = false; }
 
-    if (password !== confirmPassword) { newErrors.confirmPassword = 'Passwords do not match'; valid = false; }
+    if (password !== confirmPassword) { newErrors.confirmPassword = 'Mismatch'; valid = false; }
 
-    if (!institution) { newErrors.institution = 'Please select your institution'; valid = false; }
+    if (!institution) { newErrors.institution = 'Required'; valid = false; }
 
     if (!stressSources.length) { Alert.alert('Selection Required', 'Select at least one stress source'); return false; }
     if (!supportTypes.length) { Alert.alert('Selection Required', 'Select at least one support type'); return false; }
@@ -341,14 +333,6 @@ export default function RegisterScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={themeContext.isDark ? "light-content" : "dark-content"} />
-      <LinearGradient 
-        colors={themeContext.isDark 
-          ? ['rgba(123, 97, 255, 0.15)', themeContext.colors.background, themeContext.colors.backgroundSecondary]
-          : ['rgba(123, 97, 255, 0.12)', themeContext.colors.background, themeContext.colors.backgroundSecondary]
-        } 
-        locations={[0, 0.3, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -364,151 +348,119 @@ export default function RegisterScreen() {
           <Animated.View entering={FadeIn.duration(800)} style={styles.header}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
               <ChevronLeft color={themeContext.colors.plum} size={32} />
+              <Typography variant="ui" color={themeContext.colors.plum}>Back</Typography>
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Graphics / Character */}
-          <Animated.View entering={FadeIn.duration(800)} style={styles.characterContainer}>
-            <View style={styles.logoCircle}>
-              <Image source={require('../../assets/images/logo.png')} style={styles.logoImage} resizeMode="cover" />
-            </View>
-            <View style={styles.characterPos}>
-              <AuthCharacters focusedField={focusedField} showPassword={showPassword} />
-            </View>
-          </Animated.View>
-
-          <Animated.View entering={FadeInUp.duration(800).duration(500)} style={styles.formContainer}>
+          <Animated.View entering={FadeInUp.duration(800)} style={styles.formContainer}>
             <View style={styles.titleContainer}>
               <Typography variant="h1" style={{ marginBottom: 8 }}>Join MindBridge</Typography>
               <Typography variant="body" color={themeContext.colors.text.secondary}>Let's personalize your experience.</Typography>
             </View>
 
-            <FormSection title="Account Details" icon={User} theme={themeContext}>
-              <View style={styles.inputWrapper}>
-                <Typography variant="label" style={styles.label}>Full Name (Optional)</Typography>
+            <FormSection title="Account Details" theme={themeContext}>
+              <View style={styles.inputRow}>
+                <Typography variant="body" style={styles.inputLabel}>Name</Typography>
                 <TextInput
-                  style={[styles.input, focusedField === 'name' && styles.inputFocused]}
-                  placeholder="Prosper Shaibu Asare"
+                  style={styles.input}
+                  placeholder="Optional"
                   placeholderTextColor={themeContext.colors.text.disabled}
                   value={name}
                   onChangeText={setName}
-                  onFocus={() => setFocusedField('name')}
-                  onBlur={() => setFocusedField('none')}
                 />
               </View>
+              <View style={styles.separator} />
 
-              <Animated.View style={[styles.inputWrapper, usernameStyle]}>
-                <Typography variant="label" style={styles.label}>Username</Typography>
+              <Animated.View style={[styles.inputRow, usernameStyle]}>
+                <Typography variant="body" style={styles.inputLabel}>Username</Typography>
                 <TextInput
-                  style={[
-                    styles.input, 
-                    focusedField === 'username' && styles.inputFocused,
-                    errors.username ? styles.inputError : null
-                  ]}
-                  placeholder="asare09"
+                  style={styles.input}
+                  placeholder="Required"
                   placeholderTextColor={themeContext.colors.text.disabled}
                   autoCapitalize="none"
                   value={username}
                   onChangeText={(txt) => { setUsername(txt); if (errors.username) setErrors({ ...errors, username: undefined }); }}
-                  onFocus={() => setFocusedField('username')}
-                  onBlur={() => { setFocusedField('none'); validateField('username'); }}
+                  onBlur={() => validateField('username')}
                 />
-                <ErrorMessage message={errors.username} theme={themeContext} />
               </Animated.View>
+              <ErrorMessage message={errors.username} theme={themeContext} />
+              <View style={styles.separator} />
 
-              <Animated.View style={[styles.inputWrapper, emailStyle]}>
-                <Typography variant="label" style={styles.label}>Email Address</Typography>
+              <Animated.View style={[styles.inputRow, emailStyle]}>
+                <Typography variant="body" style={styles.inputLabel}>Email</Typography>
                 <TextInput
-                  style={[
-                    styles.input, 
-                    focusedField === 'email' && styles.inputFocused,
-                    errors.email ? styles.inputError : null
-                  ]}
-                  placeholder="anna@example.com"
+                  style={styles.input}
+                  placeholder="Required"
                   placeholderTextColor={themeContext.colors.text.disabled}
                   autoCapitalize="none"
                   keyboardType="email-address"
                   value={email}
                   onChangeText={(txt) => { setEmail(txt); if (errors.email) setErrors({ ...errors, email: undefined }); }}
-                  onFocus={() => setFocusedField('email')}
-                  onBlur={() => { setFocusedField('none'); validateField('email'); }}
+                  onBlur={() => validateField('email')}
                 />
-                <ErrorMessage message={errors.email} theme={themeContext} />
               </Animated.View>
+              <ErrorMessage message={errors.email} theme={themeContext} />
+              <View style={styles.separator} />
 
-              <Animated.View style={[styles.inputWrapper, phoneStyle]}>
-                <Typography variant="label" style={styles.label}>Phone Number</Typography>
+              <Animated.View style={[styles.inputRow, phoneStyle]}>
+                <Typography variant="body" style={styles.inputLabel}>Phone</Typography>
                 <TextInput
-                  style={[
-                    styles.input, 
-                    focusedField === 'phoneNumber' && styles.inputFocused,
-                    errors.phoneNumber ? styles.inputError : null
-                  ]}
-                  placeholder="+233 55 123 4567"
+                  style={styles.input}
+                  placeholder="Required"
                   placeholderTextColor={themeContext.colors.text.disabled}
                   keyboardType="phone-pad"
                   value={phoneNumber}
                   onChangeText={(txt) => { setPhoneNumber(txt); if (errors.phoneNumber) setErrors({ ...errors, phoneNumber: undefined }); }}
-                  onFocus={() => setFocusedField('phoneNumber')}
-                  onBlur={() => { setFocusedField('none'); validateField('phoneNumber'); }}
+                  onBlur={() => validateField('phoneNumber')}
                 />
-                <ErrorMessage message={errors.phoneNumber} theme={themeContext} />
               </Animated.View>
+              <ErrorMessage message={errors.phoneNumber} theme={themeContext} />
+              <View style={styles.separator} />
 
-              <Animated.View style={[styles.inputWrapper, passwordStyle]}>
-                <Typography variant="label" style={styles.label}>Password</Typography>
-                <View style={[
-                  styles.passwordContainer, 
-                  focusedField === 'password' && styles.inputFocused,
-                  errors.password ? styles.inputError : null
-                ]}>
-                  <TextInput
-                    style={styles.passwordInput}
-                    placeholder="••••••••"
-                    placeholderTextColor={themeContext.colors.text.disabled}
-                    secureTextEntry={!showPassword}
-                    value={password}
-                    onChangeText={(txt) => { setPassword(txt); if (errors.password) setErrors({ ...errors, password: undefined }); }}
-                    onFocus={() => setFocusedField('password')}
-                    onBlur={() => { setFocusedField('none'); validateField('password'); }}
-                  />
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                    {showPassword ? <EyeOff color={themeContext.colors.text.disabled} size={22} /> : <Eye color={themeContext.colors.text.disabled} size={22} />}
-                  </TouchableOpacity>
-                </View>
-                <ErrorMessage message={errors.password} theme={themeContext} />
-              </Animated.View>
-
-              <Animated.View style={[styles.inputWrapper, confirmPasswordStyle]}>
-                <Typography variant="label" style={styles.label}>Confirm Password</Typography>
+              <Animated.View style={[styles.inputRow, passwordStyle]}>
+                <Typography variant="body" style={styles.inputLabel}>Password</Typography>
                 <TextInput
-                  style={[
-                    styles.input, 
-                    focusedField === 'confirmPassword' && styles.inputFocused,
-                    errors.confirmPassword ? styles.inputError : null
-                  ]}
-                  placeholder="••••••••"
+                  style={styles.input}
+                  placeholder="Required"
+                  placeholderTextColor={themeContext.colors.text.disabled}
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={(txt) => { setPassword(txt); if (errors.password) setErrors({ ...errors, password: undefined }); }}
+                  onBlur={() => validateField('password')}
+                />
+                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                  {showPassword ? <EyeOff color={themeContext.colors.text.tertiary} size={20} /> : <Eye color={themeContext.colors.text.tertiary} size={20} />}
+                </TouchableOpacity>
+              </Animated.View>
+              <ErrorMessage message={errors.password} theme={themeContext} />
+              <View style={styles.separator} />
+
+              <Animated.View style={[styles.inputRow, confirmPasswordStyle]}>
+                <Typography variant="body" style={styles.inputLabel}>Confirm</Typography>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Required"
                   placeholderTextColor={themeContext.colors.text.disabled}
                   secureTextEntry={!showPassword}
                   value={confirmPassword}
                   onChangeText={(txt) => { setConfirmPassword(txt); if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined }); }}
-                  onFocus={() => setFocusedField('confirmPassword')}
-                  onBlur={() => { setFocusedField('none'); validateField('confirmPassword'); }}
+                  onBlur={() => validateField('confirmPassword')}
                 />
-                <ErrorMessage message={errors.confirmPassword} theme={themeContext} />
               </Animated.View>
+              <ErrorMessage message={errors.confirmPassword} theme={themeContext} />
             </FormSection>
 
-            <FormSection title="Academic Context" icon={GraduationCap} theme={themeContext}>
+            <FormSection title="Academic Context" theme={themeContext}>
               <InstitutionPicker
                 value={institution}
                 onSelect={setInstitution}
                 error={errors.institution}
                 theme={themeContext}
               />
+              <View style={styles.separator} />
 
-              <View style={styles.inputWrapper}>
-                <Typography variant="label" style={styles.label}>Faculty / Department</Typography>
+              <View style={styles.inputRow}>
+                <Typography variant="body" style={styles.inputLabel}>Faculty</Typography>
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. Computer Science"
@@ -517,6 +469,7 @@ export default function RegisterScreen() {
                   onChangeText={setFaculty}
                 />
               </View>
+              <View style={styles.separator} />
 
               <SelectGroup
                 label="Level / Year of Study"
@@ -532,10 +485,11 @@ export default function RegisterScreen() {
                 selectedValues={status}
                 onToggle={setStatus}
                 theme={themeContext}
+                isLast
               />
             </FormSection>
 
-            <FormSection title="Support Preferences" icon={Heart} theme={themeContext}>
+            <FormSection title="Support Preferences" theme={themeContext}>
               <SelectGroup
                 label="Primary Sources of Stress"
                 options={['Academics', 'Financial', 'Relationships', 'Social', 'Other']}
@@ -566,13 +520,14 @@ export default function RegisterScreen() {
                 selectedValues={reminders}
                 onToggle={setReminders}
                 theme={themeContext}
+                isLast
               />
             </FormSection>
 
             <View style={styles.personalizationNote}>
-              <Heart color={themeContext.colors.plum} size={20} style={{ opacity: 0.7 }} />
-              <Typography variant="bodyBold" color={themeContext.colors.plum} style={{ flex: 1, lineHeight: 20 }}>
-                This information helps us shape a supportive experience tailored just for you.
+              <Heart color={themeContext.colors.plum} size={18} style={{ opacity: 0.8 }} />
+              <Typography variant="captionMedium" color={themeContext.colors.text.secondary} style={{ flex: 1, lineHeight: 18 }}>
+                This helps us shape a supportive experience tailored just for you.
               </Typography>
             </View>
 
@@ -582,7 +537,7 @@ export default function RegisterScreen() {
               onPress={handleRegister}
               disabled={loading}
               loading={loading}
-              style={{ marginTop: 16 }}
+              style={{ marginTop: 24 }}
             >
               Create Account
             </Button>
@@ -600,76 +555,74 @@ export default function RegisterScreen() {
 }
 
 const createStyles = (theme: any) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.backgroundSecondary },
-  scrollContent: { paddingHorizontal: 24, minHeight: height },
-  header: { marginTop: 10, marginBottom: 20 },
-  backButton: { width: 44, height: 44, justifyContent: 'center', marginLeft: -8 },
-  
-  characterContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 40,
-    marginTop: 10,
-    height: 140,
-  },
-  logoCircle: { 
-    width: 80, 
-    height: 80, 
-    borderRadius: 40, 
-    overflow: 'hidden', 
-    backgroundColor: theme.colors.surface, 
-    shadowColor: '#000', 
-    shadowOffset: { width: 0, height: 8 }, 
-    shadowOpacity: theme.isDark ? 0.3 : 0.1, 
-    shadowRadius: 16, 
-    elevation: 8 
-  },
-  logoImage: { width: '100%', height: '100%' },
-  characterPos: { position: 'absolute', bottom: -10 },
+  container: { flex: 1, backgroundColor: theme.isDark ? '#000000' : '#F2F2F7' },
+  scrollContent: { paddingHorizontal: 20, minHeight: height },
+  header: { marginTop: 10, marginBottom: 40 },
+  backButton: { flexDirection: 'row', alignItems: 'center', marginLeft: -8 },
   
   formContainer: { flex: 1, gap: 32 },
   titleContainer: { marginBottom: 8 },
-  title: { color: theme.colors.text.primary, fontSize: 34, fontWeight: '800', letterSpacing: -1, marginBottom: 8 },
-  subtitle: { color: theme.colors.text.secondary, fontSize: 16, fontWeight: '500' },
   
-  sectionContainer: { gap: 20 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  sectionIconWrap: { width: 36, height: 36, borderRadius: 12, backgroundColor: theme.isDark ? 'rgba(140, 160, 185, 0.1)' : 'rgba(123, 97, 255, 0.1)', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
-  sectionTitle: { fontSize: 20, fontWeight: '800', color: theme.colors.text.primary, letterSpacing: -0.5 },
-  sectionCard: { backgroundColor: theme.colors.surface, borderRadius: 24, padding: 20, gap: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0.2 : 0.04, shadowRadius: 12, elevation: 2, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)' },
-  
-  inputWrapper: { gap: 8 },
-  label: { marginLeft: 4, textTransform: 'uppercase' },
-  input: { backgroundColor: theme.colors.background, color: theme.colors.text.primary, fontSize: 16, fontFamily: theme.typography.fonts.ui, height: 60, borderRadius: 16, paddingHorizontal: 20, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
-  inputFocused: {
-    borderColor: theme.colors.plum,
-    borderWidth: 1.5,
-    shadowColor: theme.colors.plum,
-    shadowOpacity: theme.isDark ? 0.3 : 0.15,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+  sectionContainer: { gap: 8 },
+  sectionTitle: { 
+    marginLeft: 16,
+    color: theme.colors.text.tertiary, 
+    marginBottom: 4,
   },
-  inputError: { borderColor: theme.colors.semantic.danger, borderWidth: 2 },
-  errorRow: { flexDirection: 'row', alignItems: 'center', marginLeft: 4, marginTop: 4 },
-  errorText: { color: theme.colors.semantic.danger, fontSize: 13, fontWeight: '600' },
+  groupedList: { 
+    backgroundColor: theme.isDark ? '#1C1C1E' : '#FFFFFF', 
+    borderRadius: 14, 
+    overflow: 'hidden',
+  },
+  inputRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingHorizontal: 16, 
+    height: 56 
+  },
+  inputLabel: { 
+    width: 90, 
+    color: theme.colors.text.primary 
+  },
+  inputLabelStack: {
+    color: theme.colors.text.primary,
+    marginBottom: 12,
+  },
+  input: { 
+    flex: 1, 
+    color: theme.colors.text.primary, 
+    fontSize: 17, 
+    fontFamily: theme.typography.fonts.body, 
+    height: '100%' 
+  },
+  separator: { 
+    height: StyleSheet.hairlineWidth, 
+    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', 
+    marginLeft: 16 
+  },
+  eyeIcon: { padding: 10, marginLeft: 8 },
   
-  passwordContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.background, borderRadius: 16, height: 60, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
-  passwordInput: { flex: 1, height: '100%', paddingHorizontal: 20, fontSize: 16, color: theme.colors.text.primary, fontFamily: theme.typography.fonts.ui },
-  eyeIcon: { padding: 16 },
+  errorRow: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginTop: 4, marginBottom: 4 },
   
+  selectGroupRow: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
   chipContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 16, backgroundColor: theme.colors.background, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' },
-  chipActive: { backgroundColor: theme.colors.plum, borderColor: theme.colors.plum },
-  chipText: { fontSize: 15, color: theme.colors.text.secondary, fontWeight: '600' },
-  chipTextActive: { color: theme.colors.text.onPrimary || '#FFF' },
-
+  chip: { 
+    paddingHorizontal: 14, 
+    paddingVertical: 10, 
+    borderRadius: 12, 
+    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+  },
+  chipActive: { backgroundColor: theme.colors.plum },
+  
   // Picker Styles
-  pickerTrigger: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  pickerValue: { fontSize: 16, fontWeight: '600', color: theme.colors.text.primary, flex: 1 },
+  pickerTrigger: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' },
+  pickerValue: { fontSize: 17, color: theme.colors.text.secondary, flex: 1, textAlign: 'right', marginRight: 8, fontFamily: theme.typography.fonts.body },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 32, borderTopRightRadius: 32, height: height * 0.85, padding: 24, paddingBottom: 40 },
+  modalContent: { backgroundColor: theme.colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, height: height * 0.85, padding: 24, paddingBottom: 40 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  modalTitle: { fontSize: 24, fontWeight: '800', color: theme.colors.text.primary, letterSpacing: -0.5 },
   closeBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.colors.background, borderRadius: 20 },
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.background, borderRadius: 16, paddingHorizontal: 16, marginBottom: 16 },
   searchIcon: { marginRight: 10 },
@@ -680,7 +633,6 @@ const createStyles = (theme: any) => StyleSheet.create({
   listItemText: { fontSize: 16, color: theme.colors.text.primary, fontWeight: '500', flex: 1 },
   listItemTextActive: { color: theme.colors.plum, fontWeight: '700' },
 
-  personalizationNote: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.isDark ? 'rgba(140, 160, 185, 0.1)' : 'rgba(123, 97, 255, 0.05)', padding: 16, borderRadius: 20, marginTop: 8, gap: 16, borderWidth: 1, borderColor: theme.isDark ? 'rgba(140, 160, 185, 0.15)' : 'rgba(123, 97, 255, 0.1)' },
-  
+  personalizationNote: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', padding: 16, borderRadius: 14, marginTop: 8, gap: 12 },
   signUpContainer: { marginTop: 16, alignItems: 'center', marginBottom: 20 },
 });
