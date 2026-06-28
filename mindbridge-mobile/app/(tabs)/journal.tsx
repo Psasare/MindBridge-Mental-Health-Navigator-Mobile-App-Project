@@ -55,6 +55,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { BlurView } from 'expo-blur';
 import { StreakManager } from '../../src/utils/StreakManager';
 import { VideoCheckInModal } from '../../src/components/VideoCheckInModal';
+import { Typography } from '../../src/components/ui/Typography';
+import { Button } from '../../src/components/ui/Button';
 
 const { width } = Dimensions.get('window');
 
@@ -353,10 +355,10 @@ export default function JournalScreen() {
                       <Moon color={theme.colors.plum} size={20} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.sleepWarningTitle, { color: theme.colors.text.primary }]}>Journaling in the dark?</Text>
-                      <Text style={[styles.sleepWarningText, { color: theme.colors.text.secondary }]}>
+                      <Typography variant="bodyBold" color={theme.colors.text.primary} style={styles.sleepWarningTitle}>Journaling in the dark?</Typography>
+                      <Typography variant="caption" color={theme.colors.text.secondary} style={styles.sleepWarningText}>
                         Late-night screen time can disrupt your sleep cycle. Try turning on night mode.
-                      </Text>
+                      </Typography>
                     </View>
                     <TouchableOpacity onPress={() => setShowSleepWarning(false)} style={{ padding: 4 }}>
                       <X color={theme.colors.text.tertiary} size={16} />
@@ -407,9 +409,9 @@ export default function JournalScreen() {
                 <View style={styles.emptyIconWrap}>
                   <BookOpen color={theme.colors.plum} size={32} />
                 </View>
-                <Text style={styles.emptyText}>
+                <Typography variant="body" color={theme.colors.text.tertiary} style={styles.emptyText}>
                   {t('journal.no_entries')}
-                </Text>
+                </Typography>
               </View>
             )
           }
@@ -421,7 +423,7 @@ export default function JournalScreen() {
               <View style={styles.entryHeader}>
                 <View style={styles.dateRow}>
                   <Calendar color={theme.colors.text.tertiary} size={14} />
-                  <Text style={styles.dateText}>{formatDate(entry.createdAt)}</Text>
+                  <Typography variant="captionMedium" color={theme.colors.text.tertiary} style={styles.dateText}>{formatDate(entry.createdAt)}</Typography>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <TouchableOpacity 
@@ -436,16 +438,16 @@ export default function JournalScreen() {
                   </View>
                 </View>
               </View>
-              <Text style={styles.entryTitle}>{entry.title}</Text>
-              <Text style={styles.entryContent} numberOfLines={4}>{entry.content}</Text>
+              <Typography variant="h3" color={theme.colors.text.primary} style={styles.entryTitle}>{entry.title}</Typography>
+              <Typography variant="body" color={theme.colors.text.secondary} style={styles.entryContent} numberOfLines={4}>{entry.content}</Typography>
               
               {entry.aiFeedback && (
                 <View style={[styles.aiFeedbackCard, { backgroundColor: theme.colors.plum + '10' }]}>
                   <View style={styles.aiFeedbackHeader}>
                     <Sparkles color={theme.colors.plum} size={16} />
-                    <Text style={[styles.aiFeedbackTitle, { color: theme.colors.plum }]}>Oracle Insight</Text>
+                    <Typography variant="bodyBold" color={theme.colors.plum} style={styles.aiFeedbackTitle}>Oracle Insight</Typography>
                   </View>
-                  <Text style={styles.aiFeedbackText}>{entry.aiFeedback}</Text>
+                  <Typography variant="body" color={theme.colors.text.secondary} style={styles.aiFeedbackText}>{entry.aiFeedback}</Typography>
                 </View>
               )}
 
@@ -482,14 +484,14 @@ export default function JournalScreen() {
             <TouchableOpacity onPress={() => setIsWriting(false)} style={styles.iconBtn}>
               <X color={theme.colors.plum} size={24} />
             </TouchableOpacity>
-            <Text style={styles.composerTitle}>New Entry</Text>
-            <TouchableOpacity 
-              style={[styles.saveBtn, { backgroundColor: theme.colors.plum }]}
+            <Typography variant="h4" color={theme.colors.text.primary} style={styles.composerTitle}>New Entry</Typography>
+            <Button 
+              variant="primary"
+              size="small"
               onPress={handleSave}
             >
-              <Check color="#FFF" size={16} />
-              <Text style={styles.saveBtnText}>{t('journal.save_entry')}</Text>
-            </TouchableOpacity>
+              {t('journal.save_entry')}
+            </Button>
           </View>
           
           <KeyboardAvoidingView 
@@ -525,7 +527,7 @@ export default function JournalScreen() {
             <View style={{ height: 24 }} />
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Entry Title</Text>
+              <Typography variant="captionMedium" color={theme.colors.text.tertiary} style={styles.inputLabel}>Entry Title</Typography>
               <TextInput
                 style={styles.titleInput}
                 placeholder={t('journal.title_placeholder')}
@@ -536,7 +538,7 @@ export default function JournalScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Journal Content</Text>
+              <Typography variant="captionMedium" color={theme.colors.text.tertiary} style={styles.inputLabel}>Journal Content</Typography>
               <TextInput
                 style={styles.contentInput}
                 placeholder={t('journal.content_placeholder')}

@@ -29,6 +29,8 @@ import {
   Info, GraduationCap, BookOpen, Brain, MessageSquare, Activity, Heart, Users, Zap
 } from 'lucide-react-native';
 import { AnimatedLogoLoader } from '../../src/components/AnimatedLogoLoader';
+import { Typography } from '../../src/components/ui/Typography';
+import { Button } from '../../src/components/ui/Button';
 
 const { width, height } = Dimensions.get('window');
 
@@ -407,52 +409,53 @@ export default function OnboardingScreen() {
                 <View style={styles.iconCircle}>
                   <ShieldCheck color={themeContext.colors.plum} size={40} strokeWidth={1.5} />
                 </View>
-                <Text style={styles.title}>Privacy & Data Commitment</Text>
+                <Typography variant="h2" style={styles.title}>Privacy & Data Commitment</Typography>
               </View>
 
-              <Text style={styles.consentGreeting}>Your Privacy Matters</Text>
-              <Text style={styles.consentBody}>
+              <Typography variant="h3" style={styles.consentGreeting}>Your Privacy Matters</Typography>
+              <Typography variant="body" color={themeContext.colors.text.secondary} style={styles.consentBody}>
                 MindBridge uses your personal and academic information, including your studies at {userUni}, to provide a tailored mental health and academic support experience. Your privacy is protected according to university standards.
-              </Text>
+              </Typography>
               
               <View style={styles.consentPointsBox}>
                 <View style={styles.consentPointRow}>
                   <View style={styles.consentCheckWrap}>
                     <CheckCircle2 color={themeContext.colors.accents.eucalyptus} size={20} />
                   </View>
-                  <Text style={styles.consentPointText}>Your data is secured with industry-standard encryption to ensure total confidentiality.</Text>
+                  <Typography variant="bodyBold" style={styles.consentPointText}>Your data is secured with industry-standard encryption to ensure total confidentiality.</Typography>
                 </View>
                 <View style={styles.consentPointRow}>
                   <View style={styles.consentCheckWrap}>
                     <CheckCircle2 color={themeContext.colors.accents.eucalyptus} size={20} />
                   </View>
-                  <Text style={styles.consentPointText}>You maintain full control and can manage or remove your data permissions at any time.</Text>
+                  <Typography variant="bodyBold" style={styles.consentPointText}>You maintain full control and can manage or remove your data permissions at any time.</Typography>
                 </View>
                 <View style={styles.consentPointRow}>
                   <View style={styles.consentCheckWrap}>
                     <CheckCircle2 color={themeContext.colors.accents.eucalyptus} size={20} />
                   </View>
-                  <Text style={styles.consentPointText}>We only use your information to improve your wellness and academic experience.</Text>
+                  <Typography variant="bodyBold" style={styles.consentPointText}>We only use your information to improve your wellness and academic experience.</Typography>
                 </View>
               </View>
 
               <View style={styles.commitmentCard}>
-                <Text style={styles.consentCommitmentTitle}>Important Safety Note</Text>
-                <Text style={styles.consentCommitmentText}>
+                <Typography variant="label" color={themeContext.colors.plum} style={styles.consentCommitmentTitle}>Important Safety Note</Typography>
+                <Typography variant="body" color={themeContext.colors.text.secondary} style={styles.consentCommitmentText}>
                   MindBridge is a supportive wellness tool and should not be used as a replacement for professional clinical care. If you ever feel you are in immediate danger or distress, please reach out to emergency services or campus support.
-                </Text>
+                </Typography>
               </View>
 
-              <TouchableOpacity 
-                style={[styles.primaryBtn, { marginTop: 32, marginBottom: 20, shadowOpacity: themeContext.isDark ? 0.3 : 0.15, shadowRadius: 10, elevation: 5 }]} 
+              <Button
+                variant="primary"
+                size="large"
                 onPress={handleNext}
-                activeOpacity={0.8}
+                style={{ marginTop: 32, marginBottom: 20 }}
               >
-                <Text style={styles.primaryBtnText}>Agree and Continue</Text>
-              </TouchableOpacity>
+                Agree and Continue
+              </Button>
               
               <TouchableOpacity onPress={() => router.back()} style={{ marginBottom: 20, alignSelf: 'center' }} activeOpacity={0.6}>
-                <Text style={styles.exitText}>Decline and Exit</Text>
+                <Typography variant="bodyBold" color={themeContext.colors.text.tertiary} style={styles.exitText}>Decline and Exit</Typography>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -466,8 +469,8 @@ export default function OnboardingScreen() {
                 <step.icon color={themeContext.colors.plum} size={26} strokeWidth={2} />
               </View>
             )}
-            <Text style={styles.title}>{step.title}</Text>
-            <Text style={styles.subtitle}>{step.subtitle}</Text>
+            <Typography variant="h2" style={styles.title}>{step.title}</Typography>
+            <Typography variant="body" color={themeContext.colors.text.secondary} style={styles.subtitle}>{step.subtitle}</Typography>
             <TextInput
               style={styles.textInput}
               placeholder="Your name"
@@ -479,7 +482,7 @@ export default function OnboardingScreen() {
             {step.whyWeAsk && (
               <View style={styles.whyWeAskBox}>
                 <Info color={themeContext.colors.plum} size={16} />
-                <Text style={styles.whyWeAskText}>{step.whyWeAsk}</Text>
+                <Typography variant="captionMedium" color={themeContext.colors.plum} style={styles.whyWeAskText}>{step.whyWeAsk}</Typography>
               </View>
             )}
           </View>
@@ -498,8 +501,8 @@ export default function OnboardingScreen() {
                 <step.icon color={themeContext.colors.plum} size={26} strokeWidth={2} />
               </View>
             )}
-            <Text style={styles.title}>{titleWithContext}</Text>
-            <Text style={styles.subtitle}>{step.subtitle}</Text>
+            <Typography variant="h2" style={styles.title}>{titleWithContext}</Typography>
+            <Typography variant="body" color={themeContext.colors.text.secondary} style={styles.subtitle}>{step.subtitle}</Typography>
             
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 100 }}>
               {step.options?.map((opt) => {
@@ -522,13 +525,12 @@ export default function OnboardingScreen() {
                         {isSelected && <CheckCircle2 color={themeContext.colors.surface} size={16} />}
                       </View>
                     )}
-                    <Text style={[
+                    <Typography variant={isSelected ? "bodyBold" : "body"} color={isSelected ? themeContext.colors.plum : themeContext.colors.text.primary} style={[
                       styles.optionLabel,
-                      isSelected && styles.optionLabelActive,
                       step.type === 'multiple-choice' && { marginLeft: 12 }
                     ]}>
                       {opt.label}
-                    </Text>
+                    </Typography>
                   </TouchableOpacity>
                 );
               })}
@@ -537,7 +539,7 @@ export default function OnboardingScreen() {
             {step.whyWeAsk && (
               <View style={styles.whyWeAskBox}>
                 <Info color={themeContext.colors.plum} size={16} />
-                <Text style={styles.whyWeAskText}>{step.whyWeAsk}</Text>
+                <Typography variant="captionMedium" color={themeContext.colors.plum} style={styles.whyWeAskText}>{step.whyWeAsk}</Typography>
               </View>
             )}
           </View>
@@ -551,13 +553,13 @@ export default function OnboardingScreen() {
                 <step.icon color={themeContext.colors.plum} size={26} strokeWidth={2} />
               </View>
             )}
-            <Text style={styles.title}>{step.title}</Text>
-            <Text style={styles.subtitle}>{step.subtitle}</Text>
+            <Typography variant="h2" style={styles.title}>{step.title}</Typography>
+            <Typography variant="body" color={themeContext.colors.text.secondary} style={styles.subtitle}>{step.subtitle}</Typography>
             
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
               {step.sliderQuestions?.map((q) => (
                 <View key={q.key} style={styles.sliderItem}>
-                  <Text style={styles.sliderLabel}>{q.label}</Text>
+                  <Typography variant="bodyBold" style={styles.sliderLabel}>{q.label}</Typography>
                   <DiscreteSlider 
                     value={answers.stressors?.[q.key] || 0} 
                     onValueChange={(val) => handleSliderChange(q.key, val)}
@@ -570,7 +572,7 @@ export default function OnboardingScreen() {
             {step.whyWeAsk && (
               <View style={styles.whyWeAskBox}>
                 <Info color={themeContext.colors.plum} size={16} />
-                <Text style={styles.whyWeAskText}>{step.whyWeAsk}</Text>
+                <Typography variant="captionMedium" color={themeContext.colors.plum} style={styles.whyWeAskText}>{step.whyWeAsk}</Typography>
               </View>
             )}
           </View>
@@ -590,48 +592,53 @@ export default function OnboardingScreen() {
             <View style={styles.iconCircle}>
               <User color={themeContext.colors.plum} size={40} strokeWidth={1.5} />
             </View>
-            <Text style={styles.title}>{t.onboarding.summaryTitle || step.title}</Text>
-            <Text style={styles.summaryGreeting}>Hey {name}!</Text>
+            <Typography variant="h2" style={styles.title}>{t.onboarding.summaryTitle || step.title}</Typography>
+            <Typography variant="h3" style={styles.summaryGreeting}>Hey {name}!</Typography>
             
             <View style={styles.summaryBox}>
-              <Text style={styles.summaryBoxTitle}>Here's what we learned about you:</Text>
+              <Typography variant="bodyBold" color={themeContext.colors.text.secondary} style={styles.summaryBoxTitle}>Here's what we learned about you:</Typography>
               
               <TouchableOpacity onPress={() => jumpToStep(2)} style={styles.summaryItemRow}>
-                <Text style={styles.summaryItem}>• {level} {program} at {uni}</Text>
-                <Text style={styles.editLabel}>Edit</Text>
+                <Typography variant="body" style={styles.summaryItem}>• {level} {program} at {uni}</Typography>
+                <Typography variant="ui" color={themeContext.colors.plum} style={styles.editLabel}>Edit</Typography>
               </TouchableOpacity>
 
               {(answers['q5'] && answers['q5'].length > 0) && (
                 <TouchableOpacity onPress={() => jumpToStep(6)} style={styles.summaryItemRow}>
-                  <Text style={styles.summaryItem}>• Working on: {answers['q5'].length} concern(s)</Text>
-                  <Text style={styles.editLabel}>Edit</Text>
+                  <Typography variant="body" style={styles.summaryItem}>• Working on: {answers['q5'].length} concern(s)</Typography>
+                  <Typography variant="ui" color={themeContext.colors.plum} style={styles.editLabel}>Edit</Typography>
                 </TouchableOpacity>
               )}
 
               {(answers['q7'] && answers['q7'].length > 0) && (
                 <TouchableOpacity onPress={() => jumpToStep(8)} style={styles.summaryItemRow}>
-                  <Text style={styles.summaryItem}>• Coping via: {answers['q7'].length} method(s)</Text>
-                  <Text style={styles.editLabel}>Edit</Text>
+                  <Typography variant="body" style={styles.summaryItem}>• Coping via: {answers['q7'].length} method(s)</Typography>
+                  <Typography variant="ui" color={themeContext.colors.plum} style={styles.editLabel}>Edit</Typography>
                 </TouchableOpacity>
               )}
 
               {goalsLabels ? (
                 <TouchableOpacity onPress={() => jumpToStep(11)} style={styles.summaryItemRow}>
-                  <Text style={styles.summaryItem}>• Goals: {goalsLabels}</Text>
-                  <Text style={styles.editLabel}>Edit</Text>
+                  <Typography variant="body" style={styles.summaryItem}>• Goals: {goalsLabels}</Typography>
+                  <Typography variant="ui" color={themeContext.colors.plum} style={styles.editLabel}>Edit</Typography>
                 </TouchableOpacity>
               ) : null}
             </View>
 
             <View style={styles.summaryFooterBox}>
-              <Text style={styles.summaryItem}>✓ Personalize AI conversations</Text>
-              <Text style={styles.summaryItem}>✓ Suggest relevant resources</Text>
-              <Text style={styles.summaryItem}>✓ Track your progress</Text>
+              <Typography variant="bodyBold" color={themeContext.colors.accents.eucalyptus} style={styles.summaryItem}>✓ Personalize AI conversations</Typography>
+              <Typography variant="bodyBold" color={themeContext.colors.accents.eucalyptus} style={styles.summaryItem}>✓ Suggest relevant resources</Typography>
+              <Typography variant="bodyBold" color={themeContext.colors.accents.eucalyptus} style={styles.summaryItem}>✓ Track your progress</Typography>
             </View>
 
-            <TouchableOpacity style={[styles.primaryBtn, { marginTop: 30 }]} onPress={handleNext}>
-              <Text style={styles.primaryBtnText}>Let's Begin!</Text>
-            </TouchableOpacity>
+            <Button
+              variant="primary"
+              size="large"
+              onPress={handleNext}
+              style={{ marginTop: 30 }}
+            >
+              Let's Begin!
+            </Button>
           </View>
         );
 
@@ -665,7 +672,7 @@ export default function OnboardingScreen() {
           ) : <View style={{ width: 28 }} />}
           
           {isQuestionStep && (
-            <Text style={styles.progressText}>Question {questionNumber} of 10</Text>
+            <Typography variant="bodyBold" color={themeContext.colors.plum} style={styles.progressText}>Question {questionNumber} of 10</Typography>
           )}
           
           <View style={{ width: 28 }} />
@@ -709,7 +716,7 @@ export default function OnboardingScreen() {
             
             {!step.required && (
               <TouchableOpacity onPress={handleSkipRequest} style={styles.skipBtn}>
-                <Text style={styles.skipText}>{t.common.skip}</Text>
+                <Typography variant="bodyBold" color={themeContext.colors.text.secondary} style={styles.skipText}>{t.common.skip}</Typography>
               </TouchableOpacity>
             )}
           </View>
@@ -719,7 +726,7 @@ export default function OnboardingScreen() {
             style={[styles.nextBtn, !isNextEnabled && styles.nextBtnDisabled]}
             disabled={!isNextEnabled}
           >
-            <Text style={styles.nextBtnText}>{t.common.next}</Text>
+            <Typography variant="bodyBold" color={themeContext.colors.text.onPrimary || '#FFF'} style={styles.nextBtnText}>{t.common.next}</Typography>
             <ChevronRight color={themeContext.colors.text.onPrimary || '#FFF'} size={20} />
           </TouchableOpacity>
         </View>
@@ -729,14 +736,14 @@ export default function OnboardingScreen() {
       <Modal visible={showSkipModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <Reanimated.View entering={FadeInUp} style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Wait a moment</Text>
-            <Text style={styles.modalText}>{t.onboarding.skipConfirm}</Text>
-            <TouchableOpacity style={styles.modalPrimaryBtn} onPress={confirmSkip}>
-              <Text style={styles.modalPrimaryBtnText}>{t.onboarding.skipConfirmAction}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.modalSecondaryBtn} onPress={() => setShowSkipModal(false)}>
-              <Text style={styles.modalSecondaryBtnText}>{t.onboarding.skipConfirmCancel}</Text>
-            </TouchableOpacity>
+            <Typography variant="h2" style={styles.modalTitle}>Wait a moment</Typography>
+            <Typography variant="body" color={themeContext.colors.text.secondary} style={styles.modalText}>{t.onboarding.skipConfirm}</Typography>
+            <Button variant="primary" size="large" onPress={confirmSkip} style={{ marginBottom: 12 }}>
+              {t.onboarding.skipConfirmAction}
+            </Button>
+            <Button variant="outline" size="large" onPress={() => setShowSkipModal(false)}>
+              {t.onboarding.skipConfirmCancel}
+            </Button>
           </Reanimated.View>
         </View>
       </Modal>

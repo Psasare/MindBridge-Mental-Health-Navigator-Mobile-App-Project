@@ -60,6 +60,8 @@ import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { useRouter, useFocusEffect } from 'expo-router';
 import api from '../../src/services/api';
 import { AuthContext } from '../../src/context/AuthContext';
+import { Typography } from '../../src/components/ui/Typography';
+import { Button } from '../../src/components/ui/Button';
 import { useAudioRecorder, useAudioRecorderState, createAudioPlayer, AudioPlayer, requestRecordingPermissionsAsync, RecordingPresets, setAudioModeAsync } from 'expo-audio';
 import * as FileSystem from 'expo-file-system';
 import * as Location from 'expo-location';
@@ -72,6 +74,7 @@ import {
 } from '../../src/components/TrackingComponents';
 import { VideoCheckInModal } from '../../src/components/VideoCheckInModal';
 import { StreakManager } from '../../src/utils/StreakManager';
+import { Sprout, Leaf, TreePine } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 const CHART_W = width - 96;
@@ -103,6 +106,32 @@ const TrackerHeader = ({ totalCount, avgMood, theme }: any) => {
         <Text style={[styles.statsLabel, { color: theme.colors.text.tertiary }]}>Avg. Mood</Text>
       </LinearGradient>
     </Animated.View>
+  );
+};
+
+// ─── Garden Visualizer ────────────────────────────────────────────────────────
+const GardenVisualizer = ({ streak, totalLogs, theme }: any) => {
+  const scaleAnim = useSharedValue(0.5);
+
+  useEffect(() => {
+    const targetScale = Math.min(1 + (streak * 0.15), 2.5);
+    scaleAnim.value = withSpring(targetScale, { damping: 10, mass: 1.2 });
+  }, [streak]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scaleAnim.value }],
+  }));
+
+  const Icon = streak >= 7 ? TreePine : (streak >= 3 ? Leaf : Sprout);
+  
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 32, marginHorizontal: 24, marginBottom: 16, backgroundColor: theme.colors.surface, borderRadius: 32, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+      <Typography variant="bodyBold" color={theme.colors.text.tertiary} style={{ marginBottom: 16 }}>Your Wellness Garden</Typography>
+      <Animated.View style={[{ alignItems: 'center', justifyContent: 'center', width: 100, height: 100, borderRadius: 50, backgroundColor: theme.colors.accents?.eucalyptus + '15' }, animatedStyle]}>
+        <Icon color={theme.colors.accents?.eucalyptus || '#34D399'} size={40} />
+      </Animated.View>
+      <Typography variant="captionMedium" color={theme.colors.text.secondary} style={{ marginTop: 16 }}>{streak} Day Streak</Typography>
+    </View>
   );
 };
 
@@ -689,9 +718,16 @@ export default function WellnessTrackerScreen() {
           <View style={styles.envTag}><Cloud size={14} color={theme.colors.plum} /><Text style={[styles.envText, { color: theme.colors.text.secondary }]}>{weather || 'Syncing...'}</Text></View>
         </View>
 
-        <TouchableOpacity style={[styles.plantBtn, { backgroundColor: theme.colors.plum, marginTop: 16 }]} onPress={handleLog}>
-          {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.nextBtnText}>{t('tracker.submitBtn')}</Text>}
-        </TouchableOpacity>
+        <Button
+          variant="primary"
+          size="large"
+          onPress={handleLog}
+          loading={loading}
+          disabled={loading}
+          style={{ marginTop: 16 }}
+        >
+          {t('tracker.submitBtn')}
+        </Button>
       </Animated.View>
     );
   };
@@ -715,8 +751,9 @@ export default function WellnessTrackerScreen() {
           <Text style={[styles.streakLabel, { color: theme.colors.text.secondary }]}>Day Streak</Text>
         </Animated.View>
 
-        <TouchableOpacity
-          style={[styles.nextBtn, { backgroundColor: theme.colors.plum, marginTop: 32 }]}
+        <Button
+          variant="primary"
+          size="large"
           onPress={() => {
             setStep(1);
             setMood(null);
@@ -725,9 +762,10 @@ export default function WellnessTrackerScreen() {
             setAudioUri(null);
             router.push('/(tabs)/dashboard');
           }}
+          style={{ marginTop: 32, paddingHorizontal: 32 }}
         >
-          <Text style={styles.nextBtnText}>Return to Home</Text>
-        </TouchableOpacity>
+          Return to Home
+        </Button>
       </Animated.View>
     );
   };
@@ -737,6 +775,8 @@ export default function WellnessTrackerScreen() {
       <StatusBar barStyle={theme.isDark ? 'light-content' : 'dark-content'} />
       <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top }]}>
         <ScreenHeader title={t('tracker.title')} subtitle={t('tracker.subtitle')} />
+
+        <GardenVisualizer streak={calculateClientStreak(moodLogs)} totalLogs={totalCount} theme={theme} />
 
         <TrackerHeader totalCount={totalCount} theme={theme} />
 

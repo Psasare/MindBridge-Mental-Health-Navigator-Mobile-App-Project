@@ -12,26 +12,33 @@ import { Typography } from './Typography';
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface ButtonProps {
-  title: string;
+  children?: React.ReactNode;
+  title?: string; // Fallback for backwards compatibility
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'small' | 'medium' | 'large';
   isLoading?: boolean;
+  loading?: boolean; // Alias for isLoading
   disabled?: boolean;
   fullWidth?: boolean;
   icon?: React.ReactNode;
+  style?: any;
 }
 
 export const Button: React.FC<ButtonProps> = ({
+  children,
   title,
   onPress,
   variant = 'primary',
   size = 'medium',
   isLoading = false,
+  loading = false,
   disabled = false,
   fullWidth = true,
   icon,
+  style,
 }) => {
+  const actualLoading = isLoading || loading;
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
@@ -88,7 +95,7 @@ export const Button: React.FC<ButtonProps> = ({
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      disabled={disabled || isLoading}
+      disabled={disabled || actualLoading}
       style={[
         styles.container,
         {
@@ -100,16 +107,17 @@ export const Button: React.FC<ButtonProps> = ({
           borderRadius: theme.borderRadius.md,
         },
         animatedStyle,
+        style,
       ]}
     >
       <View style={styles.content}>
-        {isLoading ? (
+        {actualLoading ? (
           <ActivityIndicator color={textColor} size="small" />
         ) : (
           <>
             {icon && <View style={styles.iconContainer}>{icon}</View>}
             <Typography variant={typographyVariant} color={textColor}>
-              {title}
+              {children || title}
             </Typography>
           </>
         )}
