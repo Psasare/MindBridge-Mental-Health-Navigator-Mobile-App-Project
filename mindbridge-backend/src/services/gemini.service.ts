@@ -4,7 +4,11 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY || "");
+const apiKey = process.env.GOOGLE_AI_KEY;
+if (!apiKey) {
+  console.error('[CRITICAL] GOOGLE_AI_KEY environment variable is missing.');
+}
+const genAI = new GoogleGenerativeAI(apiKey || "");
 
 async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000): Promise<T> {
   let attempt = 0;
