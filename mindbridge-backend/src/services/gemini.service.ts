@@ -155,7 +155,7 @@ const tools = [
 
 export const generateOracleResponse = async (userMessage: string, context: any, userId: string) => {
   try {
-    const modelName = "gemini-1.5-flash-latest";
+    const modelName = "gemini-2.5-flash";
     console.log(`[BACKEND] [Oracle] Attempting generateOracleResponse using model: ${modelName}`);
     const model = genAI.getGenerativeModel({ 
       model: modelName,
@@ -412,7 +412,7 @@ INSTRUCTIONS:
 
 export const generateProactiveInsights = async (userId: string, context: any) => {
   try {
-    const modelName = "gemini-1.5-flash-latest";
+    const modelName = "gemini-2.5-flash-lite";
     console.log(`[BACKEND] Attempting to generate insights using model: ${modelName}`);
     const model = genAI.getGenerativeModel({ model: modelName });
       
@@ -488,7 +488,7 @@ Do not output any markdown formatting, just the raw JSON object.`;
 
 export const analyzeVoiceAudio = async (base64Audio: string, mimeType: string) => {
   const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash-latest",
+    model: "gemini-2.5-flash-lite",
   });
 
   const prompt = `You are a vocal acoustic analyzer. Do not transcribe or analyze the speech content. Listen strictly to the vocal tone, pitch variability, speech rate, and pause duration. 
@@ -535,7 +535,7 @@ Return a JSON object exactly matching this structure (no markdown, just valid JS
 
 export const generatePersonalizedAssessment = async (userId: string, context: any, testType: string) => {
   try {
-    const modelName = "gemini-1.5-flash-latest";
+    const modelName = "gemini-2.5-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
       
     // Map testType to clinical focus and question count
@@ -613,7 +613,7 @@ Do not output any markdown formatting, just the raw JSON object.`;
 
 export const evaluatePersonalizedAssessment = async (userId: string, context: any, answers: any[], testType: string) => {
   try {
-    const modelName = "gemini-1.5-flash-latest";
+    const modelName = "gemini-2.5-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
       
     const prompt = `
@@ -666,7 +666,7 @@ Do not output any markdown formatting, just the raw JSON object.`;
 
 export const analyzeJournalEntry = async (content: string) => {
   try {
-    const modelName = "gemini-1.5-flash-latest";
+    const modelName = "gemini-2.5-flash";
     const model = genAI.getGenerativeModel({ model: modelName });
       
     const prompt = `

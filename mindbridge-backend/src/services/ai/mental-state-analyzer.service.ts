@@ -35,7 +35,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000): 
 
 export const analyzeCurrentState = async (userMessage: string, context: any) => {
   try {
-    const modelName = "gemini-1.5-flash";
+    const modelName = "gemini-2.5-flash-lite";
     const model = genAI.getGenerativeModel({ model: modelName });
     
     // Convert history for context
