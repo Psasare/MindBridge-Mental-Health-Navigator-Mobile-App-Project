@@ -424,7 +424,7 @@ export default function WellnessTrackerScreen() {
       }
 
       const score = mood ? mood * 2 : 6;
-      await api.post('/mood', {
+      const response = await api.post('/mood', {
         score,
         emotions: selectedEmotion ? [selectedEmotion] : [],
         energyLevel: energy,
@@ -440,6 +440,23 @@ export default function WellnessTrackerScreen() {
         facialMetrics: facialMetrics,
         vocalMetrics: vocalMetrics,
       });
+
+      // Optimistically update the dashboard cache with the new streak
+      if (response.data?.gamification) {
+        try {
+          const cached = await AsyncStorage.getItem('dashboard_cache');
+          if (cached) {
+            const data = JSON.parse(cached);
+            data.gamification = {
+              ...data.gamification,
+              currentStreak: response.data.gamification.currentStreak
+            };
+            await AsyncStorage.setItem('dashboard_cache', JSON.stringify(data));
+          }
+        } catch (e) {
+          console.log('Failed to update dashboard cache with new streak', e);
+        }
+      }
 
       await StreakManager.logCheckIn();
       if (note) await StreakManager.logJournal();

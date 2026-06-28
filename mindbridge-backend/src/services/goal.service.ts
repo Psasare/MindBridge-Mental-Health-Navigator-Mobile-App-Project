@@ -227,5 +227,63 @@ export const GoalService = {
       gamification = await prisma.userGamification.create({ data: { userId } });
     }
     return gamification;
+  },
+
+  /**
+   * Record a daily check-in (e.g. logging a mood) and update streaks immediately
+   */
+  recordDailyCheckIn: async (userId: string) => {
+    let gamification = await prisma.userGamification.findUnique({ where: { userId } });
+    if (!gamification) {
+      gamification = await prisma.userGamification.create({ data: { userId } });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    let newStreak = gamification.currentStreak;
+    let longestStreak = gamification.longestStreak;
+    let pointsAwarded = 10; // 10 points for daily check-in
+    
+    let alreadyCheckedInToday = false;
+
+    if (gamification.lastCompletedAt) {
+      const lastCompletedDate = new Date(gamification.lastCompletedAt);
+      lastCompletedDate.setHours(0, 0, 0, 0);
+
+      if (lastCompletedDate.getTime() === today.getTime()) {
+        // Already logged something today that updated the streak
+        alreadyCheckedInToday = true;
+      } else if (lastCompletedDate.getTime() === yesterday.getTime()) {
+        newStreak += 1;
+      } else if (lastCompletedDate.getTime() < yesterday.getTime()) {
+        newStreak = 1; // reset streak
+      }
+    } else {
+      newStreak = 1;
+    }
+
+    longestStreak = Math.max(longestStreak, newStreak);
+
+    if (!alreadyCheckedInToday) {
+      gamification = await prisma.userGamification.update({
+        where: { userId },
+        data: {
+          totalPoints: gamification.totalPoints + pointsAwarded,
+          currentStreak: newStreak,
+          longestStreak: longestStreak,
+          lastCompletedAt: new Date() // Sets last completed to now
+        }
+      });
+    }
+
+    return {
+      pointsAwarded: alreadyCheckedInToday ? 0 : pointsAwarded,
+      currentStreak: newStreak,
+      alreadyCheckedInToday
+    };
   }
 };

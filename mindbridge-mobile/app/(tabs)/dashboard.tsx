@@ -460,6 +460,38 @@ export default function DashboardScreen() {
     return { label: 'Empty Garden', icon: CircleDashed, color: '#94A3B8' };
   };
 
+  const loadCachedData = async () => {
+    try {
+      const cached = await AsyncStorage.getItem('dashboard_cache');
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (data.journalHistory) setJournalHistory(data.journalHistory);
+        if (data.moodHistory) setMoodHistory(data.moodHistory);
+        if (data.chatHistory) setChatHistory(data.chatHistory);
+        if (data.gardenStats) setGardenStats(data.gardenStats);
+        if (data.assessments) setAssessments(data.assessments);
+        if (data.latestPost) setLatestPost(data.latestPost);
+        if (data.recentLocation) setRecentLocation(data.recentLocation);
+        if (data.aiPrompt) setAiPrompt(data.aiPrompt);
+        if (data.suggestedResources) setSuggestedResources(data.suggestedResources);
+        if (data.actionableCopingMechanisms) setActionableCopingMechanisms(data.actionableCopingMechanisms);
+        if (data.insightSeverity) setInsightSeverity(data.insightSeverity);
+        if (data.microGoals) setMicroGoals(data.microGoals);
+        if (data.gamification) setGamification(data.gamification);
+        if (data.dailyGoals) setDailyGoals(data.dailyGoals);
+        if (data.completedGoalIds) setCompletedGoalIds(data.completedGoalIds);
+        if (data.rituals) setRituals(data.rituals);
+        if (data.userData) setUserData(data.userData);
+      }
+    } catch (e) {
+      console.warn('Failed to load dashboard cache:', e);
+    }
+  };
+
+  useEffect(() => {
+    loadCachedData();
+  }, []);
+
   const checkStatus = useCallback(async () => {
     try {
       const todayStr = new Date().toDateString();
@@ -467,77 +499,115 @@ export default function DashboardScreen() {
       const moodsRes = await api.get('/mood');
       
       const logs = res.data.recentJournal || [];
-      setJournalHistory(logs);
-      setMoodHistory(moodsRes.data || []);
-      setChatHistory(res.data.history || []);
-      
-      const currentStreak = res.data.streak || 0;
-      setUserData(prev => ({ ...prev, streak: currentStreak }));
-      
+      const newMoodHistory = moodsRes.data || [];
+      const newChatHistory = res.data.history || [];
       const growth = getGrowthStage(logs.length);
-      setGardenStats({ count: logs.length, stage: growth.label, icon: growth.icon, color: growth.color });
+      const newGardenStats = { count: logs.length, stage: growth.label, icon: growth.icon, color: growth.color };
+      const newAssessments = res.data.assessments || [];
+      const newLatestPost = res.data.latestCommunityPost || null;
+      const newRecentLocation = res.data.latestMood?.location || recentLocation;
       
-      setAssessments(res.data.assessments || []);
-      setLatestPost(res.data.latestCommunityPost || null);
-      
-      if (res.data.latestMood?.location) {
-        setRecentLocation(res.data.latestMood.location);
-      }
-
-      // Fetch AI Insights in background so it doesn't block UI load
-      api.get('/ai/proactive-insights').then(aiRes => {
-        if (aiRes.data?.dashboardPrompt) {
-          setAiPrompt(aiRes.data.dashboardPrompt);
-        }
-        if (aiRes.data?.suggestedResources) {
-          setSuggestedResources(aiRes.data.suggestedResources);
-        }
-        let uniqueCoping: string[] = [];
-        if (aiRes.data?.actionableCopingMechanisms) {
-          uniqueCoping = Array.from(new Set(aiRes.data.actionableCopingMechanisms)) as string[];
-          setActionableCopingMechanisms(uniqueCoping);
-        }
-        
-        if (aiRes.data?.severity) {
-          setInsightSeverity(aiRes.data.severity);
-        }
-        if (aiRes.data?.microGoals) {
-          const uniqueGoals = (Array.from(new Set(aiRes.data.microGoals)) as string[]).filter(g => !uniqueCoping.includes(g));
-          setMicroGoals(uniqueGoals);
-        }
-      }).catch(err => console.warn('Failed to fetch proactive insights'));
-
-      // Fetch Gamification Goals and Status
-      api.get('/goals/gamification').then(gamificationRes => {
-        if (gamificationRes.data) {
-          setGamification({
-            totalPoints: gamificationRes.data.totalPoints || 0,
-            currentStreak: gamificationRes.data.currentStreak || 0
-          });
-        }
-      }).catch(err => console.warn('Failed to fetch gamification'));
-
-      api.get('/goals/daily').then(goalsRes => {
-        if (goalsRes.data) {
-          setDailyGoals(goalsRes.data.goals || []);
-          setCompletedGoalIds(goalsRes.data.completedIds || []);
-        }
-      }).catch(err => console.warn('Failed to fetch daily goals'));
-
-      setRituals({
-        garden: res.data.latestMood && new Date(res.data.latestMood.createdAt).toDateString() === todayStr,
-        journal: logs.some((log: any) => new Date(log.createdAt).toDateString() === todayStr),
-        breathing: await AsyncStorage.getItem(`breathing_${todayStr}`) === 'true'
-      });
+      let newUserData = { ...userData };
       if (res.data.onboarding?.firstName) {
         const onboardingName = res.data.onboarding.firstName;
-        const finalName = (onboardingName === 'TESTKW' && authData?.name) ? authData.name : onboardingName;
-        setUserData(prev => ({ ...prev, name: finalName }));
+        newUserData.name = (onboardingName === 'TESTKW' && authData?.name) ? authData.name : onboardingName;
+      }
+      
+      // Parallel unblocking requests
+      const [aiRes, gamificationRes, goalsRes] = await Promise.allSettled([
+        api.get('/ai/proactive-insights'),
+        api.get('/goals/gamification'),
+        api.get('/goals/daily')
+      ]);
+
+      let newAiPrompt = aiPrompt;
+      let newSuggested = suggestedResources;
+      let newCoping = actionableCopingMechanisms;
+      let newSeverity = insightSeverity;
+      let newMicroGoals = microGoals;
+
+      if (aiRes.status === 'fulfilled' && aiRes.value.data) {
+        newAiPrompt = aiRes.value.data.dashboardPrompt || newAiPrompt;
+        newSuggested = aiRes.value.data.suggestedResources || newSuggested;
+        let uniqueCoping: string[] = [];
+        if (aiRes.value.data.actionableCopingMechanisms) {
+          uniqueCoping = Array.from(new Set(aiRes.value.data.actionableCopingMechanisms)) as string[];
+          newCoping = uniqueCoping;
+        }
+        newSeverity = aiRes.value.data.severity || newSeverity;
+        if (aiRes.value.data.microGoals) {
+          newMicroGoals = (Array.from(new Set(aiRes.value.data.microGoals)) as string[]).filter(g => !uniqueCoping.includes(g));
+        }
       }
 
+      let newGamification = gamification;
+      if (gamificationRes.status === 'fulfilled' && gamificationRes.value.data) {
+        newGamification = {
+          totalPoints: gamificationRes.value.data.totalPoints || 0,
+          currentStreak: gamificationRes.value.data.currentStreak || 0
+        };
+      } else {
+        // Fallback to res.data.streak if gamification fails to load
+        newGamification = { ...gamification, currentStreak: res.data.streak || gamification.currentStreak };
+      }
+      
+      let newDailyGoals = dailyGoals;
+      let newCompletedIds = completedGoalIds;
+      if (goalsRes.status === 'fulfilled' && goalsRes.value.data) {
+        newDailyGoals = goalsRes.value.data.goals || [];
+        newCompletedIds = goalsRes.value.data.completedIds || [];
+      }
+
+      const breathingDone = await AsyncStorage.getItem(`breathing_${todayStr}`) === 'true';
+      const newRituals = {
+        garden: res.data.latestMood && new Date(res.data.latestMood.createdAt).toDateString() === todayStr,
+        journal: logs.some((log: any) => new Date(log.createdAt).toDateString() === todayStr),
+        breathing: breathingDone
+      };
+
+      // Set State
+      setJournalHistory(logs);
+      setMoodHistory(newMoodHistory);
+      setChatHistory(newChatHistory);
+      setGardenStats(newGardenStats);
+      setAssessments(newAssessments);
+      setLatestPost(newLatestPost);
+      setRecentLocation(newRecentLocation);
+      setUserData(newUserData);
+      setAiPrompt(newAiPrompt);
+      setSuggestedResources(newSuggested);
+      setActionableCopingMechanisms(newCoping);
+      setInsightSeverity(newSeverity);
+      setMicroGoals(newMicroGoals);
+      setGamification(newGamification);
+      setDailyGoals(newDailyGoals);
+      setCompletedGoalIds(newCompletedIds);
+      setRituals(newRituals);
+
+      // Cache State for next launch
+      AsyncStorage.setItem('dashboard_cache', JSON.stringify({
+        journalHistory: logs,
+        moodHistory: newMoodHistory,
+        chatHistory: newChatHistory,
+        gardenStats: newGardenStats,
+        assessments: newAssessments,
+        latestPost: newLatestPost,
+        recentLocation: newRecentLocation,
+        userData: newUserData,
+        aiPrompt: newAiPrompt,
+        suggestedResources: newSuggested,
+        actionableCopingMechanisms: newCoping,
+        insightSeverity: newSeverity,
+        microGoals: newMicroGoals,
+        gamification: newGamification,
+        dailyGoals: newDailyGoals,
+        completedGoalIds: newCompletedIds,
+        rituals: newRituals
+      }));
+
       // Check for interventions locally if recent mood was logged and is critically low
-      if (moodsRes.data && moodsRes.data.length > 0) {
-        const latestMood = moodsRes.data[0];
+      if (newMoodHistory.length > 0) {
+        const latestMood = newMoodHistory[0];
         const isRecent = new Date(latestMood.createdAt).toDateString() === todayStr;
         if (isRecent && latestMood.score <= 3) {
           const shownIntervention = await AsyncStorage.getItem(`intervention_${todayStr}`);
@@ -549,27 +619,23 @@ export default function DashboardScreen() {
       }
 
       // Check for milestones
-      if (currentStreak === 3 || currentStreak === 7 || currentStreak === 14 || currentStreak === 30) {
-        const shownMilestone = await AsyncStorage.getItem(`milestone_${currentStreak}`);
+      const activeStreak = newGamification.currentStreak;
+      if (activeStreak === 3 || activeStreak === 7 || activeStreak === 14 || activeStreak === 30) {
+        const shownMilestone = await AsyncStorage.getItem(`milestone_${activeStreak}`);
         if (!shownMilestone) {
-          setCelebData({ milestone: currentStreak, type: 'STREAK' });
+          setCelebData({ milestone: activeStreak, type: 'STREAK' });
           setShowCelebration(true);
-          await AsyncStorage.setItem(`milestone_${currentStreak}`, 'true');
+          await AsyncStorage.setItem(`milestone_${activeStreak}`, 'true');
         }
       }
 
     } catch (e) {
-      console.warn('Network timeout when fetching dashboard context, using local offline fallbacks.');
+      console.warn('Network timeout when fetching dashboard context, using local offline fallbacks.', e);
       if (authData) {
         setUserData(prev => ({ ...prev, name: authData.name || 'Friend' }));
       }
-      setJournalHistory([]);
-      setMoodHistory([]);
-      setChatHistory([]);
-      setAssessments([]);
-      setLatestPost(null);
     }
-  }, [authData]);
+  }, [authData, userData, gamification, aiPrompt, suggestedResources, actionableCopingMechanisms, insightSeverity, microGoals, dailyGoals, completedGoalIds, recentLocation]);
 
   // Pedometer setup
   useEffect(() => {

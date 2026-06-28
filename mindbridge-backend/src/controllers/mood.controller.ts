@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import { GoalService } from '../services/goal.service';
 
 const prisma = new PrismaClient();
 
@@ -81,7 +82,9 @@ export const createMoodLog = async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json(newLog);
+    const checkInResult = await GoalService.recordDailyCheckIn(userId);
+
+    res.status(201).json({ ...newLog, gamification: checkInResult });
   } catch (error) {
     console.error('Error creating mood log:', error);
     res.status(500).json({ error: 'Server error' });
