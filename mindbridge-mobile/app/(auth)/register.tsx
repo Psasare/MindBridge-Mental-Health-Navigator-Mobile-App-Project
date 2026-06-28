@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Eye, EyeOff, ChevronLeft, AlertCircle, Search, Check, X, Heart } from 'lucide-react-native';
 import { Typography } from '../../src/components/ui/Typography';
 import { Button } from '../../src/components/ui/Button';
+import { BlurView } from 'expo-blur';
 
 const { height, width } = Dimensions.get('window');
 
@@ -81,12 +82,12 @@ const ErrorMessage = ({ message, theme }: { message: string | undefined, theme: 
 const FormSection = ({ title, theme, children }: { title: string; theme: any; children: React.ReactNode }) => {
   const styles = createStyles(theme);
   return (
-    <View style={styles.sectionContainer}>
-      <Typography variant="label" style={styles.sectionTitle}>{title}</Typography>
-      <View style={styles.groupedList}>
+    <Animated.View entering={FadeInUp.duration(600).springify()} style={styles.sectionContainer}>
+      <Typography variant="label" style={styles.sectionTitle}>{title.toUpperCase()}</Typography>
+      <View style={[styles.groupedList, theme.isDark && styles.groupedListDark]}>
         {children}
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -137,11 +138,12 @@ const InstitutionPicker = ({ value, onSelect, error, theme }: { value: string; o
         <TouchableOpacity
           style={styles.pickerTrigger}
           onPress={() => setVisible(true)}
+          activeOpacity={0.7}
         >
           <Text style={[styles.pickerValue, !value && { color: theme.colors.text.disabled }]} numberOfLines={1}>
             {value || "Select..."}
           </Text>
-          <ChevronLeft color={theme.colors.text.tertiary} size={20} style={{ transform: [{ rotate: '-90deg' }] }} />
+          <ChevronLeft color={theme.colors.text.tertiary} size={20} style={{ transform: [{ rotate: '-180deg' }] }} />
         </TouchableOpacity>
       </View>
       <ErrorMessage message={error} theme={theme} />
@@ -346,9 +348,14 @@ export default function RegisterScreen() {
         >
           {/* Header */}
           <Animated.View entering={FadeIn.duration(800)} style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ChevronLeft color={themeContext.colors.plum} size={32} />
-              <Typography variant="ui" color={themeContext.colors.plum}>Back</Typography>
+            <TouchableOpacity 
+              onPress={() => router.back()} 
+              style={styles.backButton}
+              activeOpacity={0.7}
+            >
+              <View style={styles.backButtonIconBg}>
+                <ChevronLeft color={themeContext.isDark ? '#FFF' : '#000'} size={24} />
+              </View>
             </TouchableOpacity>
           </Animated.View>
 
@@ -558,8 +565,20 @@ const createStyles = (theme: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.isDark ? '#000000' : '#F2F2F7' },
   scrollContent: { paddingHorizontal: 20, minHeight: height },
   header: { marginTop: 10, marginBottom: 40 },
-  backButton: { flexDirection: 'row', alignItems: 'center', marginLeft: -8 },
-  
+  backButton: { 
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  backButtonIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   formContainer: { flex: 1, gap: 32 },
   titleContainer: { marginBottom: 8 },
   
@@ -569,16 +588,27 @@ const createStyles = (theme: any) => StyleSheet.create({
     color: theme.colors.text.tertiary, 
     marginBottom: 4,
   },
-  groupedList: { 
-    backgroundColor: theme.isDark ? '#1C1C1E' : '#FFFFFF', 
-    borderRadius: 14, 
+  groupedList: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  groupedListDark: {
+    backgroundColor: '#1C1C1E',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    elevation: 4,
   },
   inputRow: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    paddingHorizontal: 16, 
-    height: 56 
+    paddingHorizontal: 20, 
+    height: 60 
   },
   inputLabel: { 
     width: 90, 

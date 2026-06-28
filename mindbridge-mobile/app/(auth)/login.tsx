@@ -16,11 +16,12 @@ import { AuthContext } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import api from '../../src/services/api';
-import Animated, { FadeInUp, FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming } from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Eye, EyeOff, ChevronLeft, AlertCircle, Ghost } from 'lucide-react-native';
+import { Eye, EyeOff, ChevronLeft, AlertCircle, Ghost, ArrowRight } from 'lucide-react-native';
 import { Typography } from '../../src/components/ui/Typography';
 import { Button } from '../../src/components/ui/Button';
+import { BlurView } from 'expo-blur';
 
 const { height, width } = Dimensions.get('window');
 
@@ -156,21 +157,26 @@ export default function LoginScreen() {
         >
           {/* Header */}
           <Animated.View entering={FadeIn.duration(800)} style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ChevronLeft color={themeContext.colors.plum} size={32} />
-              <Typography variant="ui" color={themeContext.colors.plum}>Back</Typography>
+            <TouchableOpacity 
+              onPress={() => router.back()} 
+              style={styles.backButton}
+              activeOpacity={0.7}
+            >
+              <View style={styles.backButtonIconBg}>
+                <ChevronLeft color={themeContext.isDark ? '#FFF' : '#000'} size={24} />
+              </View>
             </TouchableOpacity>
           </Animated.View>
 
           {/* Form Content */}
-          <Animated.View entering={FadeInUp.duration(800)} style={styles.formContainer}>
+          <Animated.View entering={FadeInUp.duration(800).springify()} style={styles.formContainer}>
             <View style={styles.titleContainer}>
-              <Typography variant="h1" style={{ marginBottom: 8 }}>Sign In</Typography>
-              <Typography variant="body" color={themeContext.colors.text.secondary}>Enter your credentials to continue.</Typography>
+              <Typography variant="h1" style={{ marginBottom: 12 }}>Sign In</Typography>
+              <Typography variant="body" color={themeContext.colors.text.secondary}>Enter your credentials to continue your journey.</Typography>
             </View>
 
             {/* HIG Grouped List for Inputs */}
-            <View style={styles.groupedList}>
+            <View style={[styles.groupedList, themeContext.isDark && styles.groupedListDark]}>
               <Animated.View style={[styles.inputRow, emailStyle]}>
                 <Typography variant="body" style={styles.inputLabel}>Email</Typography>
                 <TextInput
@@ -223,7 +229,7 @@ export default function LoginScreen() {
               </View>
             )}
 
-            <TouchableOpacity style={styles.forgotPasswordBtn} onPress={() => Alert.alert('Reset Password', 'Instructions have been sent to your email.')}>
+            <TouchableOpacity style={styles.forgotPasswordBtn} onPress={() => Alert.alert('Reset Password', 'Instructions have been sent to your email.')} activeOpacity={0.7}>
               <Typography variant="ui" color={themeContext.colors.plum}>Forgot password?</Typography>
             </TouchableOpacity>
 
@@ -235,8 +241,10 @@ export default function LoginScreen() {
                 disabled={loading}
                 loading={loading}
                 style={styles.actionBtn}
+                icon={<ArrowRight color="#FFF" size={20} />}
+                iconPosition="right"
               >
-                Log In
+                Continue
               </Button>
 
               <Button
@@ -245,8 +253,8 @@ export default function LoginScreen() {
                 onPress={handleAnonymousLogin}
                 disabled={loading}
                 loading={loading}
-                style={styles.actionBtn}
-                icon={<Ghost color={themeContext.colors.plum} size={20} />}
+                style={styles.actionBtnOutline}
+                icon={<Ghost color={themeContext.isDark ? '#FFF' : themeContext.colors.text.primary} size={20} />}
               >
                 Continue Anonymously
               </Button>
@@ -281,27 +289,47 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: 40,
   },
   backButton: { 
-    flexDirection: 'row',
+    width: 44,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  backButtonIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: -8,
   },
   formContainer: { 
     flex: 1,
   },
   titleContainer: { 
-    marginBottom: 32,
+    marginBottom: 40,
     alignItems: 'flex-start',
   },
   groupedList: {
-    backgroundColor: theme.isDark ? '#1C1C1E' : '#FFFFFF',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  groupedListDark: {
+    backgroundColor: '#1C1C1E',
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    elevation: 4,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    height: 56,
+    paddingHorizontal: 20,
+    height: 60,
   },
   inputLabel: {
     width: 90,
@@ -335,13 +363,22 @@ const createStyles = (theme: any) => StyleSheet.create({
   forgotPasswordBtn: { 
     alignSelf: 'center',
     marginTop: 24,
-    marginBottom: 32,
+    marginBottom: 36,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
   },
   actionsContainer: {
-    gap: 16,
+    gap: 12,
   },
   actionBtn: {
-    borderRadius: 14,
+    borderRadius: 16,
+    height: 56,
+  },
+  actionBtnOutline: {
+    borderRadius: 16,
+    height: 56,
+    borderWidth: 1,
+    borderColor: theme.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
   },
   signUpContainer: { 
     marginTop: 32, 

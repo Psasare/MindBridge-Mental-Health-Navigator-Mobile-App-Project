@@ -171,7 +171,7 @@ const ProgressRings = ({ completed, total, theme, styles, t }: any) => {
       </View>
       <View style={{ marginRight: 4 }}>
         <Text style={[styles.ringsCount, { color: theme.colors.text.primary }]}>{completed}/{total}</Text>
-        <Text style={[styles.ringsLabel, { color: theme.colors.text.secondary }]}>{t('streak')}</Text>
+        <Text style={[styles.ringsLabel, { color: theme.colors.text.secondary }]}>Goals</Text>
       </View>
     </View>
   );
