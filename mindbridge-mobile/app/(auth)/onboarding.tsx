@@ -454,7 +454,7 @@ export default function OnboardingScreen() {
                 Agree and Continue
               </Button>
               
-              <TouchableOpacity onPress={() => router.back()} style={{ marginBottom: 20, alignSelf: 'center' }} activeOpacity={0.6}>
+              <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={{ marginBottom: 20, alignSelf: 'center' }} activeOpacity={0.6}>
                 <Typography variant="bodyBold" color={themeContext.colors.text.tertiary} style={styles.exitText}>Decline and Exit</Typography>
               </TouchableOpacity>
             </ScrollView>

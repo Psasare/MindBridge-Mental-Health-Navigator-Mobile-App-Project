@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ScrollView, Modal, Platform } from 'react-native';
 import { useTheme } from '../src/context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowRight, ChevronRight, Footprints, User } from 'lucide-react-native';
+import { ArrowRight, ChevronRight, Footprints, User, Compass } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Pedometer } from 'expo-sensors';
 import Svg, { Circle } from 'react-native-svg';
@@ -187,7 +187,13 @@ export default function ActivityScreen() {
           <Text style={styles.headerTitle}>Summary</Text>
           <Text style={styles.headerDate}>{formattedDate}</Text>
         </View>
-        <TouchableOpacity style={styles.profileBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.profileBtn} onPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.replace('/(tabs)/explore');
+          }
+        }}>
           <View style={styles.profileImgPlaceholder}>
             <User color="#FFF" size={20} />
           </View>
@@ -325,6 +331,23 @@ export default function ActivityScreen() {
             </View>
           </Animated.View>
         </View>
+
+        {/* Mindful Movement Section */}
+        <Animated.View entering={FadeInUp.delay(550).duration(800)} style={styles.cardLarge}>
+          <View style={styles.cardSmallHeader}>
+             <Text style={styles.cardHeader}>Mindful Movement</Text>
+          </View>
+          <Text style={[styles.cardSmallSub, { marginBottom: 16 }]}>Physical spatial grounding can help center your mind when you feel disconnected.</Text>
+          
+          <TouchableOpacity 
+            style={[styles.consentBtnPrimary, { backgroundColor: '#F59E0B20', flexDirection: 'row', justifyContent: 'center', gap: 10, paddingVertical: 18 }]}
+            onPress={() => router.push('/compass')}
+            activeOpacity={0.8}
+          >
+            <Compass color="#F59E0B" size={20} />
+            <Text style={[styles.consentBtnPrimaryText, { color: '#F59E0B' }]}>Find North Sensory Exercise</Text>
+          </TouchableOpacity>
+        </Animated.View>
 
         {(!permissionGranted || !isAvailable) && (
           <Animated.View entering={FadeInUp.delay(600).duration(800)}>

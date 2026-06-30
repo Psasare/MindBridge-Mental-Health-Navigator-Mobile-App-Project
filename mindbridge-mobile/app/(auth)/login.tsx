@@ -158,7 +158,7 @@ export default function LoginScreen() {
           {/* Header */}
           <Animated.View entering={FadeIn.duration(800)} style={styles.header}>
             <TouchableOpacity 
-              onPress={() => router.back()} 
+              onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} 
               style={styles.backButton}
               activeOpacity={0.7}
             >

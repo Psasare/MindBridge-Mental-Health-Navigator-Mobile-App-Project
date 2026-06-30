@@ -163,7 +163,7 @@ export default function CompassScreen() {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/(tabs)/explore'); } }} style={[styles.closeBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
           <X color={theme.colors.text.primary} size={24} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text.primary }]}>Physical Grounding</Text>
@@ -180,7 +180,7 @@ export default function CompassScreen() {
             </Text>
             <TouchableOpacity 
               style={[styles.btn, { backgroundColor: theme.colors.plum }]}
-              onPress={() => router.back()}
+              onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/(tabs)/explore'); } }}
             >
               <Text style={styles.btnText}>Return to Tools</Text>
             </TouchableOpacity>
