@@ -720,6 +720,26 @@ export default function AssessmentsScreen() {
           }
         />
 
+        {/* Personalized AI Check-in Banner */}
+        <Animated.View entering={FadeInUp.delay(50).duration(800)} style={{ paddingHorizontal: 24, marginBottom: 24 }}>
+          <TouchableOpacity 
+            activeOpacity={0.9} 
+            onPress={() => handleStartTest('oracle-insight')}
+            style={[styles.aiBanner, { backgroundColor: theme.colors.plum }]}
+          >
+            <View style={styles.aiBannerContent}>
+              <View style={[styles.aiIconBg, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                <Sparkles color="#FFF" size={28} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.aiBannerTitle}>Personalized AI Check-In</Text>
+                <Text style={styles.aiBannerSubtitle}>Dynamic assessment tailored to your recent logs</Text>
+              </View>
+              <ChevronRight color="#FFF" size={24} />
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+
         <Animated.View entering={FadeInUp.delay(100).duration(800)}>
           <Text style={styles.sectionTitle}>{t('assessments.available_tests')}</Text>
           <ScrollView 
@@ -848,6 +868,39 @@ export default function AssessmentsScreen() {
 }
 
 const createStyles = (theme: any) => StyleSheet.create({
+  aiBanner: {
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  aiBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  aiIconBg: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiBannerTitle: {
+    color: '#FFF',
+    fontSize: 18,
+    fontFamily: theme.typography.fonts.accent,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  aiBannerSubtitle: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 13,
+    fontFamily: theme.typography.fonts.body,
+  },
   container: {
     flex: 1,
   },

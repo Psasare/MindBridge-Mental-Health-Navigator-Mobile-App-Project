@@ -91,15 +91,15 @@ Use the user's profile data to make the conversation feel hyper-personal:
 - Acknowledge their PROGRESS: If they have a high streak or completed their daily goals, praise them! If they missed goals, normalize it and encourage them gently without pressure.
 
 ═══════════════════════════════════════════
-RESPONSE FORMAT & RHYTHM
+RESPONSE FORMAT & RHYTHM (STRICT RULES)
 ═══════════════════════════════════════════
-- CRITICAL RULE: Keep responses EXTREMELY short and concise. Aim for a maximum of 1 to 2 sentences per reply.
-- NEVER provide exhaustive explanations, long lists, or essays. Do NOT use bullet points or numbered lists unless explicitly requested.
-- If the user needs more information, provide the absolute minimum and let them ask follow-up questions to get more details.
-- For heavy emotional moments, lead with a short validation, then a gentle exploration, but keep it brief (under 2 sentences).
-- Avoid excessive filler words ("certainly!", "of course!", "absolutely!") — sound natural and direct.
-- End many responses with a single, powerful open-ended question to keep the dialogue flowing.
-- Use "we" language when appropriate: "Let's try to understand this together..."
+- CRITICAL: Your responses MUST be EXTREMELY short, concise, and conversational. 
+- STRICT LIMIT: MAXIMUM of 1 to 2 short sentences per reply. NO EXCEPTIONS.
+- NEVER use bullet points, numbered lists, or long paragraphs unless the user explicitly asks for a list.
+- Do NOT provide exhaustive advice. Pick ONE insight or ONE small suggestion and stop.
+- If the person needs more information, they will ask. Give them space to query you.
+- Never use filler phrases like "I understand", "That sounds hard", "Of course", "I'm here for you". Just get straight to the point with empathy.
+- Often end with a single, short question to keep dialogue flowing.
 
 ═══════════════════════════════════════════
 SAFETY PROTOCOL
@@ -164,7 +164,11 @@ export const generateOracleResponse = async (userMessage: string, context: any, 
     const model = genAI.getGenerativeModel({ 
       model: modelName,
       systemInstruction: SYSTEM_PROMPT,
-      tools: tools as any
+      tools: tools as any,
+      generationConfig: {
+        maxOutputTokens: 100, // Hard limit to force brevity and avoid long lists
+        temperature: 0.7,
+      }
     });
 
       // Build a rich, structured user profile context block
@@ -215,41 +219,15 @@ export const generateOracleResponse = async (userMessage: string, context: any, 
       const primaryState = (context.currentState?.primaryState || '').toLowerCase();
       
       if (primaryState.includes('depression')) {
-        conditionInstruction = `For Depression:
-- Validate hopelessness (don't dismiss)
-- Celebrate small wins
-- Normalize low energy
-- Gently encourage small actions
-- Encourage professional help
-- Focus on hope without toxic positivity`;
+        conditionInstruction = `For Depression: Focus ONLY on validating hopelessness or celebrating a small win. Do NOT list multiple things. Keep it under 2 sentences.`;
       } else if (primaryState.includes('anxiety')) {
-        conditionInstruction = `For Anxiety:
-- Provide certainty when possible
-- Offer grounding techniques
-- Break problems into smaller parts
-- Validate physical symptoms
-- Breathing/calming techniques first
-- Then problem-solving
-- Reassurance (not false, but genuine)`;
+        conditionInstruction = `For Anxiety: Focus ONLY on offering a single grounding technique or providing certainty. Do NOT list multiple things. Keep it under 2 sentences.`;
       } else if (primaryState.includes('stress')) {
-        conditionInstruction = `For Stress:
-- Acknowledge overwhelm
-- Prioritize (not everything urgent)
-- Quick wins (immediate relief)
-- Time management support
-- Boundary-setting coaching
-- Perspective ("This semester will end")`;
+        conditionInstruction = `For Stress: Focus ONLY on acknowledging overwhelm and suggesting one quick win. Do NOT list multiple things. Keep it under 2 sentences.`;
       } else if (primaryState.includes('loneliness')) {
-        conditionInstruction = `For Loneliness:
-- Validate pain of isolation
-- Normalize loneliness in university
-- Reframe alone time positively
-- Focus on gradual social re-engagement`;
+        conditionInstruction = `For Loneliness: Focus ONLY on validating the pain of isolation gently. Do NOT list multiple things. Keep it under 2 sentences.`;
       } else if (primaryState.includes('academic_pressure')) {
-        conditionInstruction = `For Academic Pressure:
-- Focus on helping them take control (planning, breaking into chunks)
-- Normalize feeling overwhelmed by thesis/exams
-- Quick wins to regain control`;
+        conditionInstruction = `For Academic Pressure: Focus ONLY on helping them take control of one small chunk. Do NOT list multiple things. Keep it under 2 sentences.`;
       }
 
       const chat = model.startChat({
@@ -269,10 +247,11 @@ CURRENT REAL-TIME STATE (Analyzed from this exact moment):
   Identified Triggers: ${context.currentState?.triggers?.join(', ') || 'Unknown'}
   
   ADAPTATION INSTRUCTION: The system has detected this user is currently in a state of ${context.currentState?.severity || 'unknown'} ${context.currentState?.primaryState || 'distress'}.
-  - If severity is > 7, provide gentle, highly structured, step-by-step guidance. Do not overwhelm them. Strongly encourage them to seek campus counseling without being alarmist.
-  - If severity is < 5, provide validating support and a brief in-app tool suggestion.
+  - If severity is > 7, provide gentle, structured guidance.
+  - If severity is < 5, provide validating support.
+  CRITICAL: You MUST keep your response under 2 sentences total, no matter what.
 
-  CONDITION-SPECIFIC CONVERSATION STYLE (MUST FOLLOW):
+  CONDITION-SPECIFIC CONVERSATION STYLE:
   ${conditionInstruction}
 
 PROFILE:

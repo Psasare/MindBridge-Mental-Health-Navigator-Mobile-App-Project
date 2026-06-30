@@ -74,7 +74,8 @@ import {
 } from '../../src/components/TrackingComponents';
 import { VideoCheckInModal } from '../../src/components/VideoCheckInModal';
 import { StreakManager } from '../../src/utils/StreakManager';
-import { Sprout, Leaf, TreePine } from 'lucide-react-native';
+import { Sprout, Leaf, TreePine, PlayCircle } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 
 const { width } = Dimensions.get('window');
 const CHART_W = width - 96;
@@ -244,6 +245,7 @@ export default function WellnessTrackerScreen() {
   };
 
   const [aiInsight, setAiInsight] = useState<any>(null);
+  const [suggestedResources, setSuggestedResources] = useState<any[]>([]);
 
   const fetchData = async () => {
     try {
@@ -261,6 +263,9 @@ export default function WellnessTrackerScreen() {
       api.get('/ai/proactive-insights').then(res => {
         if (res.data?.gardenInsight) {
           setAiInsight(res.data.gardenInsight);
+        }
+        if (res.data?.suggestedResources) {
+          setSuggestedResources(res.data.suggestedResources);
         }
       }).catch(err => console.log('Failed to fetch proactive insights in garden'));
 
@@ -502,6 +507,7 @@ export default function WellnessTrackerScreen() {
                 key={m.value}
                 activeOpacity={0.8}
                 onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   setMood(m.value);
                   setTimeout(() => nextStep(), 200);
                 }}
@@ -581,7 +587,10 @@ export default function WellnessTrackerScreen() {
               <TouchableOpacity
                 key={e.label}
                 activeOpacity={0.8}
-                onPress={() => setSelectedEmotion(e.label)}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  setSelectedEmotion(e.label);
+                }}
                 style={[
                   styles.wheelSegment,
                   {
@@ -767,6 +776,26 @@ export default function WellnessTrackerScreen() {
           <Text style={[styles.streakCount, { color: theme.colors.text.primary }]}>{streak}</Text>
           <Text style={[styles.streakLabel, { color: theme.colors.text.secondary }]}>Day Streak</Text>
         </Animated.View>
+
+        {suggestedResources && suggestedResources.length > 0 && (
+          <Animated.View entering={FadeInUp.springify().damping(15).delay(300)} style={{ width: '100%', marginTop: 24 }}>
+            <Text style={{ color: theme.colors.text.secondary, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, fontFamily: theme.typography.fonts.accent, fontWeight: '700', marginBottom: 12 }}>
+              Recommended For You
+            </Text>
+            {suggestedResources.slice(0, 1).map((res, i) => (
+              <TouchableOpacity key={res.id || i} style={[styles.historyItem, { backgroundColor: theme.colors.surface, borderColor: theme.colors.plum + '30', borderWidth: 1 }]} onPress={() => router.push('/(tabs)/knowledge-hub')}>
+                <View style={[styles.moodIndicator, { backgroundColor: theme.colors.plum + '15' }]}>
+                  <PlayCircle color={theme.colors.plum} size={20} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.historyMood, { color: theme.colors.text.primary }]}>{res.title || 'Mindfulness Exercise'}</Text>
+                  <Text style={[styles.historyTime, { color: theme.colors.text.tertiary }]}>{res.category || 'General'} · Recommended by AI</Text>
+                </View>
+                <ArrowRight size={16} color={theme.colors.plum} />
+              </TouchableOpacity>
+            ))}
+          </Animated.View>
+        )}
 
         <Button
           variant="primary"
