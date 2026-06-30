@@ -224,7 +224,7 @@ export default function WelcomeScreen() {
 
           {/* Anonymous/Guest Option */}
           {activeSlide === SLIDES.length - 1 && (
-            <TouchableOpacity activeOpacity={0.7} 
+            <TouchableOpacity  
               style={[styles.outlineBtn, { borderColor: slide.accentColor }]}
               onPress={() => router.push('/(auth)/login?anonymous=true')}
               activeOpacity={0.8}
@@ -236,7 +236,7 @@ export default function WelcomeScreen() {
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(auth)/login')} activeOpacity={0.65} style={styles.signInRow}>
+          <TouchableOpacity  onPress={() => router.push('/(auth)/login')} activeOpacity={0.65} style={styles.signInRow}>
             <Text style={[styles.signInText, { color: C.textPrimary }]}>
               I already have an account{' '}
               <Text style={{ color: slide.accentColor, fontWeight: '700' }}>Sign In</Text>

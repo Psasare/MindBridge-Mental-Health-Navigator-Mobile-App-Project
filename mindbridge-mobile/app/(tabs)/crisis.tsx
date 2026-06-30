@@ -287,7 +287,7 @@ export default function CrisisSupportScreen() {
               )}
             </View>
 
-            <TouchableOpacity activeOpacity={0.7} 
+            <TouchableOpacity  
               style={styles.primaryCallBtn}
               onPress={() => handleCall(institution.number)}
               activeOpacity={0.8}
@@ -297,7 +297,7 @@ export default function CrisisSupportScreen() {
             </TouchableOpacity>
 
             {institution.secondaryNumber && (
-              <TouchableOpacity activeOpacity={0.7} 
+              <TouchableOpacity  
                 style={[styles.primaryCallBtn, { backgroundColor: themeContext.colors.accents.powderBlue, marginTop: 8 }]}
                 onPress={() => handleCall(institution.secondaryNumber)}
                 activeOpacity={0.8}
@@ -315,7 +315,7 @@ export default function CrisisSupportScreen() {
           
           {NEARBY_SERVICES.map((service, index) => (
             <Animated.View key={service.id} entering={FadeInUp.delay(400 + (index * 100)).duration(500)}>
-              <TouchableOpacity activeOpacity={0.7} 
+              <TouchableOpacity  
                 style={styles.serviceCard}
                 onPress={() => handleMap(service.query)}
                 activeOpacity={0.8}
@@ -336,7 +336,7 @@ export default function CrisisSupportScreen() {
         <Animated.View entering={FadeInUp.delay(700).duration(500)} style={styles.section}>
           <Text style={[styles.sectionTitle, { color: themeContext.colors.semantic.danger }]}>National Crisis Fallbacks</Text>
           
-          <TouchableOpacity activeOpacity={0.7} 
+          <TouchableOpacity  
             style={[styles.fallbackCard, { backgroundColor: themeContext.colors.semantic.danger, borderColor: themeContext.colors.semantic.danger }]}
             onPress={() => handleCall('112')}
             activeOpacity={0.8}

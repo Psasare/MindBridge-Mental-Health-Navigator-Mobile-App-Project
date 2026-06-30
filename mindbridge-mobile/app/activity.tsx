@@ -259,7 +259,7 @@ export default function ActivityScreen() {
         <Animated.View entering={FadeInUp.delay(100).duration(800)} style={styles.cardLarge}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.cardHeader}>Today's Progress</Text>
-            <TouchableOpacity activeOpacity={0.7} onPress={() => setShowGoalModal(true)} style={styles.editBtn} activeOpacity={0.7}>
+            <TouchableOpacity  onPress={() => setShowGoalModal(true)} style={styles.editBtn} activeOpacity={0.7}>
               <Text style={styles.editBtnText}>Edit Goals</Text>
             </TouchableOpacity>
           </View>
@@ -364,7 +364,7 @@ export default function ActivityScreen() {
           <View style={styles.goalCard}>
             <View style={styles.modalHeaderRow}>
               <Text style={styles.modalTitle}>Set Your Goals</Text>
-              <TouchableOpacity activeOpacity={0.7} onPress={() => setShowGoalModal(false)} style={styles.closeBtn} activeOpacity={0.7}>
+              <TouchableOpacity  onPress={() => setShowGoalModal(false)} style={styles.closeBtn} activeOpacity={0.7}>
                 <X color={theme.colors.text.secondary} size={24} />
               </TouchableOpacity>
             </View>
@@ -407,7 +407,7 @@ export default function ActivityScreen() {
               <Text style={styles.saveBtnText}>Allow Tracking</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity activeOpacity={0.7} onPress={() => setShowConsentModal(false)} style={[styles.saveBtn, { backgroundColor: 'transparent' }]} activeOpacity={0.7}>
+            <TouchableOpacity  onPress={() => setShowConsentModal(false)} style={[styles.saveBtn, { backgroundColor: 'transparent' }]} activeOpacity={0.7}>
               <Text style={[styles.saveBtnText, { color: theme.colors.text.secondary }]}>Not Now</Text>
             </TouchableOpacity>
           </View>

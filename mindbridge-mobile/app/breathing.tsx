@@ -189,7 +189,7 @@ export default function BreathingScreen() {
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity activeOpacity={0.7} onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.85}>
+        <TouchableOpacity  onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.85}>
           <X color={theme.colors.text.primary} size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Breathing Space</Text>
@@ -256,7 +256,7 @@ export default function BreathingScreen() {
                 {/* Duration Picker Pills */}
                 <View style={styles.pickerRow}>
                   {[60, 120, 300].map((durationSecs) => (
-                    <TouchableOpacity activeOpacity={0.7}
+                    <TouchableOpacity 
                       key={durationSecs}
                       style={[
                         styles.pickerPill,

@@ -135,7 +135,7 @@ const InstitutionPicker = ({ value, onSelect, error, theme }: { value: string; o
     <View>
       <View style={styles.inputRow}>
         <Typography variant="body" style={styles.inputLabel}>Institution</Typography>
-        <TouchableOpacity activeOpacity={0.7}
+        <TouchableOpacity 
           style={styles.pickerTrigger}
           onPress={() => setVisible(true)}
           activeOpacity={0.7}
@@ -348,7 +348,7 @@ export default function RegisterScreen() {
         >
           {/* Header */}
           <Animated.View entering={FadeIn.duration(800)} style={styles.header}>
-            <TouchableOpacity activeOpacity={0.7} 
+            <TouchableOpacity  
               onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} 
               style={styles.backButton}
               activeOpacity={0.7}

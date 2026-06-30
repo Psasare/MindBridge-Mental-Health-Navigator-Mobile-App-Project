@@ -454,7 +454,7 @@ export default function OnboardingScreen() {
                 Agree and Continue
               </Button>
               
-              <TouchableOpacity activeOpacity={0.7} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={{ marginBottom: 20, alignSelf: 'center' }} activeOpacity={0.6}>
+              <TouchableOpacity  onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={{ marginBottom: 20, alignSelf: 'center' }} activeOpacity={0.6}>
                 <Typography variant="bodyBold" color={themeContext.colors.text.tertiary} style={styles.exitText}>Decline and Exit</Typography>
               </TouchableOpacity>
             </ScrollView>
@@ -511,7 +511,7 @@ export default function OnboardingScreen() {
                   : answers[step.id] === opt.value;
 
                 return (
-                  <TouchableOpacity activeOpacity={0.7}
+                  <TouchableOpacity 
                     key={opt.value}
                     style={[
                       styles.optionBtn,

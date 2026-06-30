@@ -107,7 +107,7 @@ const MessageItem = ({ item, theme, router, t }: any) => {
                 <Text style={msgStyles.crisisLabel}>IMMEDIATE SUPPORT AVAILABLE</Text>
               </View>
               <Text style={[msgStyles.textAi, { color: theme.colors.text.primary }]}>{item.text}</Text>
-              <TouchableOpacity activeOpacity={0.7}
+              <TouchableOpacity 
                 style={msgStyles.crisisBtn}
                 onPress={() => router.push('/(tabs)/crisis')}
                 activeOpacity={0.85}
@@ -613,7 +613,7 @@ export default function AIGuideScreen() {
                         <View style={S.groupLabelRow}>
                           <Text style={[S.groupLabelText, { color: theme.colors.plum }]}>{category}</Text>
                           <View style={[S.groupLabelLine, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
-                          <TouchableOpacity activeOpacity={0.7} 
+                          <TouchableOpacity  
                             onPress={() => handleDeleteGroup(category, sortedItems.map(item => item.id).filter(id => !id.toString().startsWith('hist-')))} 
                             style={S.groupDeleteBtn}
                             activeOpacity={0.7}

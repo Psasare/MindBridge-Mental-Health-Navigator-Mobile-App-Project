@@ -197,7 +197,7 @@ export default function SettingsScreen() {
   );
 
   const ThemeOption = ({ optionMode, icon: Icon, label }: any) => (
-    <TouchableOpacity activeOpacity={0.7} 
+    <TouchableOpacity  
       style={[styles.themeOption, mode === optionMode && styles.themeOptionActive]}
       onPress={() => setMode(optionMode)}
       activeOpacity={0.8}
@@ -313,7 +313,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* ── Logout Section ── */}
-        <TouchableOpacity activeOpacity={0.7} 
+        <TouchableOpacity 
           style={styles.logoutBtn} 
           onPress={() => {
             Alert.alert(

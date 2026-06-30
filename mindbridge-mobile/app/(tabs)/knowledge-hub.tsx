@@ -1026,7 +1026,7 @@ export default function ResourcesScreen() {
                 <Text style={[styles.featuredBadgeText, { color: theme.colors.plum }]}>Based on your stress profile</Text>
               </View>
             </View>
-            <TouchableOpacity activeOpacity={0.7}
+            <TouchableOpacity 
               style={[styles.techCard, { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}
               onPress={() => {
                 if (recommendedTech.route) {
@@ -1221,7 +1221,7 @@ export default function ResourcesScreen() {
               const IconComponent = article.icon;
               return (
                 <Animated.View key={article.id} entering={FadeInUp.delay(300 + i * 50).duration(450)}>
-                  <TouchableOpacity activeOpacity={0.7}
+                  <TouchableOpacity 
                     style={[styles.articleCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', borderWidth: 1 }]}
                     onPress={() => openArticle(article)}
                     activeOpacity={0.8}
@@ -1312,7 +1312,7 @@ export default function ResourcesScreen() {
                 const IconComponent = pod.icon;
                 return (
                   <Animated.View key={pod.id} entering={FadeInUp.delay(400 + i * 50).duration(450)}>
-                    <TouchableOpacity activeOpacity={0.7}
+                    <TouchableOpacity 
                       style={[styles.articleCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', borderWidth: 1 }]}
                       onPress={() => openInBrowser(pod.url)}
                       activeOpacity={0.8}
@@ -1352,7 +1352,7 @@ export default function ResourcesScreen() {
                 const IconComponent = vid.icon;
                 return (
                   <Animated.View key={vid.id} entering={FadeInUp.delay(350 + i * 50).duration(450)}>
-                    <TouchableOpacity activeOpacity={0.7}
+                    <TouchableOpacity 
                       style={[styles.videoCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}
                       onPress={() => openInBrowser(vid.url)}
                       activeOpacity={0.82}
@@ -1401,7 +1401,7 @@ export default function ResourcesScreen() {
               const IconComponent = r.icon;
               return (
                 <Animated.View key={r.id} entering={FadeInUp.delay(400 + i * 60).duration(450)}>
-                  <TouchableOpacity activeOpacity={0.7}
+                  <TouchableOpacity 
                     style={[styles.crisisCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}
                     onPress={() => {
                       const { Linking } = require('react-native');
