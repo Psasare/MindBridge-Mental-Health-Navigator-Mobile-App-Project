@@ -8,7 +8,7 @@ const P = {
   dreamy:      '#F4F0EA', 
   amberSmoke:  '#F2E0D0',
   frost:       '#E4F0F6',
-  blueMirage:  '#6E88B0', // Restored original MindBridge Plum
+  blueMirage:  '#4A90E2', // Uplifting, happy sky blue (replaces depressing grey-blue)
   matchaMist:  '#C2D8C4',
   mossVelvet:  '#385144', // Restored original Sage
   ocean:       '#006989',

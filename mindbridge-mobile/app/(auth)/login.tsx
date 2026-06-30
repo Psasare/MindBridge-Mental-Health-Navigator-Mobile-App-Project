@@ -236,7 +236,6 @@ export default function LoginScreen() {
             <View style={styles.actionsContainer}>
               <Button
                 variant="primary"
-                color="#6A9C47"
                 size="large"
                 onPress={handleLogin}
                 disabled={loading}

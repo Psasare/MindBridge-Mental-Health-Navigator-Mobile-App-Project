@@ -65,7 +65,7 @@ export default function WelcomeScreen() {
       headlinePostLine1: ',',
       headlinePostLine2: 'Understood.',
       body: 'Private, evidence-based support designed for every Ghanaian student.',
-      accentColor: C.brandGreen,
+      accentColor: theme.colors.plum, // Consistent with app
       Icon: Brain,
       isLogo: true,
     },
@@ -77,7 +77,7 @@ export default function WelcomeScreen() {
       headlinePostLine1: '',
       headlinePostLine2: 'On Your Terms.',
       body: 'Access personalized check-ins, mood tracking, and coping tools at any time.',
-      accentColor: C.brandGreen,
+      accentColor: theme.colors.plum, // Consistent with app
       Icon: Bot,
       isLogo: false,
     },
@@ -89,7 +89,7 @@ export default function WelcomeScreen() {
       headlinePostLine1: ',',
       headlinePostLine2: 'Only Yours.',
       body: 'Your data stays private. Talk openly, without fear or judgment.',
-      accentColor: C.brandGreen,
+      accentColor: theme.colors.plum, // Consistent with app
       Icon: Lock,
       isLogo: false,
     },
@@ -141,11 +141,11 @@ export default function WelcomeScreen() {
                       opacity: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [0.15, 0.05] })
                     }]} />
 
-                    <View style={[styles.iconCircle, s.isLogo && { backgroundColor: 'transparent' }]}>
+                    <View style={[styles.iconCircle, { backgroundColor: s.accentColor + '15' }]}>
                       {s.isLogo ? (
                         <Image 
                           source={require('../../assets/images/logo.png')} 
-                          style={{ width: 140, height: 140, borderRadius: 70 }} 
+                          style={{ width: 100, height: 100, borderRadius: 50, overflow: 'hidden' }} 
                           resizeMode="cover" 
                         />
                       ) : (
