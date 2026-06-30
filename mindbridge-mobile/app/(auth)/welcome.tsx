@@ -10,6 +10,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   StatusBar,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -43,30 +44,36 @@ export default function WelcomeScreen() {
       overline: 'MENTAL HEALTH · GHANA',
       headlinePre: 'Your ',
       headlineHighlight: 'Mind',
-      headlinePost: ',\nUnderstood.',
+      headlinePostLine1: ',',
+      headlinePostLine2: 'Understood.',
       body: 'Private, evidence-based support designed for every Ghanaian student.',
       accentColor: C.brandGreen,
       Icon: Brain,
+      isLogo: true,
     },
     {
       key: 'guide',
       overline: 'AI-POWERED CARE',
       headlinePre: '',
       headlineHighlight: 'Guidance',
-      headlinePost: '\nOn Your Terms.',
+      headlinePostLine1: '',
+      headlinePostLine2: 'On Your Terms.',
       body: 'Access personalized check-ins, mood tracking, and coping tools at any time.',
       accentColor: C.brandGreen,
       Icon: Compass,
+      isLogo: false,
     },
     {
       key: 'safe',
       overline: 'FULLY CONFIDENTIAL',
       headlinePre: 'A ',
       headlineHighlight: 'Safe Space',
-      headlinePost: ',\nOnly Yours.',
+      headlinePostLine1: ',',
+      headlinePostLine2: 'Only Yours.',
       body: 'Your data stays private. Talk openly, without fear or judgment.',
       accentColor: C.brandGreen,
       Icon: Lock,
+      isLogo: false,
     },
   ];
 
@@ -104,8 +111,28 @@ export default function WelcomeScreen() {
               return (
                 <View key={s.key} style={styles.slide}>
                   <View style={styles.illustrationContainer}>
-                    <View style={styles.iconCircle}>
-                      <IconComp color={s.accentColor} size={48} strokeWidth={1.5} />
+                    {/* Animated Rings */}
+                    <Animated.View style={[styles.ring, styles.ring1, {
+                      borderColor: s.accentColor,
+                      transform: [{ scale: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.1] }) }],
+                      opacity: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.1] })
+                    }]} />
+                    <Animated.View style={[styles.ring, styles.ring2, {
+                      borderColor: s.accentColor,
+                      transform: [{ scale: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.25] }) }],
+                      opacity: pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [0.15, 0.05] })
+                    }]} />
+
+                    <View style={[styles.iconCircle, s.isLogo && { backgroundColor: 'transparent' }]}>
+                      {s.isLogo ? (
+                        <Image 
+                          source={require('../../assets/images/logo.png')} 
+                          style={{ width: 140, height: 140, borderRadius: 70 }} 
+                          resizeMode="cover" 
+                        />
+                      ) : (
+                        <IconComp color={s.accentColor} size={48} strokeWidth={1.5} />
+                      )}
                     </View>
                   </View>
                   
@@ -116,24 +143,32 @@ export default function WelcomeScreen() {
                     
                     {/* Dribbble Highlight Headline */}
                     <View style={styles.headlineWrapper}>
-                      {s.headlinePre ? (
-                        <Text style={[styles.headlineText, { color: C.textPrimary }]}>
-                          {s.headlinePre}
+                      <View style={styles.headlineRow}>
+                        {s.headlinePre ? (
+                          <Text style={[styles.headlineText, { color: C.textPrimary }]}>
+                            {s.headlinePre}
+                          </Text>
+                        ) : null}
+                        
+                        <View style={[styles.highlightBox, { backgroundColor: C.brandGreen }]}>
+                          <Text style={styles.highlightText}>
+                            {s.headlineHighlight}
+                          </Text>
+                        </View>
+
+                        {s.headlinePostLine1 ? (
+                          <Text style={[styles.headlineText, { color: C.textPrimary }]}>
+                            {s.headlinePostLine1}
+                          </Text>
+                        ) : null}
+                      </View>
+                      
+                      {s.headlinePostLine2 ? (
+                        <Text style={[styles.headlineText, { color: C.textPrimary, marginTop: 4 }]}>
+                          {s.headlinePostLine2}
                         </Text>
                       ) : null}
-                      
-                      <View style={[styles.highlightBox, { backgroundColor: C.brandGreen }]}>
-                        <Text style={styles.highlightText}>
-                          {s.headlineHighlight}
-                        </Text>
-                      </View>
                     </View>
-                    
-                    {s.headlinePost ? (
-                      <Text style={[styles.headlineText, { color: C.textPrimary }]}>
-                        {s.headlinePost}
-                      </Text>
-                    ) : null}
 
                     <Text style={[styles.bodyText, { color: C.textSecondary }]}>
                       {s.body}
@@ -226,11 +261,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headlineWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 0,
+  },
+  headlineRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    marginBottom: 0,
   },
   headlineText: {
     fontSize: 40,
