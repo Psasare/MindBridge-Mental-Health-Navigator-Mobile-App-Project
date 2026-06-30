@@ -8,11 +8,16 @@ export const recommendResources = async (userId: string, primaryState: string, s
 
   // 1. Get all resources matching condition
   // In our DB, condition is mapped to 'category' (e.g., 'anxiety', 'depression')
-  const matchingResources = await resourceClient.findMany({
+  let matchingResources = await resourceClient.findMany({
     where: {
-      category: primaryState.toLowerCase(),
+      category: { contains: primaryState.toLowerCase(), mode: 'insensitive' },
     }
   });
+
+  // If no exact category match, fetch all to allow the ranking algorithm to find the best general fit
+  if (matchingResources.length === 0) {
+    matchingResources = await resourceClient.findMany();
+  }
 
   // 2. Get user's effectiveness history
   const userHistory = await historyClient.findMany({

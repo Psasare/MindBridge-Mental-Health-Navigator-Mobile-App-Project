@@ -35,7 +35,8 @@ import {
   ShieldAlert,
   Award,
   Compass,
-  Sparkles
+  Sparkles,
+  PlayCircle
 } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
@@ -653,20 +654,47 @@ export default function AssessmentsScreen() {
             {personalizedFeedback.insight} {personalizedFeedback.recommendation}
           </Text>
 
-          <TouchableOpacity
-            style={[
-              styles.actionBtn, 
-              { backgroundColor: isSevere ? theme.colors.semantic.danger : getActiveColor() }
-            ]}
-            onPress={() => {
-              setActiveTestId(null);
-              router.push(isSevere ? '/(tabs)/crisis' : '/(tabs)/knowledge-hub');
-            }}
-          >
-            <Text style={styles.actionBtnText}>
-              {isSevere ? 'Connect with Support' : 'Explore Resources'}
-            </Text>
-          </TouchableOpacity>
+          {personalizedFeedback.suggestedResources && personalizedFeedback.suggestedResources.length > 0 ? (
+            <View style={{ width: '100%' }}>
+              <Text style={{ color: theme.colors.text.secondary, fontSize: 13, textTransform: 'uppercase', letterSpacing: 1, fontFamily: theme.typography.fonts.accent, fontWeight: '700', marginBottom: 12 }}>
+                Recommended For You
+              </Text>
+              {personalizedFeedback.suggestedResources.map((res: any, i: number) => (
+                <TouchableOpacity 
+                  key={res.id || i} 
+                  style={[styles.resultItem, { backgroundColor: theme.colors.background, borderColor: theme.colors.text.tertiary + '30', borderWidth: 1, padding: 12, marginBottom: 8 }]} 
+                  onPress={() => {
+                    setActiveTestId(null);
+                    router.push('/(tabs)/knowledge-hub');
+                  }}
+                >
+                  <View style={[styles.resultIconWrap, { backgroundColor: getActiveColor() + '15' }]}>
+                    <PlayCircle color={getActiveColor()} size={20} />
+                  </View>
+                  <View style={styles.resultInfo}>
+                    <Text style={[styles.resultTest, { color: theme.colors.text.primary, fontSize: 14 }]}>{res.title}</Text>
+                    <Text style={{ color: theme.colors.text.tertiary, fontSize: 12 }}>{res.category}</Text>
+                  </View>
+                  <ChevronRight color={getActiveColor()} size={20} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[
+                styles.actionBtn, 
+                { backgroundColor: isSevere ? theme.colors.semantic.danger : getActiveColor() }
+              ]}
+              onPress={() => {
+                setActiveTestId(null);
+                router.push(isSevere ? '/(tabs)/crisis' : '/(tabs)/knowledge-hub');
+              }}
+            >
+              <Text style={styles.actionBtnText}>
+                {isSevere ? 'Connect with Support' : 'Explore Resources'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Done Button (Hidden if strict CSSRS positive) */}

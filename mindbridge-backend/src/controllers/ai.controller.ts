@@ -435,7 +435,23 @@ export const submitPersonalizedAssessment = async (req: Request, res: Response) 
     const testType = type || 'general';
     const onboarding = await prisma.onboarding.findUnique({ where: { userId } });
     
-    const evaluation = await evaluatePersonalizedAssessment(userId, { onboarding }, answers, testType);
+    const evaluation: any = await evaluatePersonalizedAssessment(userId, { onboarding }, answers, testType);
+    
+    // Fetch suggested resources based on evaluation
+    let severityScore = 4;
+    if (evaluation.severity === 'High Risk') severityScore = 8;
+    else if (evaluation.severity === 'Moderate Risk') severityScore = 6;
+
+    // Use testType or a default condition to find resources
+    let conditionStr = 'stress';
+    if (testType === 'phq9') conditionStr = 'depression';
+    if (testType === 'gad7') conditionStr = 'anxiety';
+    if (testType === 'burnout') conditionStr = 'burnout';
+    if (testType === 'cssrs') conditionStr = 'crisis';
+    
+    const resources = await recommendResources(userId, conditionStr, severityScore);
+    evaluation.suggestedResources = resources;
+
     res.json(evaluation);
   } catch (error) {
     console.error('Error submitting personalized assessment:', error);
