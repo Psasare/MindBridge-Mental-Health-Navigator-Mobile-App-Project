@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ghost, ShieldCheck, Brain, Compass, Lock } from 'lucide-react-native';
+import { Ghost, ShieldCheck, Brain, Bot, Lock } from 'lucide-react-native';
 
 import { useTheme } from '../../src/context/ThemeContext';
 
@@ -27,6 +27,24 @@ export default function WelcomeScreen() {
   
   const scrollRef = useRef<ScrollView>(null);
   const [activeSlide, setActiveSlide] = useState(0);
+  const pulseAnim = useRef(new Animated.Value(0)).current;
+
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0,
+          duration: 3000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [pulseAnim]);
 
   // The custom Dribbble Palette for the Welcome Screen
   const C = {
@@ -60,7 +78,7 @@ export default function WelcomeScreen() {
       headlinePostLine2: 'On Your Terms.',
       body: 'Access personalized check-ins, mood tracking, and coping tools at any time.',
       accentColor: C.brandGreen,
-      Icon: Compass,
+      Icon: Sparkles,
       isLogo: false,
     },
     {
@@ -243,7 +261,20 @@ const styles = StyleSheet.create({
   layout: { flex: 1, justifyContent: 'space-between' },
   slideArea: { flex: 1 },
   slide: { width, flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
-  illustrationContainer: { marginBottom: 30, alignItems: 'center' },
+  illustrationContainer: { marginBottom: 30, alignItems: 'center', justifyContent: 'center' },
+  ring: {
+    position: 'absolute',
+    borderRadius: 999,
+    borderWidth: 1.5,
+  },
+  ring1: {
+    width: 180,
+    height: 180,
+  },
+  ring2: {
+    width: 220,
+    height: 220,
+  },
   iconCircle: {
     width: 140,
     height: 140,
