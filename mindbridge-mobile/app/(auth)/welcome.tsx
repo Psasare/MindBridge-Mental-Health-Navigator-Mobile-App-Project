@@ -13,16 +13,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ghost, ShieldCheck } from 'lucide-react-native';
+import { Ghost, ShieldCheck, Brain, Compass, Lock } from 'lucide-react-native';
 
 import { useTheme } from '../../src/context/ThemeContext';
-import { Button } from '../../src/components/Button';
-import { Typography } from '../../src/components/Typography';
-
-// SVGs
-import { MindIllustration } from '../../src/components/illustrations/MindIllustration';
-import { GuideIllustration } from '../../src/components/illustrations/GuideIllustration';
-import { SafeIllustration } from '../../src/components/illustrations/SafeIllustration';
 
 const { width, height } = Dimensions.get('window');
 
@@ -53,7 +46,7 @@ export default function WelcomeScreen() {
       headlinePost: ',\nUnderstood.',
       body: 'Private, evidence-based support designed for every Ghanaian student.',
       accentColor: C.brandGreen,
-      IllustrationComponent: MindIllustration,
+      Icon: Brain,
     },
     {
       key: 'guide',
@@ -63,7 +56,7 @@ export default function WelcomeScreen() {
       headlinePost: '\nOn Your Terms.',
       body: 'Access personalized check-ins, mood tracking, and coping tools at any time.',
       accentColor: C.brandGreen,
-      IllustrationComponent: GuideIllustration,
+      Icon: Compass,
     },
     {
       key: 'safe',
@@ -73,7 +66,7 @@ export default function WelcomeScreen() {
       headlinePost: ',\nOnly Yours.',
       body: 'Your data stays private. Talk openly, without fear or judgment.',
       accentColor: C.brandGreen,
-      IllustrationComponent: SafeIllustration,
+      Icon: Lock,
     },
   ];
 
@@ -107,12 +100,13 @@ export default function WelcomeScreen() {
             scrollEventThrottle={16}
           >
             {SLIDES.map((s) => {
-              const Illustration = s.IllustrationComponent;
+              const IconComp = s.Icon;
               return (
                 <View key={s.key} style={styles.slide}>
                   <View style={styles.illustrationContainer}>
-                    {/* The original Illustration components */}
-                    <Illustration color={s.accentColor} theme={theme} />
+                    <View style={styles.iconCircle}>
+                      <IconComp color={s.accentColor} size={48} strokeWidth={1.5} />
+                    </View>
                   </View>
                   
                   <View style={styles.copyBlock}>
@@ -215,6 +209,14 @@ const styles = StyleSheet.create({
   slideArea: { flex: 1 },
   slide: { width, flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   illustrationContainer: { marginBottom: 30, alignItems: 'center' },
+  iconCircle: {
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(106, 156, 71, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   copyBlock: { alignItems: 'center', width: '100%', paddingHorizontal: 8 },
   overline: {
     fontSize: 12,
