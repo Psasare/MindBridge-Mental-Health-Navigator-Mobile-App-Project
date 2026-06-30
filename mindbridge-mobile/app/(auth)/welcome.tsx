@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   layout: { flex: 1, justifyContent: 'space-between' },
   slideArea: { flex: 1 },
   slide: { width, flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
-  illustrationContainer: { marginBottom: 30, alignItems: 'center', justifyContent: 'center' },
+  illustrationContainer: { marginBottom: 80, alignItems: 'center', justifyContent: 'center' },
   ring: {
     position: 'absolute',
     borderRadius: 999,
