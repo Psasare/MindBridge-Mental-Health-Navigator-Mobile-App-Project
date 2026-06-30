@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Moon, Activity, Flame, ChevronLeft } from 'lucide-react-native';
+import { Moon, Activity, Flame, ChevronLeft, Sparkles, ShieldAlert } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import api from '../../src/services/api';
 
@@ -22,6 +22,7 @@ export default function InsightsScreen() {
 
   const [loading, setLoading] = useState(true);
   const [insightData, setInsightData] = useState<any>(null);
+  const [proactiveInsight, setProactiveInsight] = useState<any>(null);
 
   useEffect(() => {
     fetchDetailedInsights();
@@ -30,39 +31,19 @@ export default function InsightsScreen() {
   const fetchDetailedInsights = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/mood/insights/detailed');
-      setInsightData(res.data);
+      const [detailedRes, proactiveRes] = await Promise.all([
+        api.get('/mood/insights/detailed').catch(() => ({ data: null })),
+        api.get('/ai/proactive-insights').catch(() => ({ data: null }))
+      ]);
+      
+      setInsightData(detailedRes.data);
+      
+      if (proactiveRes.data) {
+        setProactiveInsight(proactiveRes.data);
+      }
     } catch (error) {
-      // Offline mock data
-      setInsightData({
-        sleepData: [
-          { value: 6, label: 'Mon', frontColor: theme.colors.accents.powderBlue },
-          { value: 4, label: 'Tue', frontColor: theme.colors.accents.dustyRose },
-          { value: 7, label: 'Wed', frontColor: theme.colors.accents.powderBlue },
-          { value: 8, label: 'Thu', frontColor: theme.colors.accents.eucalyptus },
-          { value: 5, label: 'Fri', frontColor: theme.colors.accents.powderBlue },
-          { value: 9, label: 'Sat', frontColor: theme.colors.accents.softMint },
-          { value: 7, label: 'Sun', frontColor: theme.colors.accents.powderBlue },
-        ],
-        stressData: [
-          { value: 8, label: 'M' },
-          { value: 6, label: 'T' },
-          { value: 9, label: 'W' },
-          { value: 4, label: 'T' },
-          { value: 3, label: 'F' },
-          { value: 2, label: 'S' },
-          { value: 3, label: 'S' },
-        ],
-        activityData: [
-          { value: 2, label: 'M', frontColor: theme.colors.accents.slate },
-          { value: 6, label: 'T', frontColor: theme.colors.accents.gentlePeach },
-          { value: 8, label: 'W', frontColor: theme.colors.accents.sand },
-          { value: 10, label: 'T', frontColor: theme.colors.semantic.danger },
-          { value: 4, label: 'F', frontColor: theme.colors.accents.powderBlue },
-          { value: 6, label: 'S', frontColor: theme.colors.accents.gentlePeach },
-          { value: 8, label: 'S', frontColor: theme.colors.accents.sand },
-        ]
-      });
+      console.log('Failed to fetch insights', error);
+      setInsightData(null);
     } finally {
       setLoading(false);
     }
@@ -93,6 +74,27 @@ export default function InsightsScreen() {
           />
         </View>
 
+        {/* Oracle Synthesis Card */}
+        {proactiveInsight && (
+          <Animated.View entering={FadeInUp.delay(50).duration(800)} style={[styles.chartCard, { backgroundColor: theme.colors.plum, borderColor: theme.colors.plum }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 10 }}>
+              <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 12 }}>
+                <Sparkles color="#FFF" size={24} />
+              </View>
+              <Text style={{ color: '#FFF', fontSize: 18, fontFamily: theme.typography.fonts.accent, fontWeight: '800' }}>The Oracle's Synthesis</Text>
+            </View>
+            <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 15, lineHeight: 24, fontFamily: theme.typography.fonts.body }}>
+              {proactiveInsight.gardenInsight?.description || proactiveInsight.dashboardPrompt}
+            </Text>
+            {proactiveInsight.severity && (
+              <View style={{ marginTop: 16, backgroundColor: 'rgba(255,255,255,0.15)', padding: 12, borderRadius: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <ShieldAlert color="#FFF" size={18} />
+                <Text style={{ color: '#FFF', fontSize: 13, fontWeight: '600' }}>Dominant state: {proactiveInsight.primaryState} ({proactiveInsight.severity})</Text>
+              </View>
+            )}
+          </Animated.View>
+        )}
+
         {/* Sleep Chart */}
         <Animated.View entering={FadeInUp.delay(100).duration(800)} style={styles.chartCard}>
           <View style={styles.chartHeader}>
@@ -105,23 +107,29 @@ export default function InsightsScreen() {
             </View>
           </View>
           <View style={styles.chartWrapper}>
-            <BarChart
-              data={insightData?.sleepData || []}
-              width={CHART_WIDTH}
-              height={140}
-              barWidth={22}
-              spacing={15}
-              roundedTop
-              roundedBottom
-              xAxisThickness={0}
-              yAxisThickness={0}
-              yAxisTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
-              xAxisLabelTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
-              noOfSections={4}
-              maxValue={12}
-              rulesColor={theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}
-              isAnimated
-            />
+            {(!insightData?.sleepData || insightData.sleepData.length === 0) ? (
+              <View style={{ height: 140, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: theme.colors.text.tertiary, fontStyle: 'italic' }}>Not enough data collected yet</Text>
+              </View>
+            ) : (
+              <BarChart
+                data={insightData.sleepData}
+                width={CHART_WIDTH}
+                height={140}
+                barWidth={22}
+                spacing={15}
+                roundedTop
+                roundedBottom
+                xAxisThickness={0}
+                yAxisThickness={0}
+                yAxisTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
+                xAxisLabelTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
+                noOfSections={4}
+                maxValue={12}
+                rulesColor={theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}
+                isAnimated
+              />
+            )}
           </View>
         </Animated.View>
 
@@ -137,30 +145,36 @@ export default function InsightsScreen() {
             </View>
           </View>
           <View style={styles.chartWrapper}>
-            <LineChart
-              areaChart
-              data={insightData?.stressData || []}
-              width={CHART_WIDTH}
-              height={140}
-              spacing={CHART_WIDTH / 8}
-              initialSpacing={10}
-              color={theme.colors.semantic.danger}
-              thickness={3}
-              startFillColor={theme.colors.semantic.danger}
-              endFillColor={theme.colors.semantic.danger}
-              startOpacity={0.3}
-              endOpacity={0.0}
-              yAxisColor={'transparent'}
-              xAxisColor={theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}
-              hideDataPoints
-              maxValue={10}
-              noOfSections={5}
-              yAxisTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
-              xAxisLabelTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
-              rulesColor={theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}
-              isAnimated
-              curved
-            />
+            {(!insightData?.stressData || insightData.stressData.length === 0) ? (
+              <View style={{ height: 140, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: theme.colors.text.tertiary, fontStyle: 'italic' }}>Not enough data collected yet</Text>
+              </View>
+            ) : (
+              <LineChart
+                areaChart
+                data={insightData.stressData}
+                width={CHART_WIDTH}
+                height={140}
+                spacing={CHART_WIDTH / 8}
+                initialSpacing={10}
+                color={theme.colors.semantic.danger}
+                thickness={3}
+                startFillColor={theme.colors.semantic.danger}
+                endFillColor={theme.colors.semantic.danger}
+                startOpacity={0.3}
+                endOpacity={0.05}
+                yAxisTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
+                xAxisLabelTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
+                xAxisThickness={0}
+                yAxisThickness={0}
+                rulesColor={theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}
+                hideDataPoints
+                maxValue={10}
+                noOfSections={5}
+                isAnimated
+                curved
+              />
+            )}
           </View>
         </Animated.View>
 
@@ -176,22 +190,28 @@ export default function InsightsScreen() {
             </View>
           </View>
           <View style={styles.chartWrapper}>
-            <BarChart
-              data={insightData?.activityData || []}
-              width={CHART_WIDTH}
-              height={140}
-              barWidth={22}
-              spacing={15}
-              roundedTop
-              xAxisThickness={0}
-              yAxisThickness={0}
-              yAxisTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
-              xAxisLabelTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
-              noOfSections={5}
-              maxValue={10}
-              rulesColor={theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}
-              isAnimated
-            />
+            {(!insightData?.activityData || insightData.activityData.length === 0) ? (
+              <View style={{ height: 140, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ color: theme.colors.text.tertiary, fontStyle: 'italic' }}>Not enough data collected yet</Text>
+              </View>
+            ) : (
+              <BarChart
+                data={insightData.activityData}
+                width={CHART_WIDTH}
+                height={140}
+                barWidth={22}
+                spacing={15}
+                roundedTop
+                xAxisThickness={0}
+                yAxisThickness={0}
+                yAxisTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
+                xAxisLabelTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
+                noOfSections={5}
+                maxValue={10}
+                rulesColor={theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}
+                isAnimated
+              />
+            )}
           </View>
         </Animated.View>
 

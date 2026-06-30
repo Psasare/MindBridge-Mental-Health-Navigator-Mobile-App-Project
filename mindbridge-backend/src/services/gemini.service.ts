@@ -562,7 +562,7 @@ ${context.recentJournal?.map((j: any) => `- Title: ${j.title || 'Untitled'}, Con
 
 INSTRUCTIONS:
 1. Generate exactly ${questionCount} multiple-choice questions to check in on their current state regarding ${clinicalFocus}.
-2. Tailor the questions to their recent struggles (e.g., if they had poor sleep, ask about their rest; if they were stressed, ask about their tension).
+2. ANALYZE CHANGES: Look closely at the trajectory of their recent mood logs and journals. Identify any changes or trends (e.g., if their mood recently dropped, if their sleep suddenly worsened, or if they've been consistently stressed). Tailor the questions explicitly to these changes to understand WHY their mental state shifted.
 3. Provide 4 options for each question, ranging from positive/healthy to negative/struggling.
 4. Output MUST be valid JSON and exactly match this schema:
 {
