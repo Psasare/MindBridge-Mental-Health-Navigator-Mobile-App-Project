@@ -1,40 +1,33 @@
 // @ts-ignore: Bypassing IDE cache bug
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ScrollView, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ScrollView, Modal, Platform } from 'react-native';
 import { useTheme } from '../src/context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { X, Footprints, Flame, Navigation, Activity as ActivityIcon, Settings, Check } from 'lucide-react-native';
+import { ArrowRight, ChevronRight, Footprints, User } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Pedometer } from 'expo-sensors';
 import Svg, { Circle } from 'react-native-svg';
-import Animated, { FadeInUp, useSharedValue, useAnimatedProps, withTiming, Easing, withDelay, FadeIn, SlideInDown, SlideOutDown } from 'react-native-reanimated';
+import Animated, { FadeInUp, useSharedValue, useAnimatedProps, withTiming, Easing, withDelay } from 'react-native-reanimated';
 import { BarChart } from 'react-native-gifted-charts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../src/services/api';
 
 const { width } = Dimensions.get('window');
 
 // Fitness Rings Configuration
-const CENTER = 130;
-const STROKE_WIDTH = 22;
-const RADIUS_STEPS = 100;
-const RADIUS_CALORIES = 76;
-const RADIUS_DISTANCE = 52;
-
-const CIRCUMFERENCE_STEPS = 2 * Math.PI * RADIUS_STEPS;
-const CIRCUMFERENCE_CALORIES = 2 * Math.PI * RADIUS_CALORIES;
-const CIRCUMFERENCE_DISTANCE = 2 * Math.PI * RADIUS_DISTANCE;
+const CENTER = 70;
+const STROKE_WIDTH = 20;
+const RADIUS_MOVE = 50;
+const CIRCUMFERENCE_MOVE = 2 * Math.PI * RADIUS_MOVE;
 
 // Apple Fitness Style Colors
-const COLOR_STEPS = '#FA114F';    // Pink/Red
-const COLOR_CALORIES = '#A4FF28'; // Neon Green
-const COLOR_DISTANCE = '#1DB0F6'; // Bright Blue
+const COLOR_STEPS = '#9A83FF'; // Purple
+const COLOR_CALORIES = '#FA114F'; // Red/Pink Move
+const COLOR_DISTANCE = '#1DB0F6'; // Blue
+const COLOR_SESSION = '#A4FF28'; // Green
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function ActivityScreen() {
-  const insets = useSafeAreaInsets();
   const theme = useTheme();
   const router = useRouter();
   
@@ -42,45 +35,21 @@ export default function ActivityScreen() {
   const [liveSteps, setLiveSteps] = useState(0);
   const [isAvailable, setIsAvailable] = useState(true);
   const [permissionGranted, setPermissionGranted] = useState(true);
-  const [weeklySteps, setWeeklySteps] = useState<any[]>([]);
   const [showConsentModal, setShowConsentModal] = useState(false);
+  const [hourlySteps, setHourlySteps] = useState<any[]>([]);
+  const [hourlyDistance, setHourlyDistance] = useState<any[]>([]);
+  const [bestSession, setBestSession] = useState<{steps: number, distance: number, dateStr: string} | null>(null);
   
   // Goals
   const [goalSteps, setGoalSteps] = useState(10000);
   const [goalCalories, setGoalCalories] = useState(400);
-  const goalDistance = (goalSteps * 0.000762).toFixed(2);
   
-  // Settings Modal State
-  const [showSettings, setShowSettings] = useState(false);
-  const [tempGoalSteps, setTempGoalSteps] = useState(10000);
-  const [tempGoalCalories, setTempGoalCalories] = useState(400);
-  
-  const progressSteps = useSharedValue(0);
   const progressCalories = useSharedValue(0);
-  const progressDistance = useSharedValue(0);
 
   // Derived metrics (combine historical + live steps)
   const totalSteps = steps + liveSteps;
   const calories = Math.round(totalSteps * 0.04);
   const distanceKm = (totalSteps * 0.000762).toFixed(2);
-
-  const saveGoals = async () => {
-    setGoalSteps(tempGoalSteps);
-    setGoalCalories(tempGoalCalories);
-    await AsyncStorage.setItem('@activity_goal_steps', tempGoalSteps.toString());
-    await AsyncStorage.setItem('@activity_goal_calories', tempGoalCalories.toString());
-    setShowSettings(false);
-    
-    // Re-animate rings based on new goals
-    const currentSteps = totalSteps;
-    const calculatedCals = Math.round(currentSteps * 0.04);
-    const calculatedDist = currentSteps * 0.000762;
-    const currentGoalDistance = tempGoalSteps * 0.000762;
-    
-    progressSteps.value = withTiming(Math.min(currentSteps / tempGoalSteps, 1), { duration: 1000 });
-    progressCalories.value = withTiming(Math.min(calculatedCals / tempGoalCalories, 1), { duration: 1000 });
-    progressDistance.value = withTiming(Math.min(calculatedDist / currentGoalDistance, 1), { duration: 1000 });
-  };
 
   const fetchPedometerData = async (gSteps: number, gCals: number) => {
     try {
@@ -111,43 +80,59 @@ export default function ActivityScreen() {
       setSteps(todaySteps);
       
       const calculatedCals = Math.round(todaySteps * 0.04);
-      const calculatedDist = todaySteps * 0.000762;
-      const gDist = gSteps * 0.000762;
+      progressCalories.value = withDelay(300, withTiming(Math.min(calculatedCals / gCals, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
 
-      progressSteps.value = withDelay(300, withTiming(Math.min(todaySteps / gSteps, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
-      progressCalories.value = withDelay(400, withTiming(Math.min(calculatedCals / gCals, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
-      progressDistance.value = withDelay(500, withTiming(Math.min(calculatedDist / gDist, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
+      // Fetch 24 hours
+      const hSteps = [];
+      const hDist = [];
+      let maxHrSteps = 0;
+      const now = new Date();
 
-      const weekData = [];
-      for (let i = 6; i >= 0; i--) {
+      for (let i = 0; i < 24; i++) {
         const dStart = new Date();
-        dStart.setDate(dStart.getDate() - i);
-        dStart.setHours(0, 0, 0, 0);
+        dStart.setHours(i, 0, 0, 0);
+        const dEnd = new Date();
+        dEnd.setHours(i, 59, 59, 999);
         
-        const dEnd = new Date(dStart);
-        dEnd.setHours(23, 59, 59, 999);
-        if (i === 0) dEnd.setTime(end.getTime());
-
-        let dailySteps = 0;
-        if (canUseSensors) {
+        let hrSteps = 0;
+        if (canUseSensors && dStart <= now) {
           try {
             const res = await Pedometer.getStepCountAsync(dStart, dEnd);
-            if (res && res.steps > 0) dailySteps = res.steps;
+            if (res && res.steps > 0) hrSteps = res.steps;
           } catch (e) {}
         }
+        
+        if (hrSteps > maxHrSteps) {
+            maxHrSteps = hrSteps;
+        }
 
-        weekData.push({
-          value: dailySteps,
-          label: dStart.toLocaleDateString('en-US', { weekday: 'narrow' }),
-          frontColor: dailySteps >= gSteps ? COLOR_STEPS : COLOR_STEPS + '50',
-          topLabelComponent: () => (
-            <Text style={{ color: theme.colors.text.tertiary, fontSize: 10, marginBottom: 4, fontWeight: '600' }}>
-              {dailySteps > 0 ? (dailySteps > 999 ? (dailySteps/1000).toFixed(1)+'k' : dailySteps) : ''}
-            </Text>
-          )
+        const label = i === 0 ? '12 AM' : i === 6 ? '6 AM' : i === 12 ? '12 PM' : i === 18 ? '6 PM' : '';
+        hSteps.push({
+          value: hrSteps,
+          label: label,
+          frontColor: COLOR_STEPS,
+          topLabelComponent: undefined
+        });
+        hDist.push({
+          value: parseFloat((hrSteps * 0.000762).toFixed(2)),
+          label: label,
+          frontColor: COLOR_DISTANCE,
+          topLabelComponent: undefined
         });
       }
-      setWeeklySteps(weekData);
+      
+      setHourlySteps(hSteps);
+      setHourlyDistance(hDist);
+      
+      if (maxHrSteps > 500) { // arbitrary threshold for a "session"
+          setBestSession({
+              steps: maxHrSteps,
+              distance: parseFloat((maxHrSteps * 0.000762).toFixed(2)),
+              dateStr: now.toLocaleDateString('en-GB') // 30/06/2026 format
+          });
+      } else {
+          setBestSession(null);
+      }
 
     } catch (e) {
       setIsAvailable(false);
@@ -168,13 +153,11 @@ export default function ActivityScreen() {
       
       setGoalSteps(gSteps);
       setGoalCalories(gCals);
-      setTempGoalSteps(gSteps);
-      setTempGoalCalories(gCals);
 
       const hasConsented = await AsyncStorage.getItem('@activity_consent_granted');
       if (hasConsented !== 'true') {
         setShowConsentModal(true);
-        return; // Wait for user to grant consent
+        return;
       }
 
       await fetchPedometerData(gSteps, gCals);
@@ -189,220 +172,193 @@ export default function ActivityScreen() {
     await fetchPedometerData(goalSteps, goalCalories);
   };
 
-  const handleConsentDecline = () => {
-    setShowConsentModal(false);
-    // Continue without tracking real steps
-  };
-
-  const animatedPropsSteps = useAnimatedProps(() => ({ strokeDashoffset: CIRCUMFERENCE_STEPS - (CIRCUMFERENCE_STEPS * progressSteps.value) }));
-  const animatedPropsCalories = useAnimatedProps(() => ({ strokeDashoffset: CIRCUMFERENCE_CALORIES - (CIRCUMFERENCE_CALORIES * progressCalories.value) }));
-  const animatedPropsDistance = useAnimatedProps(() => ({ strokeDashoffset: CIRCUMFERENCE_DISTANCE - (CIRCUMFERENCE_DISTANCE * progressDistance.value) }));
+  const animatedPropsCalories = useAnimatedProps(() => ({ strokeDashoffset: CIRCUMFERENCE_MOVE - (CIRCUMFERENCE_MOVE * progressCalories.value) }));
 
   const styles = createStyles(theme);
+  
+  const formattedDate = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' });
+  const isGoalMet = totalSteps >= goalSteps;
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
-      <LinearGradient 
-        colors={theme.isDark 
-          ? [theme.colors.background, theme.colors.backgroundSecondary] 
-          : [theme.colors.background, theme.colors.backgroundSecondary]
-        } 
-        style={StyleSheet.absoluteFillObject} 
-      />
-
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.85}>
-          <X color={theme.colors.text.primary} size={24} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Activity</Text>
-        <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.closeBtn} activeOpacity={0.85}>
-          <Settings color={theme.colors.text.primary} size={22} />
+      <StatusBar barStyle="light-content" />
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>Summary</Text>
+          <Text style={styles.headerDate}>{formattedDate}</Text>
+        </View>
+        <TouchableOpacity style={styles.profileBtn} onPress={() => router.back()}>
+          <View style={styles.profileImgPlaceholder}>
+            <User color="#FFF" size={20} />
+          </View>
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View entering={FadeInUp.delay(100).duration(800)} style={styles.ringContainer}>
-          <Svg width={CENTER * 2} height={CENTER * 2} style={styles.svg}>
-            {/* Background Rings */}
-            <Circle cx={CENTER} cy={CENTER} r={RADIUS_STEPS} stroke={COLOR_STEPS + '20'} strokeWidth={STROKE_WIDTH} fill="none" />
-            <Circle cx={CENTER} cy={CENTER} r={RADIUS_CALORIES} stroke={COLOR_CALORIES + '20'} strokeWidth={STROKE_WIDTH} fill="none" />
-            <Circle cx={CENTER} cy={CENTER} r={RADIUS_DISTANCE} stroke={COLOR_DISTANCE + '20'} strokeWidth={STROKE_WIDTH} fill="none" />
-
-            {/* Foreground Animated Rings */}
-            <AnimatedCircle
-              cx={CENTER} cy={CENTER} r={RADIUS_STEPS}
-              stroke={COLOR_STEPS} strokeWidth={STROKE_WIDTH} fill="none"
-              strokeDasharray={CIRCUMFERENCE_STEPS} animatedProps={animatedPropsSteps}
-              strokeLinecap="round" transform={`rotate(-90 ${CENTER} ${CENTER})`}
-            />
-            <AnimatedCircle
-              cx={CENTER} cy={CENTER} r={RADIUS_CALORIES}
-              stroke={COLOR_CALORIES} strokeWidth={STROKE_WIDTH} fill="none"
-              strokeDasharray={CIRCUMFERENCE_CALORIES} animatedProps={animatedPropsCalories}
-              strokeLinecap="round" transform={`rotate(-90 ${CENTER} ${CENTER})`}
-            />
-            <AnimatedCircle
-              cx={CENTER} cy={CENTER} r={RADIUS_DISTANCE}
-              stroke={COLOR_DISTANCE} strokeWidth={STROKE_WIDTH} fill="none"
-              strokeDasharray={CIRCUMFERENCE_DISTANCE} animatedProps={animatedPropsDistance}
-              strokeLinecap="round" transform={`rotate(-90 ${CENTER} ${CENTER})`}
-            />
-          </Svg>
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.delay(300).duration(800)} style={styles.statsContainer}>
-          {/* Steps */}
-          <View style={[styles.statBox, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)' }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-              <Footprints color={COLOR_STEPS} size={18} style={{ marginRight: 6 }} />
-              <Text style={[styles.statLabel, { color: theme.colors.text.secondary }]}>Steps</Text>
-            </View>
-            <Text style={[styles.statValue, { color: theme.colors.text.primary }]}>{totalSteps.toLocaleString()}</Text>
-            <Text style={[styles.statSub, { color: theme.colors.text.tertiary }]}>Goal: {goalSteps}</Text>
-          </View>
-          
-          {/* Calories */}
-          <View style={[styles.statBox, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)' }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-              <Flame color={COLOR_CALORIES} size={18} style={{ marginRight: 6 }} />
-              <Text style={[styles.statLabel, { color: theme.colors.text.secondary }]}>Calories</Text>
-            </View>
-            <Text style={[styles.statValue, { color: theme.colors.text.primary }]}>{calories}</Text>
-            <Text style={[styles.statSub, { color: theme.colors.text.tertiary }]}>Goal: {goalCalories} kcal</Text>
-          </View>
-
-          {/* Distance */}
-          <View style={[styles.statBox, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)' }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-              <Navigation color={COLOR_DISTANCE} size={18} style={{ marginRight: 6 }} />
-              <Text style={[styles.statLabel, { color: theme.colors.text.secondary }]}>Distance</Text>
-            </View>
-            <Text style={[styles.statValue, { color: theme.colors.text.primary }]}>{distanceKm} <Text style={{fontSize: 16}}>km</Text></Text>
-            <Text style={[styles.statSub, { color: theme.colors.text.tertiary }]}>Goal: {goalDistance} km</Text>
-          </View>
-        </Animated.View>
-
-        {/* Weekly Chart */}
-        {weeklySteps.length > 0 && (
-          <Animated.View entering={FadeInUp.delay(400).duration(800)} style={[styles.chartCard, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)' }]}>
-            <View style={styles.chartHeader}>
-              <View>
-                <Text style={[styles.chartTitle, { color: theme.colors.text.primary }]}>Weekly Steps</Text>
-                <Text style={[styles.chartSubtitle, { color: theme.colors.text.tertiary }]}>Your past 7 days</Text>
-              </View>
-              <ActivityIcon color={COLOR_STEPS} size={20} />
-            </View>
-            
-            <View style={{ marginTop: 24, marginLeft: -10 }}>
-              <BarChart
-                data={weeklySteps}
-                width={width - 80}
-                height={160}
-                barWidth={24}
-                spacing={16}
-                roundedTop
-                roundedBottom={false}
-                hideRules
-                xAxisThickness={0}
-                yAxisThickness={0}
-                yAxisTextStyle={{ color: theme.colors.text.tertiary, fontSize: 10 }}
-                noOfSections={3}
-                maxValue={Math.max(...weeklySteps.map((d: any) => d.value), 2000)}
-                formatYLabel={(label: string) => {
-                  const val = parseInt(label);
-                  if (val >= 1000) return (val/1000).toFixed(0) + 'k';
-                  return label;
-                }}
-                isAnimated
-                animationDuration={1000}
-                xAxisLabelTextStyle={{ color: theme.colors.text.secondary, fontSize: 12, fontWeight: '600', marginTop: 4 }}
+        
+        {/* Activity Ring */}
+        <Animated.View entering={FadeInUp.delay(100).duration(800)} style={styles.cardLarge}>
+          <Text style={styles.cardHeader}>Activity Ring</Text>
+          <View style={styles.ringRow}>
+            <Svg width={CENTER * 2} height={CENTER * 2}>
+              <Circle cx={CENTER} cy={CENTER} r={RADIUS_MOVE} stroke={COLOR_CALORIES + '30'} strokeWidth={STROKE_WIDTH} fill="none" />
+              <AnimatedCircle
+                cx={CENTER} cy={CENTER} r={RADIUS_MOVE}
+                stroke={COLOR_CALORIES} strokeWidth={STROKE_WIDTH} fill="none"
+                strokeDasharray={CIRCUMFERENCE_MOVE} animatedProps={animatedPropsCalories}
+                strokeLinecap="round" transform={`rotate(-90 ${CENTER} ${CENTER})`}
               />
+              {/* Arrow inside ring */}
+              <View style={styles.ringArrowWrap}>
+                 <ArrowRight color="#000" size={16} style={{ transform: [{rotate: '-45deg'}] }}/>
+              </View>
+            </Svg>
+            
+            <View style={styles.ringStats}>
+              <Text style={styles.ringLabel}>Move</Text>
+              <Text style={styles.ringValuePrimary}>{calories}<Text style={styles.ringValueSecondary}>/{goalCalories} KCAL</Text></Text>
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* 2-Column Grid */}
+        <View style={styles.gridRow}>
+          {/* Step Count */}
+          <Animated.View entering={FadeInUp.delay(200).duration(800)} style={styles.cardSmall}>
+            <View style={styles.cardSmallHeader}>
+               <Text style={styles.cardSmallTitle}>Step Count</Text>
+               <ChevronRight color="#444" size={16} />
+            </View>
+            <Text style={styles.cardSmallSub}>Today</Text>
+            <Text style={[styles.cardSmallValue, { color: COLOR_STEPS }]}>{totalSteps.toLocaleString()}</Text>
+            <View style={styles.chartWrapper}>
+              {hourlySteps.length > 0 && (
+                <BarChart
+                    data={hourlySteps}
+                    width={(width / 2) - 60}
+                    height={80}
+                    barWidth={2}
+                    spacing={4}
+                    initialSpacing={0}
+                    hideRules
+                    xAxisThickness={0}
+                    yAxisThickness={0}
+                    hideYAxisText
+                    xAxisLabelTextStyle={{ color: '#666', fontSize: 8, marginTop: 4, width: 30, marginLeft: -10 }}
+                    noOfSections={1}
+                    maxValue={Math.max(...hourlySteps.map(d => d.value), 500) * 1.1}
+                    disableScroll
+                    barBorderRadius={2}
+                  />
+              )}
             </View>
           </Animated.View>
-        )}
+          
+          {/* Step Distance */}
+          <Animated.View entering={FadeInUp.delay(300).duration(800)} style={styles.cardSmall}>
+             <View style={styles.cardSmallHeader}>
+               <Text style={styles.cardSmallTitle}>Step Distance</Text>
+               <ChevronRight color="#444" size={16} />
+            </View>
+            <Text style={styles.cardSmallSub}>Today</Text>
+            <Text style={[styles.cardSmallValue, { color: COLOR_DISTANCE }]}>{distanceKm}<Text style={styles.cardSmallUnit}>KM</Text></Text>
+            <View style={styles.chartWrapper}>
+               {hourlyDistance.length > 0 && (
+                 <BarChart
+                    data={hourlyDistance}
+                    width={(width / 2) - 60}
+                    height={80}
+                    barWidth={2}
+                    spacing={4}
+                    initialSpacing={0}
+                    hideRules
+                    xAxisThickness={0}
+                    yAxisThickness={0}
+                    hideYAxisText
+                    xAxisLabelTextStyle={{ color: '#666', fontSize: 8, marginTop: 4, width: 30, marginLeft: -10 }}
+                    noOfSections={1}
+                    maxValue={Math.max(...hourlyDistance.map(d => d.value), 1) * 1.1}
+                    disableScroll
+                    barBorderRadius={2}
+                  />
+               )}
+            </View>
+          </Animated.View>
+        </View>
+
+        {/* 2-Column Grid Row 2 */}
+        <View style={styles.gridRow}>
+          {/* Sessions */}
+          <Animated.View entering={FadeInUp.delay(400).duration(800)} style={styles.cardSmall}>
+            <View style={styles.cardSmallHeader}>
+               <Text style={styles.cardSmallTitle}>Sessions</Text>
+               <ChevronRight color="#444" size={16} />
+            </View>
+            {bestSession ? (
+              <View style={styles.sessionInner}>
+                <View style={styles.sessionIconWrap}>
+                   <Footprints color={COLOR_SESSION} size={14} />
+                </View>
+                <Text style={styles.cardSmallTitle}>Outdoor Walk</Text>
+                <Text style={[styles.cardSmallValue, { color: COLOR_SESSION, marginTop: 4 }]}>{bestSession.distance.toFixed(2)}<Text style={styles.cardSmallUnit}>KM</Text></Text>
+                <Text style={styles.sessionDate}>{bestSession.dateStr}</Text>
+              </View>
+            ) : (
+              <View style={[styles.sessionInner, { justifyContent: 'center' }]}>
+                <Text style={[styles.cardSmallSub, { textAlign: 'center', marginTop: 20 }]}>No active walk detected today.</Text>
+              </View>
+            )}
+          </Animated.View>
+          
+          {/* Awards */}
+          <Animated.View entering={FadeInUp.delay(500).duration(800)} style={styles.cardSmall}>
+             <View style={styles.cardSmallHeader}>
+               <Text style={styles.cardSmallTitle}>Awards</Text>
+               <ChevronRight color="#444" size={16} />
+            </View>
+            <View style={styles.awardInner}>
+               <View style={[styles.awardHex, { backgroundColor: isGoalMet ? COLOR_SESSION : '#333' }]}>
+                  <Text style={styles.awardText}>{isGoalMet ? '10K' : 'Go'}</Text>
+               </View>
+               <Text style={styles.awardTitle}>{isGoalMet ? 'Daily Goal Met' : 'Keep Going'}</Text>
+               <Text style={styles.sessionDate}>{formattedDate.split(', ')[1]}</Text>
+            </View>
+          </Animated.View>
+        </View>
 
         {(!permissionGranted || !isAvailable) && (
-          <Animated.View entering={FadeInUp.delay(500).duration(800)}>
-            <View style={[styles.errorCard, { backgroundColor: theme.colors.semantic.danger + '15' }]}>
-              <Text style={[styles.errorText, { color: theme.colors.semantic.danger }]}>
+          <Animated.View entering={FadeInUp.delay(600).duration(800)}>
+            <View style={styles.errorCard}>
+              <Text style={styles.errorText}>
                 Pedometer data is unavailable. Please ensure physical activity permissions are granted on your device.
               </Text>
             </View>
           </Animated.View>
         )}
         
-        <View style={{ height: 40 }} />
+        <View style={{ height: 60 }} />
       </ScrollView>
-
-      {/* Settings Modal */}
-      <Modal visible={showSettings} animationType="slide" transparent>
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === "ios" ? "padding" : "height"} 
-          style={{ flex: 1 }}
-        >
-          <View style={styles.modalOverlay}>
-            <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled">
-              <View style={[styles.modalContent, { backgroundColor: theme.colors.surface, alignSelf: 'center', width: '90%' }]}>
-                <View style={styles.modalHeader}>
-                  <Text style={[styles.modalTitle, { color: theme.colors.text.primary }]}>Activity Goals</Text>
-                  <TouchableOpacity onPress={() => {
-                    setShowSettings(false);
-                    setTempGoalSteps(goalSteps);
-                    setTempGoalCalories(goalCalories);
-                  }} style={styles.modalClose}>
-                    <X color={theme.colors.text.primary} size={24} />
-                  </TouchableOpacity>
-                </View>
-                
-                <View style={styles.modalBody}>
-                  <Text style={[styles.modalLabel, { color: theme.colors.text.secondary }]}>Daily Step Goal</Text>
-                  <TextInput 
-                    style={[styles.modalInput, { color: theme.colors.text.primary, borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
-                    keyboardType="numeric"
-                    value={tempGoalSteps.toString()}
-                    onChangeText={(val) => setTempGoalSteps(parseInt(val) || 0)}
-                  />
-                  
-                  <Text style={[styles.modalLabel, { color: theme.colors.text.secondary, marginTop: 16 }]}>Daily Calorie Goal (kcal)</Text>
-                  <TextInput 
-                    style={[styles.modalInput, { color: theme.colors.text.primary, borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
-                    keyboardType="numeric"
-                    value={tempGoalCalories.toString()}
-                    onChangeText={(val) => setTempGoalCalories(parseInt(val) || 0)}
-                  />
-                  
-                  <TouchableOpacity onPress={saveGoals} style={[styles.saveBtn, { backgroundColor: theme.colors.plum }]}>
-                    <Check color="#FFF" size={20} />
-                    <Text style={styles.saveBtnText}>Save Goals</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
 
       {/* Consent Modal */}
       <Modal visible={showConsentModal} animationType="fade" transparent>
         <View style={styles.consentOverlay}>
-          <Animated.View entering={FadeInUp.duration(600).springify()} style={[styles.consentCard, { backgroundColor: theme.colors.surface }]}>
-            <View style={[styles.consentIconWrapper, { backgroundColor: COLOR_STEPS + '20' }]}>
+          <View style={styles.consentCard}>
+            <View style={styles.consentIconWrapper}>
               <Footprints color={COLOR_STEPS} size={32} />
             </View>
-            <Text style={[styles.consentTitle, { color: theme.colors.text.primary }]}>Activity Tracking</Text>
-            <Text style={[styles.consentBody, { color: theme.colors.text.secondary }]}>
+            <Text style={styles.consentTitle}>Activity Tracking</Text>
+            <Text style={styles.consentBody}>
               MindBridge uses your phone's sensors to securely track your steps, calculate active calories, and measure your distance to give you holistic insights connecting your physical health to your mental well-being.
             </Text>
             
-            <TouchableOpacity onPress={handleConsentAllow} style={[styles.consentBtnPrimary, { backgroundColor: theme.colors.plum }]} activeOpacity={0.8}>
+            <TouchableOpacity onPress={handleConsentAllow} style={styles.consentBtnPrimary} activeOpacity={0.8}>
               <Text style={styles.consentBtnPrimaryText}>Allow Tracking</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity onPress={handleConsentDecline} style={styles.consentBtnSecondary} activeOpacity={0.7}>
-              <Text style={[styles.consentBtnSecondaryText, { color: theme.colors.text.tertiary }]}>Not Now</Text>
+            <TouchableOpacity onPress={() => setShowConsentModal(false)} style={styles.consentBtnSecondary} activeOpacity={0.7}>
+              <Text style={styles.consentBtnSecondaryText}>Not Now</Text>
             </TouchableOpacity>
-          </Animated.View>
+          </View>
         </View>
       </Modal>
     </View>
@@ -412,202 +368,210 @@ export default function ActivityScreen() {
 const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000', // Apple pure black
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: 20,
-    zIndex: 10,
-    paddingBottom: 10,
-  },
-  closeBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingTop: 60,
+    paddingBottom: 20,
   },
   headerTitle: {
-    color: theme.colors.text.primary,
-    fontSize: 18,
+    color: '#FFFFFF',
+    fontSize: 34,
+    fontWeight: '800',
     fontFamily: theme.typography.fonts.header,
-    letterSpacing: 0.5,
+  },
+  headerDate: {
+    color: '#8E8E93',
+    fontSize: 14,
+    textTransform: 'uppercase',
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  profileBtn: {
+    marginTop: 4,
+  },
+  profileImgPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#1C1C1E',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
-    alignItems: 'center',
-    paddingTop: 24,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
+    paddingBottom: 40,
   },
-  ringContainer: {
-    position: 'relative',
+  cardLarge: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 16,
+  },
+  cardHeader: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 16,
+  },
+  ringRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ringArrowWrap: {
+    position: 'absolute',
+    top: CENTER - 12,
+    left: CENTER - 12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLOR_CALORIES,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 32,
   },
-  svg: {
-    transform: [{ rotate: '0deg' }],
+  ringStats: {
+    marginLeft: 20,
   },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    gap: 12,
-    marginBottom: 24,
+  ringLabel: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  statBox: {
-    flex: 1,
-    borderRadius: 24,
-    padding: 16,
-    alignItems: 'flex-start',
-    borderWidth: 1,
-    borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-  },
-  statValue: {
-    fontSize: 22,
-    fontFamily: theme.typography.fonts.header,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: theme.typography.fonts.ui,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statSub: {
-    fontSize: 11,
-    fontFamily: theme.typography.fonts.ui,
-    marginTop: 4,
-  },
-  chartCard: {
-    width: '100%',
-    borderRadius: 32,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-  },
-  chartHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  chartTitle: {
-    fontSize: 18,
-    fontFamily: theme.typography.fonts.header,
+  ringValuePrimary: {
+    color: COLOR_CALORIES,
+    fontSize: 24,
     fontWeight: '800',
   },
-  chartSubtitle: {
-    fontSize: 13,
-    fontFamily: theme.typography.fonts.body,
-    marginTop: 4,
+  ringValueSecondary: {
+    color: COLOR_CALORIES,
+    fontSize: 14,
+    fontWeight: '600',
   },
-  errorCard: {
-    width: '100%',
+  gridRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  cardSmall: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 20,
     padding: 16,
-    borderRadius: 16,
-    marginTop: 20,
+    width: (width / 2) - 22,
   },
-  errorText: {
-    textAlign: 'center',
-    fontSize: 13,
-    fontFamily: theme.typography.fonts.body,
-    lineHeight: 20,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: 24,
-    paddingBottom: 48,
-  },
-  modalHeader: {
+  cardSmallHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontFamily: theme.typography.fonts.header,
-    fontWeight: '800',
-  },
-  modalClose: {
-    padding: 4,
-  },
-  modalBody: {
-    paddingBottom: 10,
-  },
-  modalLabel: {
-    fontSize: 14,
-    fontFamily: theme.typography.fonts.ui,
-    fontWeight: '600',
     marginBottom: 8,
   },
-  modalInput: {
-    borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 16,
-    fontFamily: theme.typography.fonts.body,
+  cardSmallTitle: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  saveBtn: {
-    flexDirection: 'row',
+  cardSmallSub: {
+    color: '#8E8E93',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  cardSmallValue: {
+    fontSize: 28,
+    fontWeight: '800',
+  },
+  cardSmallUnit: {
+    fontSize: 14,
+  },
+  chartWrapper: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  sessionInner: {
+    marginTop: 12,
+  },
+  sessionIconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLOR_SESSION + '20',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 8,
+  },
+  sessionDate: {
+    color: '#8E8E93',
+    fontSize: 12,
+    marginTop: 12,
+  },
+  awardInner: {
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  awardHex: {
+    width: 60,
+    height: 60,
+    transform: [{rotate: '30deg'}],
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  awardText: {
+    transform: [{rotate: '-30deg'}],
+    color: '#000',
+    fontWeight: '900',
+    fontSize: 18,
+  },
+  awardTitle: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  errorCard: {
+    backgroundColor: '#FA114F20',
     padding: 16,
     borderRadius: 16,
-    marginTop: 32,
+    marginTop: 8,
   },
-  saveBtnText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontFamily: theme.typography.fonts.ui,
-    fontWeight: '700',
-    marginLeft: 8,
+  errorText: {
+    color: COLOR_CALORIES,
+    textAlign: 'center',
+    fontSize: 13,
   },
   consentOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.8)',
     justifyContent: 'center',
-    alignItems: 'center',
     padding: 24,
   },
   consentCard: {
-    width: '100%',
+    backgroundColor: '#1C1C1E',
     borderRadius: 32,
     padding: 32,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
   },
   consentIconWrapper: {
     width: 64,
     height: 64,
     borderRadius: 32,
+    backgroundColor: COLOR_STEPS + '20',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
   },
   consentTitle: {
+    color: '#FFF',
     fontSize: 24,
-    fontFamily: theme.typography.fonts.header,
     fontWeight: '800',
     marginBottom: 12,
-    textAlign: 'center',
   },
   consentBody: {
+    color: '#8E8E93',
     fontSize: 15,
-    fontFamily: theme.typography.fonts.body,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 32,
@@ -616,13 +580,13 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: '100%',
     paddingVertical: 16,
     borderRadius: 16,
+    backgroundColor: COLOR_STEPS,
     alignItems: 'center',
     marginBottom: 12,
   },
   consentBtnPrimaryText: {
     color: '#FFF',
     fontSize: 16,
-    fontFamily: theme.typography.fonts.ui,
     fontWeight: '700',
   },
   consentBtnSecondary: {
@@ -631,8 +595,8 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
   },
   consentBtnSecondaryText: {
+    color: '#8E8E93',
     fontSize: 15,
-    fontFamily: theme.typography.fonts.ui,
     fontWeight: '600',
   }
 });
