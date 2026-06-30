@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Moon, Activity, Flame, ChevronLeft, Sparkles, ShieldAlert } from 'lucide-react-native';
+import { Moon, Activity, Flame, ChevronLeft, BrainCircuit, ShieldAlert } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import api from '../../src/services/api';
 
@@ -79,7 +79,7 @@ export default function InsightsScreen() {
           <Animated.View entering={FadeInUp.delay(50).duration(800)} style={[styles.chartCard, { backgroundColor: theme.colors.plum, borderColor: theme.colors.plum }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 10 }}>
               <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 12 }}>
-                <Sparkles color="#FFF" size={24} />
+                <BrainCircuit color="#FFF" size={24} />
               </View>
               <Text style={{ color: '#FFF', fontSize: 18, fontFamily: theme.typography.fonts.accent, fontWeight: '800' }}>The Oracle's Synthesis</Text>
             </View>
@@ -226,10 +226,23 @@ const createStyles = (theme: any) => StyleSheet.create({
   scrollContent: { paddingBottom: 100 },
   headerRow: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: 20 },
   backBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', alignItems: 'center', justifyContent: 'center', marginTop: 10, marginRight: 10 },
-  chartCard: { backgroundColor: theme.colors.surface, marginHorizontal: 20, marginBottom: 20, padding: 20, borderRadius: 28, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)', overflow: 'hidden' },
-  chartHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
-  chartIconWrap: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  chartTitle: { fontSize: 16, fontFamily: theme.typography.fonts.header, color: theme.colors.text.primary },
-  chartSubtitle: { fontSize: 12, fontFamily: theme.typography.fonts.body, color: theme.colors.text.tertiary, marginTop: 2 },
+  chartCard: { 
+    backgroundColor: theme.colors.surface, 
+    marginHorizontal: 20, 
+    marginBottom: 24, 
+    padding: 24, 
+    borderRadius: 28, 
+    borderWidth: 1, 
+    borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+    shadowColor: theme.isDark ? '#000' : theme.colors.plum,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: theme.isDark ? 0.3 : 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  chartHeader: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 24 },
+  chartIconWrap: { width: 44, height: 44, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  chartTitle: { fontSize: 18, fontFamily: theme.typography.fonts.header, color: theme.colors.text.primary, fontWeight: '700' },
+  chartSubtitle: { fontSize: 13, fontFamily: theme.typography.fonts.body, color: theme.colors.text.tertiary, marginTop: 4 },
   chartWrapper: { alignItems: 'center' },
 });
