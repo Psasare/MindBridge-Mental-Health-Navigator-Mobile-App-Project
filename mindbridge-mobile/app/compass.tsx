@@ -163,7 +163,7 @@ export default function CompassScreen() {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/(tabs)/explore'); } }} style={[styles.closeBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/(tabs)/explore'); } }} style={[styles.closeBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
           <X color={theme.colors.text.primary} size={24} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text.primary }]}>Physical Grounding</Text>
@@ -178,7 +178,7 @@ export default function CompassScreen() {
             <Text style={[styles.subtitle, { color: theme.colors.text.secondary }]}>
               By engaging your body in physical space and your senses in the present moment, you've helped regulate your nervous system.
             </Text>
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               style={[styles.btn, { backgroundColor: theme.colors.plum }]}
               onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/(tabs)/explore'); } }}
             >

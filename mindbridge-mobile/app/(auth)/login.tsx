@@ -157,7 +157,7 @@ export default function LoginScreen() {
         >
           {/* Header */}
           <Animated.View entering={FadeIn.duration(800)} style={styles.header}>
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} 
               style={styles.backButton}
               activeOpacity={0.7}
@@ -208,7 +208,7 @@ export default function LoginScreen() {
                   }}
                   onBlur={() => validateField('password')}
                 />
-                <TouchableOpacity 
+                <TouchableOpacity activeOpacity={0.7} 
                   onPress={() => setShowPassword(!showPassword)}
                   style={styles.eyeIcon}
                 >
@@ -229,7 +229,7 @@ export default function LoginScreen() {
               </View>
             )}
 
-            <TouchableOpacity style={styles.forgotPasswordBtn} onPress={() => Alert.alert('Reset Password', 'Instructions have been sent to your email.')} activeOpacity={0.7}>
+            <TouchableOpacity activeOpacity={0.7} style={styles.forgotPasswordBtn} onPress={() => Alert.alert('Reset Password', 'Instructions have been sent to your email.')} activeOpacity={0.7}>
               <Typography variant="ui" color={themeContext.colors.plum}>Forgot password?</Typography>
             </TouchableOpacity>
 
@@ -260,7 +260,7 @@ export default function LoginScreen() {
               </Button>
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               onPress={() => router.push('/(auth)/register')}
               style={styles.signUpContainer}
             >

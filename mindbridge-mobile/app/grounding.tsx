@@ -137,7 +137,7 @@ export default function GroundingScreen() {
 
         {/* Header */}
         <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.85}>
+          <TouchableOpacity activeOpacity={0.7} onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.85}>
             <X color={theme.colors.text.primary} size={24} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Grounding Space</Text>
@@ -157,7 +157,7 @@ export default function GroundingScreen() {
               <Text style={styles.completedSub}>
                 By focusing on your five senses, you have successfully anchored your mind to the present moment. Take a deep breath.
               </Text>
-              <TouchableOpacity style={styles.doneBtn} onPress={() => router.back()}>
+              <TouchableOpacity activeOpacity={0.7} style={styles.doneBtn} onPress={() => router.back()}>
                 <Text style={styles.doneBtnText}>Back to Dashboard</Text>
               </TouchableOpacity>
             </Animated.View>

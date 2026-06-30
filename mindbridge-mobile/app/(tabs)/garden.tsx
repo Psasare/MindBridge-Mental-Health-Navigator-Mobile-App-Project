@@ -625,7 +625,7 @@ export default function WellnessTrackerScreen() {
           })}
         </View>
 
-        <TouchableOpacity 
+        <TouchableOpacity activeOpacity={0.7} 
           disabled={!selectedEmotion}
           style={[
             styles.nextBtn, 
@@ -654,7 +654,7 @@ export default function WellnessTrackerScreen() {
           <SocialPicker value={social} onChange={setSocial} theme={theme} />
           <SymptomCloud selected={symptoms} onToggle={(id: string) => setSymptoms(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])} theme={theme} />
         </ScrollView>
-        <TouchableOpacity style={[styles.nextBtn, { backgroundColor: theme.colors.plum, marginTop: 16 }]} onPress={nextStep}>
+        <TouchableOpacity activeOpacity={0.7} style={[styles.nextBtn, { backgroundColor: theme.colors.plum, marginTop: 16 }]} onPress={nextStep}>
           <Text style={styles.nextBtnText}>Continue</Text>
         </TouchableOpacity>
       </Animated.View>
@@ -680,7 +680,7 @@ export default function WellnessTrackerScreen() {
 
         <View style={styles.mediaRow}>
           {isRecording ? (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               onPress={stopRecording}
               style={[styles.mediaBtn, { backgroundColor: '#EF4444', flex: 1 }]}
             >
@@ -690,14 +690,14 @@ export default function WellnessTrackerScreen() {
           ) : audioUri ? (
             <View style={{ flex: 1, gap: 12 }}>
               <View style={styles.playbackContainer}>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.7}
                   onPress={playSound}
                   style={[styles.mediaBtn, { backgroundColor: theme.colors.plum, flex: 1 }]}
                 >
                   <Activity size={20} color="#FFF" />
                   <Text style={[styles.mediaBtnText, { color: '#FFF' }]}>{isPlaying ? 'Pause' : 'Play'}</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.7}
                   onPress={deleteSound}
                   style={styles.deleteAudioBtn}
                 >
@@ -706,7 +706,7 @@ export default function WellnessTrackerScreen() {
               </View>
 
               {!vocalMetrics ? (
-                <TouchableOpacity 
+                <TouchableOpacity activeOpacity={0.7} 
                   style={[styles.mediaBtn, { backgroundColor: theme.colors.plum + '20', padding: 12 }]} 
                   onPress={handleAnalyzeVoice}
                   disabled={isAnalyzingVoice}
@@ -731,7 +731,7 @@ export default function WellnessTrackerScreen() {
             </View>
           ) : (
             <>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 onPress={startRecording}
                 style={[styles.mediaBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)', flex: 1 }]}
               >
@@ -739,7 +739,7 @@ export default function WellnessTrackerScreen() {
                 <Text style={[styles.mediaBtnText, { color: theme.colors.text.secondary }]}>Audio</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 onPress={() => setShowVideoModal(true)}
                 style={[styles.mediaBtn, { backgroundColor: facialMetrics ? 'rgba(52, 211, 153, 0.15)' : (theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'), flex: 1 }]}
               >
@@ -796,7 +796,7 @@ export default function WellnessTrackerScreen() {
               Recommended For You
             </Text>
             {suggestedResources.slice(0, 1).map((res, i) => (
-              <TouchableOpacity key={res.id || i} style={[styles.historyItem, { backgroundColor: theme.colors.surface, borderColor: theme.colors.plum + '30', borderWidth: 1 }]} onPress={() => router.push('/(tabs)/knowledge-hub')}>
+              <TouchableOpacity activeOpacity={0.7} key={res.id || i} style={[styles.historyItem, { backgroundColor: theme.colors.surface, borderColor: theme.colors.plum + '30', borderWidth: 1 }]} onPress={() => router.push('/(tabs)/knowledge-hub')}>
                 <View style={[styles.moodIndicator, { backgroundColor: theme.colors.plum + '15' }]}>
                   <PlayCircle color={theme.colors.plum} size={20} />
                 </View>
@@ -847,7 +847,7 @@ export default function WellnessTrackerScreen() {
                 <StepProgress current={step} />
                 <View style={styles.wizardNav}>
                   {step > 1 ? (
-                    <TouchableOpacity onPress={prevStep} style={styles.backBtn}>
+                    <TouchableOpacity activeOpacity={0.7} onPress={prevStep} style={styles.backBtn}>
                       <ArrowRight size={20} color={theme.colors.text.tertiary} style={{ transform: [{ rotate: '180deg' }] }} />
                       <Text style={[styles.backText, { color: theme.colors.text.tertiary }]}>{t('common.back')}</Text>
                     </TouchableOpacity>
@@ -868,7 +868,7 @@ export default function WellnessTrackerScreen() {
         <View style={styles.historySection}>
           <View style={styles.historyHeader}>
             <Text style={[styles.historyTitle, { color: theme.colors.text.primary }]}>{t('tracker.recent_checkins') || 'Recent Check-ins'}</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/profile')}><Text style={{ color: theme.colors.plum, fontWeight: '700' }}>View All</Text></TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/profile')}><Text style={{ color: theme.colors.plum, fontWeight: '700' }}>View All</Text></TouchableOpacity>
           </View>
           {history.length > 0 ? history.map((item: any, idx: number) => {
             const emotion = item.emotions?.[0] || 'neutral';
@@ -945,13 +945,13 @@ export default function WellnessTrackerScreen() {
                       <Text style={[styles.analysisCardSub, { color: theme.colors.text.tertiary }]}>Showing last {activeData.length} records</Text>
                     </View>
                     <View style={[styles.toggleContainer, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
-                      <TouchableOpacity
+                      <TouchableOpacity activeOpacity={0.7}
                         style={[styles.toggleBtn, timeRange === '7d' && [styles.toggleActiveBtn, { backgroundColor: theme.colors.plum }]]}
                         onPress={() => setTimeRange('7d')}
                       >
                         <Text style={[styles.toggleBtnText, timeRange === '7d' ? { color: '#FFF' } : { color: theme.colors.text.secondary }]}>Weekly</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity
+                      <TouchableOpacity activeOpacity={0.7}
                         style={[styles.toggleBtn, timeRange === '30d' && [styles.toggleActiveBtn, { backgroundColor: theme.colors.plum }]]}
                         onPress={() => setTimeRange('30d')}
                       >
@@ -1152,10 +1152,10 @@ export default function WellnessTrackerScreen() {
             </Text>
             
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              <TouchableOpacity onPress={() => handleConsent(false)} style={[styles.saveBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', flex: 1 }]}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => handleConsent(false)} style={[styles.saveBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', flex: 1 }]}>
                 <Text style={[styles.saveBtnText, { color: theme.colors.text.primary }]}>Not Now</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleConsent(true)} style={[styles.saveBtn, { backgroundColor: theme.colors.plum, flex: 1 }]}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => handleConsent(true)} style={[styles.saveBtn, { backgroundColor: theme.colors.plum, flex: 1 }]}>
                 <Text style={[styles.saveBtnText, { color: '#FFF' }]}>Enable</Text>
               </TouchableOpacity>
             </View>

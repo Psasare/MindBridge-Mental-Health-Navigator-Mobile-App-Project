@@ -107,7 +107,7 @@ const MessageItem = ({ item, theme, router, t }: any) => {
                 <Text style={msgStyles.crisisLabel}>IMMEDIATE SUPPORT AVAILABLE</Text>
               </View>
               <Text style={[msgStyles.textAi, { color: theme.colors.text.primary }]}>{item.text}</Text>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 style={msgStyles.crisisBtn}
                 onPress={() => router.push('/(tabs)/crisis')}
                 activeOpacity={0.85}
@@ -147,7 +147,7 @@ const MessageItem = ({ item, theme, router, t }: any) => {
                       : `Here is a tool that might help with your ${item.state.primaryCondition}:`}
                   </Text>
 
-                  <TouchableOpacity 
+                  <TouchableOpacity activeOpacity={0.7} 
                     style={[msgStyles.stateActionBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : '#FFF', borderColor: theme.colors.plum + '30' }]}
                     onPress={() => {
                       if (item.state.severity === 'severe' || item.state.severity === 'critical') router.push('/(tabs)/crisis');
@@ -499,10 +499,10 @@ export default function AIGuideScreen() {
               <Text style={[S.headerSub, { color: theme.colors.text.secondary }]}>{loading ? 'Reflecting…' : 'Always here for you'}</Text>
             </View>
           </View>
-          <TouchableOpacity style={[S.headerBtn, { marginRight: 4 }]} onPress={() => setIsHistoryVisible(true)}>
+          <TouchableOpacity activeOpacity={0.7} style={[S.headerBtn, { marginRight: 4 }]} onPress={() => setIsHistoryVisible(true)}>
             <History color={theme.colors.text.tertiary} size={19} />
           </TouchableOpacity>
-          <TouchableOpacity style={S.headerBtn} onPress={handleClearChat}>
+          <TouchableOpacity activeOpacity={0.7} style={S.headerBtn} onPress={handleClearChat}>
             <RefreshCw color={theme.colors.text.tertiary} size={19} />
           </TouchableOpacity>
         </View>
@@ -523,7 +523,7 @@ export default function AIGuideScreen() {
             </View>
             <View style={S.promptsGrid}>
               {SUGGESTED_PROMPTS.map((p, i) => (
-                <TouchableOpacity key={i} style={[S.chip, { backgroundColor: theme.colors.surface, borderColor: theme.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)' }]} onPress={() => handleSend(p)}>
+                <TouchableOpacity activeOpacity={0.7} key={i} style={[S.chip, { backgroundColor: theme.colors.surface, borderColor: theme.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)' }]} onPress={() => handleSend(p)}>
                   <Text style={[S.chipText, { color: theme.colors.text.secondary }]}>{p}</Text>
                 </TouchableOpacity>
               ))}
@@ -556,10 +556,10 @@ export default function AIGuideScreen() {
               onContentSizeChange={e => setInputHeight(Math.min(Math.max(44, e.nativeEvent.contentSize.height), 120))}
             />
             <View style={S.inputActions}>
-              <TouchableOpacity style={[S.micBtn, isRecording && { backgroundColor: '#EF4444' }]} onPress={isRecording ? stopRecording : startRecording}>
+              <TouchableOpacity activeOpacity={0.7} style={[S.micBtn, isRecording && { backgroundColor: '#EF4444' }]} onPress={isRecording ? stopRecording : startRecording}>
                 {isRecording ? <StopCircle color="#FFF" size={20} /> : <Mic color={theme.isDark ? theme.colors.accents.powderBlue : '#7B61FF'} size={20} />}
               </TouchableOpacity>
-              <TouchableOpacity style={[S.sendBtn, { backgroundColor: '#7B61FF' }, !message.trim() && !isRecording && { opacity: 0.5 }]} onPress={() => handleSend()} disabled={!message.trim() || loading}>
+              <TouchableOpacity activeOpacity={0.7} style={[S.sendBtn, { backgroundColor: '#7B61FF' }, !message.trim() && !isRecording && { opacity: 0.5 }]} onPress={() => handleSend()} disabled={!message.trim() || loading}>
                 <Send color="#FFF" size={20} />
               </TouchableOpacity>
             </View>
@@ -584,7 +584,7 @@ export default function AIGuideScreen() {
                   <Text style={[S.modalSubtitle, { color: theme.colors.text.secondary }]}>Past interactions with Oracle</Text>
                 </View>
               </View>
-              <TouchableOpacity onPress={() => setIsHistoryVisible(false)} style={[S.closeBtn, { backgroundColor: '#7B61FF15' }]}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setIsHistoryVisible(false)} style={[S.closeBtn, { backgroundColor: '#7B61FF15' }]}>
                 <X color="#7B61FF" size={18} />
               </TouchableOpacity>
             </View>
@@ -613,7 +613,7 @@ export default function AIGuideScreen() {
                         <View style={S.groupLabelRow}>
                           <Text style={[S.groupLabelText, { color: theme.colors.plum }]}>{category}</Text>
                           <View style={[S.groupLabelLine, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
-                          <TouchableOpacity 
+                          <TouchableOpacity activeOpacity={0.7} 
                             onPress={() => handleDeleteGroup(category, sortedItems.map(item => item.id).filter(id => !id.toString().startsWith('hist-')))} 
                             style={S.groupDeleteBtn}
                             activeOpacity={0.7}
@@ -642,7 +642,7 @@ export default function AIGuideScreen() {
                                 <View style={S.historyBubbleHeader}>
                                   <Text style={[S.historySender, { color: theme.isDark ? theme.colors.accents.powderBlue : theme.colors.plum }]}>Oracle</Text>
                                   {msg.id && !msg.id.toString().startsWith('hist-') && (
-                                    <TouchableOpacity onPress={() => handleDeleteMessage(msg.id)} style={{ padding: 4 }}>
+                                    <TouchableOpacity activeOpacity={0.7} onPress={() => handleDeleteMessage(msg.id)} style={{ padding: 4 }}>
                                       <Trash2 color={theme.colors.text.tertiary} size={12} />
                                     </TouchableOpacity>
                                   )}
@@ -669,7 +669,7 @@ export default function AIGuideScreen() {
                                 <View style={S.historyBubbleHeader}>
                                   <Text style={[S.historySender, { color: '#FFF' }]}>You</Text>
                                   {msg.id && !msg.id.toString().startsWith('hist-') && (
-                                    <TouchableOpacity onPress={() => handleDeleteMessage(msg.id)} style={{ padding: 4 }}>
+                                    <TouchableOpacity activeOpacity={0.7} onPress={() => handleDeleteMessage(msg.id)} style={{ padding: 4 }}>
                                       <Trash2 color="rgba(255,255,255,0.7)" size={12} />
                                     </TouchableOpacity>
                                   )}

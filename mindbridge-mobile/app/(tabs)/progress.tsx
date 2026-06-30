@@ -40,7 +40,7 @@ export default function ProgressScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.7} style={styles.backBtn} onPress={() => router.back()}>
           <ChevronLeft color={theme.colors.text.primary} size={24} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text.primary }]}>Your Progress</Text>

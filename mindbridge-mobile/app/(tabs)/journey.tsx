@@ -112,7 +112,7 @@ export default function JourneyScreen() {
               <View style={styles.timelineLeft}>
                 <Text style={styles.timeText}>{task.time}</Text>
                 <View style={[styles.timelineLine, index === tasks.length - 1 && { height: 20 }]} />
-                <TouchableOpacity 
+                <TouchableOpacity activeOpacity={0.7} 
                   onPress={() => toggleTask(task.id)}
                   style={styles.dotContainer}
                 >

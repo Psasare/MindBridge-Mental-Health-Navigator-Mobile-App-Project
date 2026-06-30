@@ -517,7 +517,7 @@ export default function ProfileScreen() {
             </View>
           )}
           
-          <TouchableOpacity 
+          <TouchableOpacity activeOpacity={0.7} 
             style={[styles.detailedInsightsBtn, { backgroundColor: theme.colors.plum + '10' }]}
             onPress={() => router.push('/(tabs)/insights')}
           >
@@ -566,7 +566,7 @@ export default function ProfileScreen() {
             <ShieldAlert size={14} color={theme.colors.semantic.danger} />
             <Text style={[styles.sectionLabel, { color: theme.colors.semantic.danger }]}>{t('profile.crisis_support')}</Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity activeOpacity={0.7} 
             style={[styles.crisisCard, { backgroundColor: theme.isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)' }]}
             onPress={() => router.push('/(tabs)/crisis')}
           >
@@ -670,7 +670,7 @@ export default function ProfileScreen() {
                 <View style={styles.modalHandle} />
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Help & Support</Text>
-                  <TouchableOpacity onPress={() => setShowHelp(false)} style={styles.closeBtn}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => setShowHelp(false)} style={styles.closeBtn}>
                     <X size={20} color={theme.colors.text.tertiary} />
                   </TouchableOpacity>
                 </View>
@@ -687,7 +687,7 @@ export default function ProfileScreen() {
                       <Text style={[styles.helpA, { color: theme.colors.text.secondary }]}>{item.a}</Text>
                     </View>
                   ))}
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.7}
                     style={[styles.saveBtn, { marginTop: 16, marginBottom: 32, backgroundColor: theme.colors.semantic.danger + 'DD' }]}
                     onPress={() => { setShowHelp(false); router.push('/(tabs)/crisis'); }}
                   >
@@ -711,7 +711,7 @@ export default function ProfileScreen() {
                 <View style={styles.modalHandle} />
                 <View style={styles.modalHeader}>
                   <Text style={styles.modalTitle}>Update Profile</Text>
-                  <TouchableOpacity onPress={() => setIsEditing(false)} style={styles.closeBtn}>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => setIsEditing(false)} style={styles.closeBtn}>
                     <X size={20} color={theme.colors.text.tertiary} />
                   </TouchableOpacity>
                 </View>
@@ -748,7 +748,7 @@ export default function ProfileScreen() {
                 </View>
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>University</Text>
-                  <TouchableOpacity 
+                  <TouchableOpacity activeOpacity={0.7} 
                     style={styles.pickerTrigger} 
                     onPress={() => setShowUniPicker(true)}
                   >
@@ -763,7 +763,7 @@ export default function ProfileScreen() {
                       <View style={styles.uniModalContent}>
                         <View style={styles.modalHeader}>
                           <Text style={styles.modalTitle}>Select Institution</Text>
-                          <TouchableOpacity onPress={() => setShowUniPicker(false)} style={styles.closeBtn}>
+                          <TouchableOpacity activeOpacity={0.7} onPress={() => setShowUniPicker(false)} style={styles.closeBtn}>
                             <X color={theme.colors.text.tertiary} size={24} />
                           </TouchableOpacity>
                         </View>
@@ -784,7 +784,7 @@ export default function ProfileScreen() {
                           keyExtractor={item => item}
                           contentContainerStyle={styles.listContent}
                           renderItem={({ item }) => (
-                            <TouchableOpacity
+                            <TouchableOpacity activeOpacity={0.7}
                               style={[styles.listItemSearch, editData.university === item && styles.listItemActiveSearch]}
                               onPress={() => {
                                 setEditData({...editData, university: item});
@@ -828,7 +828,7 @@ export default function ProfileScreen() {
                 </View>
               </ScrollView>
 
-              <TouchableOpacity style={styles.saveBtn} onPress={handleUpdate}>
+              <TouchableOpacity activeOpacity={0.7} style={styles.saveBtn} onPress={handleUpdate}>
                 <Text style={styles.saveBtnText}>Save Changes</Text>
               </TouchableOpacity>
               </View>

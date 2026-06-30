@@ -671,7 +671,7 @@ const AudioPlayerModal = ({ meditation, visible, onClose, theme }: any) => {
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={[styles.modalContainer, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.modalHeader, { borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-          <TouchableOpacity onPress={onClose} style={styles.modalCloseBtn}>
+          <TouchableOpacity activeOpacity={0.7} onPress={onClose} style={styles.modalCloseBtn}>
             <X color={theme.colors.text.secondary} size={22} />
           </TouchableOpacity>
           <View style={[styles.modalCategoryBadge, { backgroundColor: (theme.colors.accents[meditation.color as keyof typeof theme.colors.accents] || theme.colors.plum) + '20' }]}>
@@ -695,7 +695,7 @@ const AudioPlayerModal = ({ meditation, visible, onClose, theme }: any) => {
           <View style={styles.playerProgressWrap}>
             <View style={[styles.playerProgressTrack, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
               <View style={[styles.playerProgressFill, { width: `${progress * 100}%`, backgroundColor: theme.colors.plum }]} />
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 style={[styles.playerScrubHandle, {
                   left: `${Math.max(0, Math.min(100, progress * 100))}%`,
                   backgroundColor: theme.colors.plum,
@@ -711,7 +711,7 @@ const AudioPlayerModal = ({ meditation, visible, onClose, theme }: any) => {
 
           {/* Seek Buttons + Play */}
           <View style={styles.playerControls}>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={styles.playerSkipBtn}
               onPress={async () => {
                 const newPos = Math.max(0, positionMs - 15000);
@@ -721,7 +721,7 @@ const AudioPlayerModal = ({ meditation, visible, onClose, theme }: any) => {
               <Text style={[styles.playerSkipText, { color: theme.colors.text.secondary }]}>-15s</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={[styles.playerPlayBtn, { backgroundColor: theme.colors.plum }]}
               onPress={handlePlayPause}
               disabled={isLoading}
@@ -735,7 +735,7 @@ const AudioPlayerModal = ({ meditation, visible, onClose, theme }: any) => {
               )}
             </TouchableOpacity>
 
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={styles.playerSkipBtn}
               onPress={async () => {
                 const newPos = Math.min(durationMs, positionMs + 15000);
@@ -796,7 +796,7 @@ const ArticleModal = ({ article, visible, onClose, theme }: any) => {
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={[styles.modalContainer, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.modalHeader, { borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-          <TouchableOpacity onPress={onClose} style={styles.modalCloseBtn}>
+          <TouchableOpacity activeOpacity={0.7} onPress={onClose} style={styles.modalCloseBtn}>
             <X color={theme.colors.text.secondary} size={22} />
           </TouchableOpacity>
           <View style={[styles.modalCategoryBadge, { backgroundColor: (theme.colors.accents[article.color as keyof typeof theme.colors.accents] || theme.colors.plum) + '15' }]}>
@@ -833,7 +833,7 @@ const TechniqueModal = ({ technique, visible, onClose, theme, router }: any) => 
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={[styles.modalContainer, { backgroundColor: theme.colors.background }]}>
         <View style={[styles.modalHeader, { borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }]}>
-          <TouchableOpacity onPress={onClose} style={styles.modalCloseBtn}>
+          <TouchableOpacity activeOpacity={0.7} onPress={onClose} style={styles.modalCloseBtn}>
             <X color={theme.colors.text.secondary} size={22} />
           </TouchableOpacity>
           <View style={[styles.modalCategoryBadge, { backgroundColor: (theme.colors.accents[technique.color as keyof typeof theme.colors.accents] || theme.colors.plum) + '15' }]}>
@@ -862,7 +862,7 @@ const TechniqueModal = ({ technique, visible, onClose, theme, router }: any) => 
             </View>
           ))}
           {technique.route && (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={[styles.practiceBtn, { backgroundColor: theme.colors.plum }]}
               onPress={() => { onClose(); router.push(technique.route); }}
             >
@@ -977,7 +977,7 @@ export default function ResourcesScreen() {
           title={t('resources.title')}
           subtitle={t('resources.subtitle')}
           rightAction={
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               style={styles.searchBtn}
               accessible={true}
               accessibilityRole="button"
@@ -1000,7 +1000,7 @@ export default function ResourcesScreen() {
             const isActive = activeCategory === cat.id;
             const IconComponent = cat.icon;
             return (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 key={cat.id}
                 onPress={() => setActiveCategory(cat.id)}
                 style={[styles.catPill, isActive && styles.catPillActive]}
@@ -1026,7 +1026,7 @@ export default function ResourcesScreen() {
                 <Text style={[styles.featuredBadgeText, { color: theme.colors.plum }]}>Based on your stress profile</Text>
               </View>
             </View>
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={[styles.techCard, { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}
               onPress={() => {
                 if (recommendedTech.route) {
@@ -1074,7 +1074,7 @@ export default function ResourcesScreen() {
                   <Clock color={theme.colors.text.tertiary} size={13} />
                   <Text style={[styles.featuredMetaText, { color: theme.colors.text.tertiary }]}>{FEATURED.readTime}</Text>
                 </View>
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.7}
                   style={[styles.featuredBtn, { backgroundColor: (theme.colors.plum) + '15' }]}
                   onPress={() => setFeaturedExpanded(!featuredExpanded)}
                 >
@@ -1171,7 +1171,7 @@ export default function ResourcesScreen() {
           <Animated.View entering={FadeInUp.delay(200).duration(500)} style={styles.section}>
             <Text style={[styles.sectionTitle, { paddingHorizontal: 24, marginBottom: 12 }]}>Quick Relief Tools</Text>
             <View style={styles.quickToolsGrid}>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 style={[styles.quickToolCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', backgroundColor: theme.colors.surface }]}
                 onPress={() => router.push('/breathing')}
               >
@@ -1179,7 +1179,7 @@ export default function ResourcesScreen() {
                 <Text style={[styles.quickToolTitle, { color: theme.colors.text.primary }]}>Box Breathing</Text>
                 <Text style={[styles.quickToolSub, { color: theme.colors.text.secondary }]}>4 min guided</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 style={[styles.quickToolCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', backgroundColor: theme.colors.surface }]}
                 onPress={() => router.push('/grounding')}
               >
@@ -1187,7 +1187,7 @@ export default function ResourcesScreen() {
                 <Text style={[styles.quickToolTitle, { color: theme.colors.text.primary }]}>5-4-3-2-1 Grounding</Text>
                 <Text style={[styles.quickToolSub, { color: theme.colors.text.secondary }]}>5 min guided</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 style={[styles.quickToolCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', backgroundColor: theme.colors.surface }]}
                 onPress={() => router.push('/(tabs)/journal')}
               >
@@ -1195,7 +1195,7 @@ export default function ResourcesScreen() {
                 <Text style={[styles.quickToolTitle, { color: theme.colors.text.primary }]}>Reflective Journal</Text>
                 <Text style={[styles.quickToolSub, { color: theme.colors.text.secondary }]}>Write it out</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 style={[styles.quickToolCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', backgroundColor: theme.colors.surface }]}
                 onPress={() => router.push('/(tabs)/assessments')}
               >
@@ -1221,7 +1221,7 @@ export default function ResourcesScreen() {
               const IconComponent = article.icon;
               return (
                 <Animated.View key={article.id} entering={FadeInUp.delay(300 + i * 50).duration(450)}>
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.7}
                     style={[styles.articleCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', borderWidth: 1 }]}
                     onPress={() => openArticle(article)}
                     activeOpacity={0.8}
@@ -1312,7 +1312,7 @@ export default function ResourcesScreen() {
                 const IconComponent = pod.icon;
                 return (
                   <Animated.View key={pod.id} entering={FadeInUp.delay(400 + i * 50).duration(450)}>
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.7}
                       style={[styles.articleCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)', borderWidth: 1 }]}
                       onPress={() => openInBrowser(pod.url)}
                       activeOpacity={0.8}
@@ -1352,7 +1352,7 @@ export default function ResourcesScreen() {
                 const IconComponent = vid.icon;
                 return (
                   <Animated.View key={vid.id} entering={FadeInUp.delay(350 + i * 50).duration(450)}>
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.7}
                       style={[styles.videoCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}
                       onPress={() => openInBrowser(vid.url)}
                       activeOpacity={0.82}
@@ -1401,7 +1401,7 @@ export default function ResourcesScreen() {
               const IconComponent = r.icon;
               return (
                 <Animated.View key={r.id} entering={FadeInUp.delay(400 + i * 60).duration(450)}>
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.7}
                     style={[styles.crisisCard, { borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)' }]}
                     onPress={() => {
                       const { Linking } = require('react-native');
@@ -1429,7 +1429,7 @@ export default function ResourcesScreen() {
                 </Animated.View>
               );
             })}
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={[styles.viewCrisisAllBtn, { borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)', backgroundColor: theme.colors.surface }]}
               onPress={() => router.push('/(tabs)/crisis')}
             >

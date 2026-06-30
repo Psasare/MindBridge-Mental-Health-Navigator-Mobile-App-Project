@@ -189,7 +189,7 @@ export default function BreathingScreen() {
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.85}>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => router.back()} style={styles.closeBtn} activeOpacity={0.85}>
           <X color={theme.colors.text.primary} size={24} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Breathing Space</Text>
@@ -206,7 +206,7 @@ export default function BreathingScreen() {
             <Text style={styles.completedSub}>
               Great job taking time for your breath. Your mind is calmer and more focused.
             </Text>
-            <TouchableOpacity style={styles.doneBtn} onPress={() => router.back()}>
+            <TouchableOpacity activeOpacity={0.7} style={styles.doneBtn} onPress={() => router.back()}>
               <Text style={styles.doneBtnText}>Back to Dashboard</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -256,7 +256,7 @@ export default function BreathingScreen() {
                 {/* Duration Picker Pills */}
                 <View style={styles.pickerRow}>
                   {[60, 120, 300].map((durationSecs) => (
-                    <TouchableOpacity
+                    <TouchableOpacity activeOpacity={0.7}
                       key={durationSecs}
                       style={[
                         styles.pickerPill,

@@ -172,7 +172,7 @@ export default function CommunityScreen() {
               <Text style={styles.postTime}>{formatDate(post.createdAt)} • Anonymous</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.moreBtn}>
+          <TouchableOpacity activeOpacity={0.7} style={styles.moreBtn}>
             <MoreHorizontal color={theme.colors.text.tertiary} size={20} />
           </TouchableOpacity>
         </View>
@@ -227,7 +227,7 @@ export default function CommunityScreen() {
             <Text style={styles.groupListTitle}>{group.name}</Text>
             <Text style={styles.groupListMembers}>{formatMembers(memberCount)} Members</Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity activeOpacity={0.7} 
             style={[
               styles.joinBtn, 
               { 
@@ -270,7 +270,7 @@ export default function CommunityScreen() {
             <Text style={styles.peerRating}>{peer.rating.toFixed(1)} Rating</Text>
           </View>
         </View>
-        <TouchableOpacity style={[styles.msgBtn, { backgroundColor: theme.colors.plum }]}>
+        <TouchableOpacity activeOpacity={0.7} style={[styles.msgBtn, { backgroundColor: theme.colors.plum }]}>
           <MessageCircle color="#FFF" size={16} />
           <Text style={styles.msgBtnText}>Connect</Text>
         </TouchableOpacity>
@@ -306,10 +306,10 @@ export default function CommunityScreen() {
             <View style={styles.feedHeaderRow}>
               <Text style={styles.sectionTitle}>{t('community.recent_discussions')}</Text>
               <View style={styles.filterToggle}>
-                <TouchableOpacity onPress={() => setSortBy('recent')} style={[styles.filterToggleBtn, sortBy === 'recent' && { backgroundColor: theme.colors.plum }]}>
+                <TouchableOpacity activeOpacity={0.7} onPress={() => setSortBy('recent')} style={[styles.filterToggleBtn, sortBy === 'recent' && { backgroundColor: theme.colors.plum }]}>
                   <Text style={[styles.filterToggleText, sortBy === 'recent' && { color: '#FFF' }]}>Recent</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setSortBy('popular')} style={[styles.filterToggleBtn, sortBy === 'popular' && { backgroundColor: theme.colors.plum }]}>
+                <TouchableOpacity activeOpacity={0.7} onPress={() => setSortBy('popular')} style={[styles.filterToggleBtn, sortBy === 'popular' && { backgroundColor: theme.colors.plum }]}>
                   <Text style={[styles.filterToggleText, sortBy === 'popular' && { color: '#FFF' }]}>Popular</Text>
                 </TouchableOpacity>
               </View>
@@ -396,7 +396,7 @@ export default function CommunityScreen() {
           title="Safe Space" 
           subtitle="Connect, share, and find support"
           rightAction={
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               style={styles.searchBtn}
               onPress={() => Alert.alert('Search', 'Community search will be available soon!')}
             >
@@ -412,7 +412,7 @@ export default function CommunityScreen() {
             { id: 'groups', label: 'Groups' },
             { id: 'peers', label: 'Peers' }
           ].map((tab) => (
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               key={tab.id}
               style={[styles.tabBtn, activeTab === tab.id && { backgroundColor: theme.colors.plum }]}
               onPress={() => setActiveTab(tab.id as TabType)}
@@ -454,7 +454,7 @@ export default function CommunityScreen() {
           <View style={[styles.modalContainer, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{t('community.share_thought') || 'Start a Discussion'}</Text>
-              <TouchableOpacity onPress={() => setIsCreateVisible(false)} style={styles.closeBtn}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setIsCreateVisible(false)} style={styles.closeBtn}>
                 <X color={theme.colors.plum} size={18} />
               </TouchableOpacity>
             </View>
@@ -462,7 +462,7 @@ export default function CommunityScreen() {
             <Text style={styles.modalLabel}>Support Group</Text>
             <View style={styles.pickerRow}>
               {groups.map((g: any) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.7}
                   key={g.id}
                   style={[
                     styles.pickerChip,
@@ -497,7 +497,7 @@ export default function CommunityScreen() {
               onChangeText={setPostContent}
             />
 
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               style={[styles.publishBtn, (!postContent.trim() || publishing) && { opacity: 0.6 }]} 
               onPress={handleCreatePost}
               disabled={!postContent.trim() || publishing}

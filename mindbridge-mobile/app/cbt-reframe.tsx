@@ -73,7 +73,7 @@ export default function CBTReframeScreen() {
       
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.colors.surface, borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => router.back()} style={styles.backBtn}>
           <ChevronLeft color={theme.colors.text.primary} size={28} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.colors.text.primary }]}>Thought Reframer</Text>
@@ -109,7 +109,7 @@ export default function CBTReframeScreen() {
           </View>
           
           {!result && (
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               style={[styles.analyzeBtn, { backgroundColor: theme.colors.plum, opacity: thought.trim().length > 0 ? 1 : 0.5 }]} 
               onPress={handleAnalyze}
               disabled={thought.trim().length === 0 || loading}
@@ -181,14 +181,14 @@ export default function CBTReframeScreen() {
 
             {/* Actions */}
             <Animated.View entering={FadeInUp.delay(700).duration(600)} style={styles.actionRow}>
-              <TouchableOpacity 
+              <TouchableOpacity activeOpacity={0.7} 
                 style={[styles.actionBtn, { backgroundColor: theme.colors.surface, borderColor: theme.colors.plum + '30' }]} 
                 onPress={() => { setThought(''); setResult(null); }}
               >
                 <Text style={[styles.actionBtnText, { color: theme.colors.text.primary }]}>Reframe Another</Text>
               </TouchableOpacity>
               
-              <TouchableOpacity 
+              <TouchableOpacity activeOpacity={0.7} 
                 style={[styles.actionBtnPrimary, { backgroundColor: saved ? theme.colors.accents.eucalyptus : theme.colors.plum }]} 
                 onPress={handleSaveToJournal}
                 disabled={saved}

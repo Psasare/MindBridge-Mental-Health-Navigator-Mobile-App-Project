@@ -81,7 +81,7 @@ export default function GoalExecutionScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()}>
+        <TouchableOpacity activeOpacity={0.7} style={styles.closeBtn} onPress={() => router.back()}>
           <X color={theme.colors.text.primary} size={24} />
         </TouchableOpacity>
       </View>
@@ -102,7 +102,7 @@ export default function GoalExecutionScreen() {
                 <Text style={styles.badgeName}>{gamificationResult.badgeUnlocked}</Text>
               </View>
             )}
-            <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: theme.colors.plum, marginTop: 40 }]} onPress={() => router.back()}>
+            <TouchableOpacity activeOpacity={0.7} style={[styles.primaryBtn, { backgroundColor: theme.colors.plum, marginTop: 40 }]} onPress={() => router.back()}>
               <Text style={styles.primaryBtnText}>Return to Dashboard</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -136,7 +136,7 @@ export default function GoalExecutionScreen() {
             {goal.duration > 0 && (
               <View style={styles.timerContainer}>
                 <Text style={[styles.timerText, { color: theme.colors.text.primary }]}>{formatTime(timeLeft)}</Text>
-                <TouchableOpacity 
+                <TouchableOpacity activeOpacity={0.7} 
                   style={[styles.timerBtn, { backgroundColor: isActive ? theme.colors.semantic.danger + '20' : theme.colors.plum + '20' }]} 
                   onPress={toggleTimer}
                 >
@@ -145,7 +145,7 @@ export default function GoalExecutionScreen() {
               </View>
             )}
 
-            <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: theme.colors.plum, marginTop: 40 }]} onPress={markComplete}>
+            <TouchableOpacity activeOpacity={0.7} style={[styles.primaryBtn, { backgroundColor: theme.colors.plum, marginTop: 40 }]} onPress={markComplete}>
               <CheckCircle2 color="#FFF" size={24} />
               <Text style={styles.primaryBtnText}>Mark Complete</Text>
             </TouchableOpacity>
@@ -157,7 +157,7 @@ export default function GoalExecutionScreen() {
             
             <View style={styles.starsContainer}>
               {[1, 2, 3, 4, 5].map(star => (
-                <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                <TouchableOpacity activeOpacity={0.7} key={star} onPress={() => setRating(star)}>
                   <Star 
                     size={48} 
                     color={rating >= star ? '#FFD700' : theme.colors.text.disabled} 
@@ -167,7 +167,7 @@ export default function GoalExecutionScreen() {
               ))}
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               style={[styles.primaryBtn, { backgroundColor: rating > 0 ? theme.colors.plum : theme.colors.text.disabled, marginTop: 40 }]} 
               onPress={submitCompletion}
               disabled={rating === 0 || isSubmitting}

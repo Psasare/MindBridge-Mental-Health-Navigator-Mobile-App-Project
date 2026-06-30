@@ -65,7 +65,7 @@ export default function InsightsScreen() {
 
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top }]} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity activeOpacity={0.7} onPress={() => router.back()} style={styles.backBtn}>
             <ChevronLeft color={theme.colors.text.primary} size={24} />
           </TouchableOpacity>
           <ScreenHeader 

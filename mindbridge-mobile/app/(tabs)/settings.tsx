@@ -122,9 +122,6 @@ export default function SettingsScreen() {
     );
   };
 
-  const handleComingSoon = (feature: string) => {
-    Alert.alert("Coming Soon", `${feature} is currently under development and will be available in the next update!`);
-  };
 
   const submitFeedback = async () => {
     if (!feedback.trim()) return;
@@ -200,7 +197,7 @@ export default function SettingsScreen() {
   );
 
   const ThemeOption = ({ optionMode, icon: Icon, label }: any) => (
-    <TouchableOpacity 
+    <TouchableOpacity activeOpacity={0.7} 
       style={[styles.themeOption, mode === optionMode && styles.themeOptionActive]}
       onPress={() => setMode(optionMode)}
       activeOpacity={0.8}
@@ -316,7 +313,7 @@ export default function SettingsScreen() {
         </View>
 
         {/* ── Logout Section ── */}
-        <TouchableOpacity 
+        <TouchableOpacity activeOpacity={0.7} 
           style={styles.logoutBtn} 
           onPress={() => {
             Alert.alert(
@@ -355,7 +352,7 @@ export default function SettingsScreen() {
                 <Lock color={colors.accents.powderBlue} size={24} />
               </View>
               <Text style={styles.modalTitle}>Update Password</Text>
-              <TouchableOpacity onPress={() => setIsPasswordModalVisible(false)} style={styles.closeBtn}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setIsPasswordModalVisible(false)} style={styles.closeBtn}>
                 <X color={colors.text.tertiary} size={24} />
               </TouchableOpacity>
             </View>
@@ -397,7 +394,7 @@ export default function SettingsScreen() {
                 />
               </View>
 
-              <TouchableOpacity 
+              <TouchableOpacity activeOpacity={0.7} 
                 style={[styles.modalActionBtn, isUpdatingPass && { opacity: 0.7 }]}
                 onPress={handleUpdatePassword}
                 disabled={isUpdatingPass}
@@ -422,7 +419,7 @@ export default function SettingsScreen() {
                 <MessageSquare color={colors.accents.forestGreen} size={24} />
               </View>
               <Text style={styles.modalTitle}>Your Feedback</Text>
-              <TouchableOpacity onPress={() => setIsFeedbackVisible(false)}><X color={colors.text.tertiary} size={24} /></TouchableOpacity>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setIsFeedbackVisible(false)}><X color={colors.text.tertiary} size={24} /></TouchableOpacity>
             </View>
             <TextInput
               style={[styles.textInput, { height: 120 }]}
@@ -432,7 +429,7 @@ export default function SettingsScreen() {
               value={feedback}
               onChangeText={setFeedback}
             />
-            <TouchableOpacity style={styles.modalActionBtn} onPress={submitFeedback} disabled={isSendingFeedback}>
+            <TouchableOpacity activeOpacity={0.7} style={styles.modalActionBtn} onPress={submitFeedback} disabled={isSendingFeedback}>
               {isSendingFeedback ? <ActivityIndicator color="#FFF" /> : <Text style={styles.modalActionText}>Send Feedback</Text>}
             </TouchableOpacity>
           </View>
@@ -448,7 +445,7 @@ export default function SettingsScreen() {
                 <Info color={colors.plum} size={24} />
               </View>
               <Text style={styles.modalTitle}>About MindBridge</Text>
-              <TouchableOpacity onPress={() => setIsAboutVisible(false)}><X color={colors.text.tertiary} size={24} /></TouchableOpacity>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setIsAboutVisible(false)}><X color={colors.text.tertiary} size={24} /></TouchableOpacity>
             </View>
             <View style={{ gap: 16 }}>
               <Text style={{ color: colors.text.primary, fontSize: 17, fontWeight: '700', lineHeight: 24 }}>
@@ -475,7 +472,7 @@ export default function SettingsScreen() {
                 <HelpCircle color={colors.accents.slate} size={24} />
               </View>
               <Text style={styles.modalTitle}>Help Center</Text>
-              <TouchableOpacity onPress={() => setIsHelpVisible(false)}><X color={colors.text.tertiary} size={24} /></TouchableOpacity>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setIsHelpVisible(false)}><X color={colors.text.tertiary} size={24} /></TouchableOpacity>
             </View>
             <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
               <View style={{ gap: 16 }}>

@@ -104,7 +104,7 @@ const SelectGroup = ({ label, options, selectedValues, onToggle, theme, multiple
               : selectedValues === opt;
             
             return (
-              <TouchableOpacity
+              <TouchableOpacity activeOpacity={0.7}
                 key={opt}
                 style={[styles.chip, isSelected && styles.chipActive]}
                 onPress={() => onToggle(opt)}
@@ -135,7 +135,7 @@ const InstitutionPicker = ({ value, onSelect, error, theme }: { value: string; o
     <View>
       <View style={styles.inputRow}>
         <Typography variant="body" style={styles.inputLabel}>Institution</Typography>
-        <TouchableOpacity
+        <TouchableOpacity activeOpacity={0.7}
           style={styles.pickerTrigger}
           onPress={() => setVisible(true)}
           activeOpacity={0.7}
@@ -153,7 +153,7 @@ const InstitutionPicker = ({ value, onSelect, error, theme }: { value: string; o
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Typography variant="h3">Select Institution</Typography>
-              <TouchableOpacity onPress={() => setVisible(false)} style={styles.closeBtn}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setVisible(false)} style={styles.closeBtn}>
                 <X color={theme.colors.plum} size={24} />
               </TouchableOpacity>
             </View>
@@ -174,7 +174,7 @@ const InstitutionPicker = ({ value, onSelect, error, theme }: { value: string; o
               keyExtractor={item => item}
               contentContainerStyle={styles.listContent}
               renderItem={({ item }) => (
-                <TouchableOpacity
+                <TouchableOpacity activeOpacity={0.7}
                   style={[styles.listItem, value === item && styles.listItemActive]}
                   onPress={() => {
                     onSelect(item);
@@ -348,7 +348,7 @@ export default function RegisterScreen() {
         >
           {/* Header */}
           <Animated.View entering={FadeIn.duration(800)} style={styles.header}>
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} 
               style={styles.backButton}
               activeOpacity={0.7}
@@ -435,7 +435,7 @@ export default function RegisterScreen() {
                   onChangeText={(txt) => { setPassword(txt); if (errors.password) setErrors({ ...errors, password: undefined }); }}
                   onBlur={() => validateField('password')}
                 />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                <TouchableOpacity activeOpacity={0.7} onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
                   {showPassword ? <EyeOff color={themeContext.colors.text.tertiary} size={20} /> : <Eye color={themeContext.colors.text.tertiary} size={20} />}
                 </TouchableOpacity>
               </Animated.View>
@@ -549,7 +549,7 @@ export default function RegisterScreen() {
               Create Account
             </Button>
 
-            <TouchableOpacity onPress={() => router.push('/(auth)/login')} style={styles.signUpContainer}>
+            <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(auth)/login')} style={styles.signUpContainer}>
               <Typography variant="body" color={themeContext.colors.text.secondary}>
                 Already have an account? <Typography variant="bodyBold" color={themeContext.colors.plum}>Log In</Typography>
               </Typography>

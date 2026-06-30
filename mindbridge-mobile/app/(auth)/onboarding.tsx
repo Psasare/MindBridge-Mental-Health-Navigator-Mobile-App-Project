@@ -238,7 +238,7 @@ const DiscreteSlider = ({ value, onValueChange, theme }: { value: number, onValu
       <View style={styles.sliderTrack} />
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', width: '100%' }}>
         {[1, 2, 3, 4, 5].map((val) => (
-          <TouchableOpacity 
+          <TouchableOpacity activeOpacity={0.7} 
             key={val} 
             onPress={() => onValueChange(val)}
             style={[
@@ -454,7 +454,7 @@ export default function OnboardingScreen() {
                 Agree and Continue
               </Button>
               
-              <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={{ marginBottom: 20, alignSelf: 'center' }} activeOpacity={0.6}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={{ marginBottom: 20, alignSelf: 'center' }} activeOpacity={0.6}>
                 <Typography variant="bodyBold" color={themeContext.colors.text.tertiary} style={styles.exitText}>Decline and Exit</Typography>
               </TouchableOpacity>
             </ScrollView>
@@ -511,7 +511,7 @@ export default function OnboardingScreen() {
                   : answers[step.id] === opt.value;
 
                 return (
-                  <TouchableOpacity
+                  <TouchableOpacity activeOpacity={0.7}
                     key={opt.value}
                     style={[
                       styles.optionBtn,
@@ -598,27 +598,27 @@ export default function OnboardingScreen() {
             <View style={styles.summaryBox}>
               <Typography variant="bodyBold" color={themeContext.colors.text.secondary} style={styles.summaryBoxTitle}>Here's what we learned about you:</Typography>
               
-              <TouchableOpacity onPress={() => jumpToStep(2)} style={styles.summaryItemRow}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => jumpToStep(2)} style={styles.summaryItemRow}>
                 <Typography variant="body" style={styles.summaryItem}>• {level} {program} at {uni}</Typography>
                 <Typography variant="ui" color={themeContext.colors.plum} style={styles.editLabel}>Edit</Typography>
               </TouchableOpacity>
 
               {(answers['q5'] && answers['q5'].length > 0) && (
-                <TouchableOpacity onPress={() => jumpToStep(6)} style={styles.summaryItemRow}>
+                <TouchableOpacity activeOpacity={0.7} onPress={() => jumpToStep(6)} style={styles.summaryItemRow}>
                   <Typography variant="body" style={styles.summaryItem}>• Working on: {answers['q5'].length} concern(s)</Typography>
                   <Typography variant="ui" color={themeContext.colors.plum} style={styles.editLabel}>Edit</Typography>
                 </TouchableOpacity>
               )}
 
               {(answers['q7'] && answers['q7'].length > 0) && (
-                <TouchableOpacity onPress={() => jumpToStep(8)} style={styles.summaryItemRow}>
+                <TouchableOpacity activeOpacity={0.7} onPress={() => jumpToStep(8)} style={styles.summaryItemRow}>
                   <Typography variant="body" style={styles.summaryItem}>• Coping via: {answers['q7'].length} method(s)</Typography>
                   <Typography variant="ui" color={themeContext.colors.plum} style={styles.editLabel}>Edit</Typography>
                 </TouchableOpacity>
               )}
 
               {goalsLabels ? (
-                <TouchableOpacity onPress={() => jumpToStep(11)} style={styles.summaryItemRow}>
+                <TouchableOpacity activeOpacity={0.7} onPress={() => jumpToStep(11)} style={styles.summaryItemRow}>
                   <Typography variant="body" style={styles.summaryItem}>• Goals: {goalsLabels}</Typography>
                   <Typography variant="ui" color={themeContext.colors.plum} style={styles.editLabel}>Edit</Typography>
                 </TouchableOpacity>
@@ -666,7 +666,7 @@ export default function OnboardingScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <View style={styles.headerTop}>
           {currentStepIndex > 0 ? (
-            <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
+            <TouchableOpacity activeOpacity={0.7} onPress={handleBack} style={styles.backBtn}>
               <ChevronLeft color={themeContext.colors.plum} size={28} />
             </TouchableOpacity>
           ) : <View style={{ width: 28 }} />}
@@ -710,18 +710,18 @@ export default function OnboardingScreen() {
       {isQuestionStep && (
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 20) + 10 }]}>
           <View style={styles.leftFooterActions}>
-            <TouchableOpacity onPress={handleBack} style={styles.backFooterBtn}>
+            <TouchableOpacity activeOpacity={0.7} onPress={handleBack} style={styles.backFooterBtn}>
               <ChevronLeft color={themeContext.colors.plum} size={24} />
             </TouchableOpacity>
             
             {!step.required && (
-              <TouchableOpacity onPress={handleSkipRequest} style={styles.skipBtn}>
+              <TouchableOpacity activeOpacity={0.7} onPress={handleSkipRequest} style={styles.skipBtn}>
                 <Typography variant="bodyBold" color={themeContext.colors.text.secondary} style={styles.skipText}>{t.common.skip}</Typography>
               </TouchableOpacity>
             )}
           </View>
           
-          <TouchableOpacity 
+          <TouchableOpacity activeOpacity={0.7} 
             onPress={handleNext} 
             style={[styles.nextBtn, !isNextEnabled && styles.nextBtnDisabled]}
             disabled={!isNextEnabled}

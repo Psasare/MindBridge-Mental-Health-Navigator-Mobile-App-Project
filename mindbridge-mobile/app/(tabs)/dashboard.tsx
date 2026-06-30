@@ -749,7 +749,7 @@ export default function DashboardScreen() {
                 <Text style={[styles.sectionTitleText, { color: theme.colors.text.primary }]}>Your Daily Goals</Text>
                 <Text style={styles.sectionSubtitleText}>Curated for your current mental state</Text>
               </View>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/progress')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/progress')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 <Flame size={20} color="#FF9800" fill={completedCount >= 1 ? "#FF9800" : "transparent"} />
               </TouchableOpacity>
             </View>
@@ -800,7 +800,7 @@ export default function DashboardScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={[styles.sectionTitleText, { color: theme.colors.text.primary }]}>{t('dashboard.latestReflection')}</Text>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/journal')}><Text style={{ color: theme.colors.plum, fontSize: 13, fontWeight: '700' }}>{t('dashboard.viewAll')}</Text></TouchableOpacity>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(tabs)/journal')}><Text style={{ color: theme.colors.plum, fontSize: 13, fontWeight: '700' }}>{t('dashboard.viewAll')}</Text></TouchableOpacity>
             </View>
             <TouchableOpacity 
               activeOpacity={0.9} 
@@ -935,7 +935,7 @@ export default function DashboardScreen() {
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll} decelerationRate="fast">
               {suggestedResources.map((res: any, idx: number) => (
-                <TouchableOpacity 
+                <TouchableOpacity activeOpacity={0.7} 
                   key={idx}
                   style={[styles.resourceCardWide, { backgroundColor: theme.colors.surface, marginRight: 16 }]}
                   onPress={async () => {

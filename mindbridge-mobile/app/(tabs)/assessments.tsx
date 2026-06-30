@@ -550,7 +550,7 @@ export default function AssessmentsScreen() {
 
         {/* Navigation Buttons */}
         <View style={styles.navContainer}>
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.7}
             style={[styles.navBtn, currentQuestionIndex === 0 && styles.navBtnDisabled]}
             disabled={currentQuestionIndex === 0}
             onPress={handlePrevQuestion}
@@ -561,7 +561,7 @@ export default function AssessmentsScreen() {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.7}
             style={[
               styles.navBtn, 
               styles.navBtnNext,
@@ -659,7 +659,7 @@ export default function AssessmentsScreen() {
                 Recommended For You
               </Text>
               {personalizedFeedback.suggestedResources.map((res: any, i: number) => (
-                <TouchableOpacity 
+                <TouchableOpacity activeOpacity={0.7} 
                   key={res.id || i} 
                   style={[styles.resultItem, { backgroundColor: theme.colors.background, borderColor: theme.colors.text.tertiary + '30', borderWidth: 1, padding: 12, marginBottom: 8 }]} 
                   onPress={() => {
@@ -679,7 +679,7 @@ export default function AssessmentsScreen() {
               ))}
             </View>
           ) : (
-            <TouchableOpacity
+            <TouchableOpacity activeOpacity={0.7}
               style={[
                 styles.actionBtn, 
                 { backgroundColor: isSevere ? theme.colors.semantic.danger : getActiveColor() }
@@ -698,7 +698,7 @@ export default function AssessmentsScreen() {
 
         {/* Done Button (Hidden if strict CSSRS positive) */}
         {!(activeTestId === 'cssrs' && isSevere) && (
-          <TouchableOpacity
+          <TouchableOpacity activeOpacity={0.7}
             style={styles.doneBtn}
             onPress={() => setActiveTestId(null)}
           >
@@ -738,7 +738,7 @@ export default function AssessmentsScreen() {
           title={t('assessments.title')} 
           subtitle={t('assessments.subtitle')}
           rightAction={
-            <TouchableOpacity 
+            <TouchableOpacity activeOpacity={0.7} 
               style={styles.infoBtn}
               onPress={() => Alert.alert(t('assessments.privacy_title'), t('assessments.privacy_msg'))}
             >
@@ -877,7 +877,7 @@ export default function AssessmentsScreen() {
         >
           {/* Modal Header */}
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={handleCloseRequest} style={styles.modalCloseBtn}>
+            <TouchableOpacity activeOpacity={0.7} onPress={handleCloseRequest} style={styles.modalCloseBtn}>
               <X color={theme.colors.text.primary} size={24} />
             </TouchableOpacity>
             <Text style={styles.modalTitleText}>
