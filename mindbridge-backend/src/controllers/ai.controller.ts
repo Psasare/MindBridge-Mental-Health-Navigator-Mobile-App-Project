@@ -20,47 +20,35 @@ export const getOracleContext = async (req: Request, res: Response) => {
     const userId = (req as any).userId;
 
     // Run independent database queries in parallel to significantly reduce latency
-    const [
-      latestMood,
-      moodCount,
-      user,
-      recentJournal,
-      journalCount,
-      onboarding,
-      history,
-      assessments,
-      latestCommunityPost
-    ] = await Promise.all([
-      prisma.moodLog.findFirst({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.moodLog.count({ where: { userId } }),
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { name: true }
-      }),
-      prisma.journal.findMany({
-        where: { userId },
-        take: 3,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          title: true,
-          content: true,
-          mood: true,
-          createdAt: true,
-        }
-      }),
-      prisma.journal.count({ where: { userId } }),
-      prisma.onboarding.findUnique({
-        where: { userId }
-      }),
-      AiRepository.getChatHistory(userId, 15),
-      AiRepository.getLatestAssessments(userId),
-      prisma.communityPost.findFirst({
-        orderBy: { createdAt: 'desc' }
-      })
-    ]);
+    const latestMood = await prisma.moodLog.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+    const moodCount = await prisma.moodLog.count({ where: { userId } });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true }
+    });
+    const recentJournal = await prisma.journal.findMany({
+      where: { userId },
+      take: 3,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        title: true,
+        content: true,
+        mood: true,
+        createdAt: true,
+      }
+    });
+    const journalCount = await prisma.journal.count({ where: { userId } });
+    const onboarding = await prisma.onboarding.findUnique({
+      where: { userId }
+    });
+    const history = await AiRepository.getChatHistory(userId, 15);
+    const assessments = await AiRepository.getLatestAssessments(userId);
+    const latestCommunityPost = await prisma.communityPost.findFirst({
+      orderBy: { createdAt: 'desc' }
+    });
 
     // Note: suggestedResources logic has been moved to getProactiveInsights for AI-driven personalization
     let suggestedResources: any[] = [];
@@ -116,44 +104,32 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       });
     }
 
-    const [
-      latestMood,
-      recentMoods,
-      recentJournal,
-      user,
-      onboarding,
-      history,
-      assessments,
-      gamification,
-      dailyGoals
-    ] = await Promise.all([
-      prisma.moodLog.findFirst({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-      }).catch(() => null),
-      prisma.moodLog.findMany({
-        where: { userId },
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-        select: { location: true, createdAt: true, score: true }
-      }).catch(() => []),
-      prisma.journal.findMany({
-        where: { userId },
-        take: 3,
-        orderBy: { createdAt: 'desc' },
-      }).catch(() => []),
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { name: true }
-      }),
-      prisma.onboarding.findUnique({
-        where: { userId }
-      }).catch(() => null),
-      AiRepository.getChatHistory(userId, 10).catch(() => []),
-      AiRepository.getLatestAssessments(userId).catch(() => []),
-      GoalService.getGamificationStatus(userId).catch(() => null),
-      GoalService.getDailyStatus(userId).catch(() => null)
-    ]);
+    const latestMood = await prisma.moodLog.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    }).catch(() => null);
+    const recentMoods = await prisma.moodLog.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+      select: { location: true, createdAt: true, score: true }
+    }).catch(() => []);
+    const recentJournal = await prisma.journal.findMany({
+      where: { userId },
+      take: 3,
+      orderBy: { createdAt: 'desc' },
+    }).catch(() => []);
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true }
+    });
+    const onboarding = await prisma.onboarding.findUnique({
+      where: { userId }
+    }).catch(() => null);
+    const history = await AiRepository.getChatHistory(userId, 10).catch(() => []);
+    const assessments = await AiRepository.getLatestAssessments(userId).catch(() => []);
+    const gamification = await GoalService.getGamificationStatus(userId).catch(() => null);
+    const dailyGoals = await GoalService.getDailyStatus(userId).catch(() => null);
 
     if (!user) {
       return res.status(401).json({ message: "Account not found. Please log out and back in." });
@@ -184,10 +160,17 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       audioBase64,
     };
 
-    // 4. Analyze Current State
-    const currentState = await analyzeCurrentState(message || "User sent a voice note", contextForOracle);
-    
-    // Save the Mental State Log to DB
+    // 4. Run State Analyzer and Oracle Response Generator in PARALLEL to cut latency in half
+    const [currentState, aiResponse] = await Promise.all([
+      analyzeCurrentState(message || "User sent a voice note", contextForOracle),
+      generateOracleResponse(message, contextForOracle, userId)
+    ]);
+
+    // 5. Save Results to DB
+    await prisma.chatMessage.create({
+      data: { userId, role: 'model', content: aiResponse }
+    });
+
     try {
       if (currentState.primaryState && currentState.primaryState !== 'Unknown') {
         const isCrisis = currentState.actionRequired === 'immediate_support';
@@ -227,17 +210,6 @@ export const chatWithOracle = async (req: Request, res: Response) => {
         state: currentState
       });
     }
-
-    // Pass the state into the context
-    contextForOracle.currentState = currentState;
-
-    // 5. Generate AI Response
-    const aiResponse = await generateOracleResponse(message, contextForOracle, userId);
-
-    // 6. Save AI Response
-    await prisma.chatMessage.create({
-      data: { userId, role: 'model', content: aiResponse }
-    });
 
     res.json({ response: aiResponse, state: currentState });
   } catch (error: any) {

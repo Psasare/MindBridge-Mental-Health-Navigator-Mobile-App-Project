@@ -296,7 +296,7 @@ export default function ActivityScreen() {
                 <Text style={styles.barValues}>{distanceKm} <Text style={styles.barUnit}>/ {goalDistance} km</Text></Text>
               </View>
               <View style={styles.barTrack}>
-                <Animated.View style={[styles.barFill, { backgroundColor: theme.colors.ocean, width: `${Math.min((distanceKm / goalDistance) * 100, 100)}%` }]} />
+                <Animated.View style={[styles.barFill, { backgroundColor: '#FF9500', width: `${Math.min((distanceKm / goalDistance) * 100, 100)}%` }]} />
               </View>
             </View>
           </View>

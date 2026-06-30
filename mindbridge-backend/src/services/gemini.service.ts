@@ -166,7 +166,7 @@ export const generateOracleResponse = async (userMessage: string, context: any, 
       systemInstruction: SYSTEM_PROMPT,
       tools: tools as any,
       generationConfig: {
-        maxOutputTokens: 100, // Hard limit to force brevity and avoid long lists
+        maxOutputTokens: 500, // Increased limit so it doesn't get cut off mid-sentence
         temperature: 0.7,
       }
     });

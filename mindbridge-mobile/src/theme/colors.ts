@@ -23,17 +23,17 @@ export const lightColors = {
   sage:      P.mossVelvet,          
   ocean:     P.ocean,               
 
-  background:          P.cloudMilk,
-  backgroundSecondary: P.dreamy,
-  surface:             '#FFFFFF',   
+  background:          '#F2F2F7',   // iOS Grouped Background Light
+  backgroundSecondary: '#FFFFFF',
+  surface:             '#FFFFFF',   // iOS Surface Light
 
   surfaceWarm: P.amberSmoke,        
   surfaceCool: P.frost,             
 
   text: {
-    primary:   '#1F2937',           
-    secondary: '#6B7A8A',           
-    tertiary:  '#A0AAB5',           
+    primary:   '#000000',           // iOS Label Light
+    secondary: '#8E8E93',           // iOS Secondary Label Light
+    tertiary:  '#C7C7CC',           // iOS Tertiary Label Light
     onPrimary: '#FFFFFF',           
     onWarm:    P.mossVelvet,        
     onCool:    P.ocean,             
@@ -86,21 +86,21 @@ export const darkColors = {
   sage:      '#5A8A70',             
   ocean:     '#0099C0',             
 
-  background:          P.abyss,           
-  backgroundSecondary: '#111520',          
-  surface:             P.dustyCoal,       
+  background:          '#000000',   // iOS Pure OLED Black
+  backgroundSecondary: '#1C1C1E',   // iOS Grouped Background Dark       
+  surface:             '#1C1C1E',   // iOS Elevated Surface Dark    
 
   surfaceWarm: '#2E2218',           
   surfaceCool: '#141C28',           
 
   text: {
-    primary:   '#EEF2F7',           
-    secondary: '#A8B8C8',           
-    tertiary:  '#708090',           
-    onPrimary: P.abyss,             
-    onWarm:    '#E8C8A8',           
-    onCool:    '#90C8E0',           
-    disabled:  '#3A4A5A',
+    primary:   '#FFFFFF',           // iOS Label Dark
+    secondary: '#EBEBF599',         // iOS Secondary Label Dark (60% opacity)
+    tertiary:  '#48484A',           // iOS Tertiary Label Dark
+    onPrimary: '#000000',             
+    onWarm:    '#D4B89A',           
+    onCool:    '#8BC0D0',           
+    disabled:  '#EBEBF54D',         // iOS Disabled Label Dark (30% opacity)
   },
 
   accents: {
