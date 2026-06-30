@@ -150,7 +150,7 @@ export default function ActivityScreen() {
         wSteps.push({
           value: dailySteps,
           label: label,
-          frontColor: theme.colors.plum, 
+          frontColor: '#FA114F', 
           topLabelComponent: () => null
         });
       }
@@ -261,7 +261,6 @@ export default function ActivityScreen() {
             <Text style={styles.cardHeader}>Today's Progress</Text>
             <TouchableOpacity onPress={() => setShowGoalModal(true)} style={styles.editBtn} activeOpacity={0.7}>
               <Text style={styles.editBtnText}>Edit Goals</Text>
-              <Edit3 color={theme.colors.plum} size={14} />
             </TouchableOpacity>
           </View>
           
@@ -269,11 +268,11 @@ export default function ActivityScreen() {
             {/* Steps Hero Ring */}
             <View style={styles.svgWrapper}>
               <Svg width={CENTER * 2} height={CENTER * 2}>
-                <Circle cx={CENTER} cy={CENTER} r={RADIUS} stroke={theme.colors.plum + '20'} strokeWidth={STROKE_WIDTH} fill="none" />
-                <AnimatedCircle cx={CENTER} cy={CENTER} r={RADIUS} stroke={theme.colors.plum} strokeWidth={STROKE_WIDTH} fill="none" strokeDasharray={CIRCUMFERENCE} animatedProps={animatedPropsSteps} strokeLinecap="round" rotation="-90" origin={`${CENTER}, ${CENTER}`} />
+                <Circle cx={CENTER} cy={CENTER} r={RADIUS} stroke={'#FA114F20'} strokeWidth={STROKE_WIDTH} fill="none" />
+                <AnimatedCircle cx={CENTER} cy={CENTER} r={RADIUS} stroke={'#FA114F'} strokeWidth={STROKE_WIDTH} fill="none" strokeDasharray={CIRCUMFERENCE} animatedProps={animatedPropsSteps} strokeLinecap="round" rotation="-90" origin={`${CENTER}, ${CENTER}`} />
               </Svg>
               <View style={styles.heroCenterText}>
-                <Footprints color={theme.colors.plum} size={28} style={{ marginBottom: 4 }} />
+                <Footprints color={'#FA114F'} size={28} style={{ marginBottom: 4 }} />
                 <Text style={styles.heroValue}>{totalSteps.toLocaleString()}</Text>
                 <Text style={styles.heroUnit}>/ {goalSteps.toLocaleString()} steps</Text>
               </View>
@@ -286,7 +285,7 @@ export default function ActivityScreen() {
                 <Text style={styles.barValues}>{calsBurned} <Text style={styles.barUnit}>/ {goalCalories} kcal</Text></Text>
               </View>
               <View style={styles.barTrack}>
-                <Animated.View style={[styles.barFill, { backgroundColor: theme.colors.sage, width: `${Math.min((calsBurned / goalCalories) * 100, 100)}%` }]} />
+                <Animated.View style={[styles.barFill, { backgroundColor: '#4ADBC8', width: `${Math.min((calsBurned / goalCalories) * 100, 100)}%` }]} />
               </View>
             </View>
 
@@ -401,7 +400,7 @@ export default function ActivityScreen() {
             </View>
             <Text style={[styles.modalTitle, { textAlign: 'center', marginBottom: 12 }]}>Activity Tracking</Text>
             <Text style={[styles.emptyText, { marginBottom: 32, paddingVertical: 0 }]}>
-              MindBridge uses your phone's sensors to securely track your steps, calculate active calories, and measure your distance to give you holistic insights connecting your physical health to your mental well-being.
+              Would you like your steps to be tracked and calculated? MindBridge uses your phone's sensors to securely track your steps, calculate active calories, and measure your distance to connect physical health to your mental well-being.
             </Text>
             
             <TouchableOpacity onPress={handleConsentAllow} style={styles.saveBtn} activeOpacity={0.8}>
