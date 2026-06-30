@@ -4,16 +4,16 @@
 
 // ── Palette constants ─────────────────────────────────────────────────────────
 const P = {
-  cloudMilk:   '#F8F5F2',
-  dreamy:      '#EAEBED',
+  cloudMilk:   '#FDFBF7', // Dribbble Cream (Keep this for clean bg)
+  dreamy:      '#F4F0EA', 
   amberSmoke:  '#F2E0D0',
   frost:       '#E4F0F6',
-  blueMirage:  '#6E88B0',
+  blueMirage:  '#6E88B0', // Restored original MindBridge Plum
   matchaMist:  '#C2D8C4',
-  mossVelvet:  '#385144',
+  mossVelvet:  '#385144', // Restored original Sage
   ocean:       '#006989',
-  dustyCoal:   '#222222',
-  abyss:       '#0A0F1E',
+  dustyCoal:   '#1F2937', // Dribbble Slate (Keep for text)
+  abyss:       '#121212', 
 };
 
 // ── Light Mode ────────────────────────────────────────────────────────────────
@@ -31,13 +31,13 @@ export const lightColors = {
   surfaceCool: P.frost,             
 
   text: {
-    primary:   '#1A1F2B',           
-    secondary: '#3D4A58',           
-    tertiary:  '#6B7A8A',           
+    primary:   '#1F2937',           
+    secondary: '#6B7A8A',           
+    tertiary:  '#A0AAB5',           
     onPrimary: '#FFFFFF',           
     onWarm:    P.mossVelvet,        
     onCool:    P.ocean,             
-    disabled:  '#B8C4CE',
+    disabled:  '#D1D5DB',
   },
 
   accents: {

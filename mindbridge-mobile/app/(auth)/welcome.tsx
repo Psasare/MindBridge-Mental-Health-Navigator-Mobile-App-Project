@@ -78,7 +78,7 @@ export default function WelcomeScreen() {
       headlinePostLine2: 'On Your Terms.',
       body: 'Access personalized check-ins, mood tracking, and coping tools at any time.',
       accentColor: C.brandGreen,
-      Icon: Sparkles,
+      Icon: Bot,
       isLogo: false,
     },
     {
@@ -168,7 +168,7 @@ export default function WelcomeScreen() {
                           </Text>
                         ) : null}
                         
-                        <View style={[styles.highlightBox, { backgroundColor: C.brandGreen }]}>
+                        <View style={[styles.highlightBox, { backgroundColor: slide.accentColor }]}>
                           <Text style={styles.highlightText}>
                             {s.headlineHighlight}
                           </Text>
@@ -203,7 +203,7 @@ export default function WelcomeScreen() {
                 key={i} 
                 style={[
                   styles.dot, 
-                  { backgroundColor: i === activeSlide ? C.brandGreen : C.dotInactive },
+                  { backgroundColor: i === activeSlide ? slide.accentColor : C.dotInactive },
                   i === activeSlide && styles.dotActive
                 ]} 
               />
@@ -213,7 +213,7 @@ export default function WelcomeScreen() {
 
         <View style={styles.ctaSection}>
           <TouchableOpacity 
-            style={[styles.primaryBtn, { backgroundColor: C.brandGreen }]}
+            style={[styles.primaryBtn, { backgroundColor: slide.accentColor }]}
             onPress={goNext}
             activeOpacity={0.8}
           >
@@ -225,12 +225,12 @@ export default function WelcomeScreen() {
           {/* Anonymous/Guest Option */}
           {activeSlide === SLIDES.length - 1 && (
             <TouchableOpacity 
-              style={[styles.outlineBtn, { borderColor: C.brandGreen }]}
+              style={[styles.outlineBtn, { borderColor: slide.accentColor }]}
               onPress={() => router.push('/(auth)/login?anonymous=true')}
               activeOpacity={0.8}
             >
-              <Ghost color={C.brandGreen} size={20} strokeWidth={2.5} />
-              <Text style={[styles.outlineBtnText, { color: C.brandGreen }]}>
+              <Ghost color={slide.accentColor} size={20} strokeWidth={2.5} />
+              <Text style={[styles.outlineBtnText, { color: slide.accentColor }]}>
                 Explore Anonymously
               </Text>
             </TouchableOpacity>
@@ -239,7 +239,7 @@ export default function WelcomeScreen() {
           <TouchableOpacity onPress={() => router.push('/(auth)/login')} activeOpacity={0.65} style={styles.signInRow}>
             <Text style={[styles.signInText, { color: C.textPrimary }]}>
               I already have an account{' '}
-              <Text style={{ color: C.brandGreen, fontWeight: '700' }}>Sign In</Text>
+              <Text style={{ color: slide.accentColor, fontWeight: '700' }}>Sign In</Text>
             </Text>
           </TouchableOpacity>
 

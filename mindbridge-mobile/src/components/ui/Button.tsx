@@ -24,6 +24,7 @@ interface ButtonProps {
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
   style?: any;
+  color?: string; // Optional override for primary background
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -39,6 +40,7 @@ export const Button: React.FC<ButtonProps> = ({
   icon,
   iconPosition = 'left',
   style,
+  color,
 }) => {
   const actualLoading = isLoading || loading;
   const scale = useSharedValue(1);
@@ -60,7 +62,7 @@ export const Button: React.FC<ButtonProps> = ({
   }));
 
   // Resolve colors based on variant
-  let backgroundColor = theme.colors.plum;
+  let backgroundColor = color || theme.colors.plum;
   let textColor = theme.colors.text.onPrimary;
   let borderColor = 'transparent';
 

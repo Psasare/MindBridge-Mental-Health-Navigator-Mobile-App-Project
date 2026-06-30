@@ -540,6 +540,7 @@ export default function RegisterScreen() {
 
             <Button
               variant="primary"
+              color="#6A9C47"
               size="large"
               onPress={handleRegister}
               disabled={loading}
