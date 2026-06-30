@@ -308,6 +308,7 @@ export default function WellnessTrackerScreen() {
 
   const calculateClientStreak = (logs: any[]) => {
     if (logs.length === 0) return 0;
+    if (logs[0]._serverStreak) return logs[0]._serverStreak;
     const sorted = [...logs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     let streak = 0;
     let today = new Date();
@@ -447,7 +448,10 @@ export default function WellnessTrackerScreen() {
       });
 
       // Optimistically update the dashboard cache with the new streak
+      // Optimistically update the dashboard cache with the new streak
+      let newServerStreak = 0;
       if (response.data?.gamification) {
+        newServerStreak = response.data.gamification.currentStreak;
         try {
           const cached = await AsyncStorage.getItem('dashboard_cache');
           if (cached) {
@@ -466,21 +470,30 @@ export default function WellnessTrackerScreen() {
       await StreakManager.logCheckIn();
       if (note) await StreakManager.logJournal();
 
+      const newLog = { 
+        score: mood ? mood * 2 : 6, 
+        emotions: selectedEmotion ? [selectedEmotion] : [], 
+        createdAt: new Date().toISOString(),
+        _serverStreak: newServerStreak
+      };
+
+      setMoodLogs(prev => [newLog, ...prev]);
+      setHistory(prev => [newLog, ...prev].slice(0, 3));
+      
       setStep(5);
       setTotalCount(prev => prev + 1);
       fetchData();
     } catch (error) {
       console.warn('Network timeout when saving mood, updating locally.');
+      const newLog = { 
+        score: mood ? mood * 2 : 6, 
+        emotions: selectedEmotion ? [selectedEmotion] : [], 
+        createdAt: new Date().toISOString() 
+      };
+      setMoodLogs(prev => [newLog, ...prev]);
+      setHistory(prev => [newLog, ...prev].slice(0, 3));
       setStep(5);
       setTotalCount(prev => prev + 1);
-      setHistory(prev => [
-        { 
-          score: mood ? mood * 2 : 6, 
-          emotions: selectedEmotion ? [selectedEmotion] : [], 
-          createdAt: new Date().toISOString() 
-        }, 
-        ...prev
-      ].slice(0, 3));
     } finally {
       setLoading(false);
     }

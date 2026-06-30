@@ -573,7 +573,7 @@ export default function DashboardScreen() {
       setAssessments(newAssessments);
       setLatestPost(newLatestPost);
       setRecentLocation(newRecentLocation);
-      setUserData(newUserData);
+      setUserData({ ...newUserData, streak: newGamification.currentStreak });
       setAiPrompt(newAiPrompt);
       setSuggestedResources(newSuggested);
       setActionableCopingMechanisms(newCoping);
@@ -593,7 +593,7 @@ export default function DashboardScreen() {
         assessments: newAssessments,
         latestPost: newLatestPost,
         recentLocation: newRecentLocation,
-        userData: newUserData,
+        userData: { ...newUserData, streak: newGamification.currentStreak },
         aiPrompt: newAiPrompt,
         suggestedResources: newSuggested,
         actionableCopingMechanisms: newCoping,
