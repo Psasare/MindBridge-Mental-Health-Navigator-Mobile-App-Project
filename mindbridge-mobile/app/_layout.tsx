@@ -92,6 +92,8 @@ const InitialLayout = () => {
     let subscription: any;
     
     const subscribe = async () => {
+      if (!userToken) return;
+      
       // 100ms update interval to catch quick shake spikes
       await Accelerometer.setUpdateInterval(100);
       subscription = Accelerometer.addListener(accelerometerData => {

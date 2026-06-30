@@ -372,11 +372,9 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   actionBtn: {
     borderRadius: 16,
-    height: 56,
   },
   actionBtnOutline: {
     borderRadius: 16,
-    height: 56,
     borderWidth: 1,
     borderColor: theme.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
   },
