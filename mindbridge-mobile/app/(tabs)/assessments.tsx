@@ -35,7 +35,6 @@ import {
   ShieldAlert,
   Award,
   Compass,
-  Sparkles,
   PlayCircle
 } from 'lucide-react-native';
 
@@ -757,7 +756,7 @@ export default function AssessmentsScreen() {
           >
             <View style={styles.aiBannerContent}>
               <View style={[styles.aiIconBg, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                <Sparkles color="#FFF" size={28} />
+                <BrainCircuit color="#FFF" size={28} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.aiBannerTitle}>Personalized AI Check-In</Text>
