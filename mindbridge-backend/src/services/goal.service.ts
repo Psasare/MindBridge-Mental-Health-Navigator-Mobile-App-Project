@@ -178,10 +178,10 @@ export const GoalService = {
       badges.push(badgeUnlock);
     }
 
-    // Update streak if this is the 3rd goal today
+    // Update streak if this is the 1st goal today
     let newStreak = gamification.currentStreak;
     let longestStreak = gamification.longestStreak;
-    if (newlyCompletedCount === 3) {
+    if (newlyCompletedCount === 1) {
       // Check if they completed 3 yesterday
       const yesterday = new Date(today);
       yesterday.setDate(yesterday.getDate() - 1);
@@ -207,7 +207,7 @@ export const GoalService = {
         currentStreak: newStreak,
         longestStreak: longestStreak,
         badges,
-        lastCompletedAt: newlyCompletedCount >= 3 ? new Date() : gamification.lastCompletedAt
+        lastCompletedAt: newlyCompletedCount === 1 ? new Date() : gamification.lastCompletedAt
       }
     });
 

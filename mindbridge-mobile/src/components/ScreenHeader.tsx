@@ -66,13 +66,7 @@ export const ScreenHeader = ({
         )}
         
         <View style={styles.rightActions}>
-          {rightAction || (
-            <TouchableOpacity style={styles.iconBtn}>
-              <BlurView intensity={theme.isDark ? 20 : 40} tint={theme.isDark ? 'dark' : 'light'} style={styles.blurCircle}>
-                <MoreHorizontal color={theme.colors.plum} size={20} />
-              </BlurView>
-            </TouchableOpacity>
-          )}
+          {rightAction}
         </View>
       </View>
 

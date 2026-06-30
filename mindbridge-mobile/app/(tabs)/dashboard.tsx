@@ -170,8 +170,8 @@ const ProgressRings = ({ completed, total, theme, styles, t }: any) => {
         }]} />
       </View>
       <View style={{ marginRight: 4 }}>
-        <Text style={[styles.ringsCount, { color: theme.colors.text.primary }]}>{completed}/{total}</Text>
-        <Text style={[styles.ringsLabel, { color: theme.colors.text.secondary }]}>Goals</Text>
+        <Text style={[styles.ringsCount, { color: theme.colors.text.primary }]}>{completed}</Text>
+        <Text style={[styles.ringsLabel, { color: theme.colors.text.secondary }]}>{completed === 1 ? 'Goal' : 'Goals'}</Text>
       </View>
     </View>
   );
@@ -720,7 +720,7 @@ export default function DashboardScreen() {
           <View style={{ flex: 1 }}>
             <ScreenHeader title={`${getGreeting()}, ${userData.name}`} subtitle={t('dashboard.nurturePeaceToday')} noPadding />
           </View>
-          <ProgressRings completed={completedCount} total={5} theme={theme} styles={styles} t={t} />
+          <ProgressRings completed={completedCount} total={dailyGoals.length || 1} theme={theme} styles={styles} t={t} />
         </View>
 
         <Animated.View entering={FadeInUp.delay(100).duration(800)} style={styles.section}>
@@ -750,8 +750,7 @@ export default function DashboardScreen() {
                 <Text style={styles.sectionSubtitleText}>Curated for your current mental state</Text>
               </View>
               <TouchableOpacity onPress={() => router.push('/(tabs)/progress')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Text style={{ color: theme.colors.plum, fontSize: 13, fontWeight: '700' }}>Gamification</Text>
-                <Flame size={20} color="#FF9800" fill={completedCount >= 3 ? "#FF9800" : "transparent"} />
+                <Flame size={20} color="#FF9800" fill={completedCount >= 1 ? "#FF9800" : "transparent"} />
               </TouchableOpacity>
             </View>
             
