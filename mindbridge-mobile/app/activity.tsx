@@ -1,29 +1,33 @@
 // @ts-ignore: Bypassing IDE cache bug
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ScrollView, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ScrollView, Modal } from 'react-native';
 import { useTheme } from '../src/context/ThemeContext';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowRight, ChevronRight, Footprints, User } from 'lucide-react-native';
+import { ChevronRight, Footprints, User, Activity as ActivityIcon } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { Pedometer } from 'expo-sensors';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, G } from 'react-native-svg';
 import Animated, { FadeInUp, useSharedValue, useAnimatedProps, withTiming, Easing, withDelay } from 'react-native-reanimated';
 import { BarChart } from 'react-native-gifted-charts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../src/services/api';
 
 const { width } = Dimensions.get('window');
 
 // Fitness Rings Configuration
-const CENTER = 70;
-const STROKE_WIDTH = 20;
-const RADIUS_MOVE = 50;
-const CIRCUMFERENCE_MOVE = 2 * Math.PI * RADIUS_MOVE;
+const CENTER = 100;
+const STROKE_WIDTH = 18;
+const R_MOVE = 80;
+const R_EXERCISE = 60;
+const R_STAND = 40;
 
-// Apple Fitness Style Colors
-const COLOR_STEPS = '#9A83FF'; // Purple
-const COLOR_CALORIES = '#FA114F'; // Red/Pink Move
-const COLOR_DISTANCE = '#1DB0F6'; // Blue
-const COLOR_SESSION = '#A4FF28'; // Green
+const C_MOVE = 2 * Math.PI * R_MOVE;
+const C_EXERCISE = 2 * Math.PI * R_EXERCISE;
+const C_STAND = 2 * Math.PI * R_STAND;
+
+// Apple Fitness Colors
+const COLOR_MOVE = '#FA114F'; // Red/Pink
+const COLOR_EXERCISE = '#A4FF28'; // Green
+const COLOR_STAND = '#1DB0F6'; // Blue
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -36,19 +40,25 @@ export default function ActivityScreen() {
   const [isAvailable, setIsAvailable] = useState(true);
   const [permissionGranted, setPermissionGranted] = useState(true);
   const [showConsentModal, setShowConsentModal] = useState(false);
-  const [hourlySteps, setHourlySteps] = useState<any[]>([]);
-  const [hourlyDistance, setHourlyDistance] = useState<any[]>([]);
+  const [weeklySteps, setWeeklySteps] = useState<any[]>([]);
   const [bestSession, setBestSession] = useState<{steps: number, distance: number, dateStr: string} | null>(null);
   
   // Goals
   const [goalSteps, setGoalSteps] = useState(10000);
   const [goalCalories, setGoalCalories] = useState(400);
+  const goalExercise = 30; // 30 minutes
+  const goalStand = 12; // 12 hours
   
-  const progressCalories = useSharedValue(0);
+  const progressMove = useSharedValue(0);
+  const progressExercise = useSharedValue(0);
+  const progressStand = useSharedValue(0);
 
-  // Derived metrics (combine historical + live steps)
+  // Derived metrics
   const totalSteps = steps + liveSteps;
-  const calories = Math.round(totalSteps * 0.04);
+  const moveCals = Math.round(totalSteps * 0.04);
+  const exerciseMins = Math.round(totalSteps / 100);
+  // Estimate stand hours based on time of day (just for demonstration if no pedometer)
+  const standHours = Math.min(Math.max(1, new Date().getHours() - 6), 12);
   const distanceKm = (totalSteps * 0.000762).toFixed(2);
 
   const fetchPedometerData = async (gSteps: number, gCals: number) => {
@@ -76,59 +86,88 @@ export default function ActivityScreen() {
           });
         } catch (e) {}
       }
+
+      // Fetch Mood History for fallback
+      let moodHistory: any[] = [];
+      try {
+        const response = await api.get('/mood');
+        moodHistory = response.data;
+      } catch (e) {
+        console.log('Could not fetch mood history for fallback', e);
+      }
+
+      if (todaySteps === 0 && moodHistory && moodHistory.length > 0) {
+        const logForToday = moodHistory.find(m => {
+          const md = new Date(m.createdAt);
+          return md >= start && md <= end;
+        });
+        if (logForToday && logForToday.steps) todaySteps = logForToday.steps;
+      }
       
       setSteps(todaySteps);
       
-      const calculatedCals = Math.round(todaySteps * 0.04);
-      progressCalories.value = withDelay(300, withTiming(Math.min(calculatedCals / gCals, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
+      const calcMove = Math.round(todaySteps * 0.04);
+      const calcEx = Math.round(todaySteps / 100);
+      const calcStand = standHours;
 
-      // Fetch 24 hours
-      const hSteps = [];
-      const hDist = [];
-      let maxHrSteps = 0;
-      const now = new Date();
+      progressMove.value = withDelay(100, withTiming(Math.min(calcMove / gCals, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
+      progressExercise.value = withDelay(300, withTiming(Math.min(calcEx / goalExercise, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
+      progressStand.value = withDelay(500, withTiming(Math.min(calcStand / goalStand, 1), { duration: 1500, easing: Easing.out(Easing.cubic) }));
 
-      for (let i = 0; i < 24; i++) {
+      // Fetch Last 7 Days
+      const wSteps = [];
+      let maxDaySteps = 0;
+      let maxDayDate = new Date();
+
+      for (let i = 6; i >= 0; i--) {
         const dStart = new Date();
-        dStart.setHours(i, 0, 0, 0);
-        const dEnd = new Date();
-        dEnd.setHours(i, 59, 59, 999);
+        dStart.setDate(dStart.getDate() - i);
+        dStart.setHours(0, 0, 0, 0);
         
-        let hrSteps = 0;
-        if (canUseSensors && dStart <= now) {
+        const dEnd = new Date(dStart);
+        dEnd.setHours(23, 59, 59, 999);
+        if (i === 0) dEnd.setTime(end.getTime());
+
+        let dailySteps = 0;
+        if (canUseSensors && dStart <= end) {
           try {
             const res = await Pedometer.getStepCountAsync(dStart, dEnd);
-            if (res && res.steps > 0) hrSteps = res.steps;
+            if (res && res.steps > 0) dailySteps = res.steps;
           } catch (e) {}
         }
+
+        if (dailySteps === 0 && moodHistory && moodHistory.length > 0) {
+          const logForDay = moodHistory.find(m => {
+            const md = new Date(m.createdAt);
+            return md >= dStart && md <= dEnd;
+          });
+          if (logForDay && logForDay.steps) {
+            dailySteps = logForDay.steps;
+          }
+        }
         
-        if (hrSteps > maxHrSteps) {
-            maxHrSteps = hrSteps;
+        if (dailySteps > maxDaySteps) {
+            maxDaySteps = dailySteps;
+            maxDayDate = new Date(dStart);
         }
 
-        const label = i === 0 ? '12 AM' : i === 6 ? '6 AM' : i === 12 ? '12 PM' : i === 18 ? '6 PM' : '';
-        hSteps.push({
-          value: hrSteps,
+        const label = dStart.toLocaleDateString('en-US', { weekday: 'narrow' });
+        
+        wSteps.push({
+          value: dailySteps,
           label: label,
-          frontColor: COLOR_STEPS,
-          topLabelComponent: undefined
-        });
-        hDist.push({
-          value: parseFloat((hrSteps * 0.000762).toFixed(2)),
-          label: label,
-          frontColor: COLOR_DISTANCE,
-          topLabelComponent: undefined
+          frontColor: COLOR_MOVE, // Apple uses red for general movement charts
+          topLabelComponent: () => null
         });
       }
       
-      setHourlySteps(hSteps);
-      setHourlyDistance(hDist);
+      setWeeklySteps(wSteps);
       
-      if (maxHrSteps > 500) { // arbitrary threshold for a "session"
+      if (maxDaySteps > 2000) { 
           setBestSession({
-              steps: maxHrSteps,
-              distance: parseFloat((maxHrSteps * 0.000762).toFixed(2)),
-              dateStr: now.toLocaleDateString('en-GB') // 30/06/2026 format
+              steps: maxDaySteps,
+              distance: parseFloat((maxDaySteps * 0.000762).toFixed(2)),
+              dateStr: maxDayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
           });
       } else {
           setBestSession(null);
@@ -172,20 +211,20 @@ export default function ActivityScreen() {
     await fetchPedometerData(goalSteps, goalCalories);
   };
 
-  const animatedPropsCalories = useAnimatedProps(() => ({ strokeDashoffset: CIRCUMFERENCE_MOVE - (CIRCUMFERENCE_MOVE * progressCalories.value) }));
+  const animatedPropsMove = useAnimatedProps(() => ({ strokeDashoffset: C_MOVE - (C_MOVE * progressMove.value) }));
+  const animatedPropsExercise = useAnimatedProps(() => ({ strokeDashoffset: C_EXERCISE - (C_EXERCISE * progressExercise.value) }));
+  const animatedPropsStand = useAnimatedProps(() => ({ strokeDashoffset: C_STAND - (C_STAND * progressStand.value) }));
 
   const styles = createStyles(theme);
-  
-  const formattedDate = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' });
-  const isGoalMet = totalSteps >= goalSteps;
+  const formattedDate = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' }).toUpperCase();
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Summary</Text>
           <Text style={styles.headerDate}>{formattedDate}</Text>
+          <Text style={styles.headerTitle}>Summary</Text>
         </View>
         <TouchableOpacity style={styles.profileBtn} onPress={() => router.back()}>
           <View style={styles.profileImgPlaceholder}>
@@ -196,146 +235,104 @@ export default function ActivityScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         
-        {/* Activity Ring */}
+        {/* Activity Rings Card */}
         <Animated.View entering={FadeInUp.delay(100).duration(800)} style={styles.cardLarge}>
-          <Text style={styles.cardHeader}>Activity Ring</Text>
-          <View style={styles.ringRow}>
-            <Svg width={CENTER * 2} height={CENTER * 2}>
-              <Circle cx={CENTER} cy={CENTER} r={RADIUS_MOVE} stroke={COLOR_CALORIES + '30'} strokeWidth={STROKE_WIDTH} fill="none" />
-              <AnimatedCircle
-                cx={CENTER} cy={CENTER} r={RADIUS_MOVE}
-                stroke={COLOR_CALORIES} strokeWidth={STROKE_WIDTH} fill="none"
-                strokeDasharray={CIRCUMFERENCE_MOVE} animatedProps={animatedPropsCalories}
-                strokeLinecap="round" transform={`rotate(-90 ${CENTER} ${CENTER})`}
-              />
-              {/* Arrow inside ring */}
-              <View style={styles.ringArrowWrap}>
-                 <ArrowRight color="#000" size={16} style={{ transform: [{rotate: '-45deg'}] }}/>
-              </View>
-            </Svg>
+          <View style={styles.cardHeaderRow}>
+            <Text style={styles.cardHeader}>Activity</Text>
+            <ChevronRight color="#666" size={16} />
+          </View>
+          
+          <View style={styles.ringsContainer}>
+            <View style={styles.svgWrapper}>
+              <Svg width={CENTER * 2} height={CENTER * 2}>
+                <G rotation="-90" origin={`${CENTER}, ${CENTER}`}>
+                  {/* Tracks */}
+                  <Circle cx={CENTER} cy={CENTER} r={R_MOVE} stroke={COLOR_MOVE + '30'} strokeWidth={STROKE_WIDTH} fill="none" />
+                  <Circle cx={CENTER} cy={CENTER} r={R_EXERCISE} stroke={COLOR_EXERCISE + '30'} strokeWidth={STROKE_WIDTH} fill="none" />
+                  <Circle cx={CENTER} cy={CENTER} r={R_STAND} stroke={COLOR_STAND + '30'} strokeWidth={STROKE_WIDTH} fill="none" />
+                  
+                  {/* Animated Progress Rings */}
+                  <AnimatedCircle cx={CENTER} cy={CENTER} r={R_MOVE} stroke={COLOR_MOVE} strokeWidth={STROKE_WIDTH} fill="none" strokeDasharray={C_MOVE} animatedProps={animatedPropsMove} strokeLinecap="round" />
+                  <AnimatedCircle cx={CENTER} cy={CENTER} r={R_EXERCISE} stroke={COLOR_EXERCISE} strokeWidth={STROKE_WIDTH} fill="none" strokeDasharray={C_EXERCISE} animatedProps={animatedPropsExercise} strokeLinecap="round" />
+                  <AnimatedCircle cx={CENTER} cy={CENTER} r={R_STAND} stroke={COLOR_STAND} strokeWidth={STROKE_WIDTH} fill="none" strokeDasharray={C_STAND} animatedProps={animatedPropsStand} strokeLinecap="round" />
+                </G>
+              </Svg>
+            </View>
             
-            <View style={styles.ringStats}>
-              <Text style={styles.ringLabel}>Move</Text>
-              <Text style={styles.ringValuePrimary}>{calories}<Text style={styles.ringValueSecondary}>/{goalCalories} KCAL</Text></Text>
+            <View style={styles.metricsCol}>
+              <View style={styles.metricRow}>
+                <Text style={[styles.metricLabel, { color: COLOR_MOVE }]}>Move</Text>
+                <Text style={styles.metricValue}>{moveCals}<Text style={styles.metricUnit}>/{goalCalories} KCAL</Text></Text>
+              </View>
+              <View style={styles.metricRow}>
+                <Text style={[styles.metricLabel, { color: COLOR_EXERCISE }]}>Exercise</Text>
+                <Text style={styles.metricValue}>{exerciseMins}<Text style={styles.metricUnit}>/{goalExercise} MIN</Text></Text>
+              </View>
+              <View style={styles.metricRow}>
+                <Text style={[styles.metricLabel, { color: COLOR_STAND }]}>Stand</Text>
+                <Text style={styles.metricValue}>{standHours}<Text style={styles.metricUnit}>/{goalStand} HRS</Text></Text>
+              </View>
             </View>
           </View>
         </Animated.View>
 
-        {/* 2-Column Grid */}
-        <View style={styles.gridRow}>
-          {/* Step Count */}
-          <Animated.View entering={FadeInUp.delay(200).duration(800)} style={styles.cardSmall}>
-            <View style={styles.cardSmallHeader}>
-               <Text style={styles.cardSmallTitle}>Step Count</Text>
-               <ChevronRight color="#444" size={16} />
-            </View>
-            <Text style={styles.cardSmallSub}>Today</Text>
-            <Text style={[styles.cardSmallValue, { color: COLOR_STEPS }]}>{totalSteps.toLocaleString()}</Text>
-            <View style={styles.chartWrapper}>
-              {hourlySteps.length > 0 && (
+        {/* Trends */}
+        <Animated.View entering={FadeInUp.delay(200).duration(800)} style={styles.cardLarge}>
+           <View style={styles.cardHeaderRow}>
+             <Text style={styles.cardHeader}>Steps</Text>
+             <ChevronRight color="#666" size={16} />
+           </View>
+           <Text style={styles.trendValue}>{totalSteps.toLocaleString()}</Text>
+           <Text style={styles.trendSub}>Today</Text>
+           
+           <View style={styles.chartWrapper}>
+              {weeklySteps.length > 0 && (
                 <BarChart
-                    data={hourlySteps}
-                    width={(width / 2) - 60}
-                    height={80}
-                    barWidth={2}
-                    spacing={4}
+                    data={weeklySteps}
+                    width={width - 80}
+                    height={100}
+                    barWidth={18}
+                    spacing={16}
                     initialSpacing={0}
                     hideRules
                     xAxisThickness={0}
                     yAxisThickness={0}
                     hideYAxisText
-                    xAxisLabelTextStyle={{ color: '#666', fontSize: 8, marginTop: 4, width: 30, marginLeft: -10 }}
+                    xAxisLabelTextStyle={{ color: '#8E8E93', fontSize: 12, marginTop: 8, textAlign: 'center' }}
                     noOfSections={1}
-                    maxValue={Math.max(...hourlySteps.map(d => d.value), 500) * 1.1}
+                    maxValue={Math.max(...weeklySteps.map(d => d.value), 500) * 1.1}
                     disableScroll
-                    barBorderRadius={2}
+                    barBorderRadius={6}
                   />
               )}
             </View>
-          </Animated.View>
-          
-          {/* Step Distance */}
-          <Animated.View entering={FadeInUp.delay(300).duration(800)} style={styles.cardSmall}>
-             <View style={styles.cardSmallHeader}>
-               <Text style={styles.cardSmallTitle}>Step Distance</Text>
-               <ChevronRight color="#444" size={16} />
-            </View>
-            <Text style={styles.cardSmallSub}>Today</Text>
-            <Text style={[styles.cardSmallValue, { color: COLOR_DISTANCE }]}>{distanceKm}<Text style={styles.cardSmallUnit}>KM</Text></Text>
-            <View style={styles.chartWrapper}>
-               {hourlyDistance.length > 0 && (
-                 <BarChart
-                    data={hourlyDistance}
-                    width={(width / 2) - 60}
-                    height={80}
-                    barWidth={2}
-                    spacing={4}
-                    initialSpacing={0}
-                    hideRules
-                    xAxisThickness={0}
-                    yAxisThickness={0}
-                    hideYAxisText
-                    xAxisLabelTextStyle={{ color: '#666', fontSize: 8, marginTop: 4, width: 30, marginLeft: -10 }}
-                    noOfSections={1}
-                    maxValue={Math.max(...hourlyDistance.map(d => d.value), 1) * 1.1}
-                    disableScroll
-                    barBorderRadius={2}
-                  />
-               )}
-            </View>
-          </Animated.View>
-        </View>
+        </Animated.View>
 
-        {/* 2-Column Grid Row 2 */}
-        <View style={styles.gridRow}>
-          {/* Sessions */}
-          <Animated.View entering={FadeInUp.delay(400).duration(800)} style={styles.cardSmall}>
-            <View style={styles.cardSmallHeader}>
-               <Text style={styles.cardSmallTitle}>Sessions</Text>
-               <ChevronRight color="#444" size={16} />
-            </View>
-            {bestSession ? (
-              <View style={styles.sessionInner}>
-                <View style={styles.sessionIconWrap}>
-                   <Footprints color={COLOR_SESSION} size={14} />
-                </View>
-                <Text style={styles.cardSmallTitle}>Outdoor Walk</Text>
-                <Text style={[styles.cardSmallValue, { color: COLOR_SESSION, marginTop: 4 }]}>{bestSession.distance.toFixed(2)}<Text style={styles.cardSmallUnit}>KM</Text></Text>
-                <Text style={styles.sessionDate}>{bestSession.dateStr}</Text>
-              </View>
-            ) : (
-              <View style={[styles.sessionInner, { justifyContent: 'center' }]}>
-                <Text style={[styles.cardSmallSub, { textAlign: 'center', marginTop: 20 }]}>No active walk detected today.</Text>
-              </View>
-            )}
-          </Animated.View>
-          
-          {/* Awards */}
-          <Animated.View entering={FadeInUp.delay(500).duration(800)} style={styles.cardSmall}>
-             <View style={styles.cardSmallHeader}>
-               <Text style={styles.cardSmallTitle}>Awards</Text>
-               <ChevronRight color="#444" size={16} />
-            </View>
-            <View style={styles.awardInner}>
-               <View style={[styles.awardHex, { backgroundColor: isGoalMet ? COLOR_SESSION : '#333' }]}>
-                  <Text style={styles.awardText}>{isGoalMet ? '10K' : 'Go'}</Text>
+        {/* Workouts / Sessions */}
+        <Animated.View entering={FadeInUp.delay(300).duration(800)} style={styles.cardLarge}>
+           <View style={styles.cardHeaderRow}>
+             <Text style={styles.cardHeader}>Workouts</Text>
+             <ChevronRight color="#666" size={16} />
+           </View>
+           
+           {bestSession ? (
+             <View style={styles.workoutRow}>
+               <View style={styles.workoutIconWrap}>
+                 <Footprints color="#FFF" size={24} />
                </View>
-               <Text style={styles.awardTitle}>{isGoalMet ? 'Daily Goal Met' : 'Keep Going'}</Text>
-               <Text style={styles.sessionDate}>{formattedDate.split(', ')[1]}</Text>
-            </View>
-          </Animated.View>
-        </View>
+               <View style={styles.workoutInfo}>
+                 <Text style={styles.workoutTitle}>Outdoor Walk</Text>
+                 <Text style={styles.workoutDate}>{bestSession.dateStr}</Text>
+               </View>
+               <View style={styles.workoutStats}>
+                 <Text style={styles.workoutDist}>{bestSession.distance.toFixed(2)} KM</Text>
+               </View>
+             </View>
+           ) : (
+             <Text style={styles.emptyText}>No recent workouts to display.</Text>
+           )}
+        </Animated.View>
 
-        {(!permissionGranted || !isAvailable) && (
-          <Animated.View entering={FadeInUp.delay(600).duration(800)}>
-            <View style={styles.errorCard}>
-              <Text style={styles.errorText}>
-                Pedometer data is unavailable. Please ensure physical activity permissions are granted on your device.
-              </Text>
-            </View>
-          </Animated.View>
-        )}
-        
         <View style={{ height: 60 }} />
       </ScrollView>
 
@@ -344,7 +341,7 @@ export default function ActivityScreen() {
         <View style={styles.consentOverlay}>
           <View style={styles.consentCard}>
             <View style={styles.consentIconWrapper}>
-              <Footprints color={COLOR_STEPS} size={32} />
+              <ActivityIcon color={COLOR_MOVE} size={32} />
             </View>
             <Text style={styles.consentTitle}>Activity Tracking</Text>
             <Text style={styles.consentBody}>
@@ -386,13 +383,12 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   headerDate: {
     color: '#8E8E93',
-    fontSize: 14,
-    textTransform: 'uppercase',
-    fontWeight: '600',
-    marginTop: 4,
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 4,
   },
   profileBtn: {
-    marginTop: 4,
+    marginTop: 8,
   },
   profileImgPlaceholder: {
     width: 36,
@@ -412,135 +408,106 @@ const createStyles = (theme: any) => StyleSheet.create({
     padding: 20,
     marginBottom: 16,
   },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   cardHeader: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 16,
-  },
-  ringRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ringArrowWrap: {
-    position: 'absolute',
-    top: CENTER - 12,
-    left: CENTER - 12,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: COLOR_CALORIES,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ringStats: {
-    marginLeft: 20,
-  },
-  ringLabel: {
-    color: '#FFFFFF',
-    fontSize: 16,
     fontWeight: '600',
   },
-  ringValuePrimary: {
-    color: COLOR_CALORIES,
+  ringsContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+  },
+  svgWrapper: {
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 20,
+  },
+  metricsCol: {
+    width: '100%',
+    gap: 12,
+  },
+  metricRow: {
+    flexDirection: 'column',
+  },
+  metricLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  metricValue: {
+    color: '#FFFFFF',
     fontSize: 24,
     fontWeight: '800',
   },
-  ringValueSecondary: {
-    color: COLOR_CALORIES,
-    fontSize: 14,
+  metricUnit: {
+    fontSize: 16,
     fontWeight: '600',
-  },
-  gridRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  cardSmall: {
-    backgroundColor: '#1C1C1E',
-    borderRadius: 20,
-    padding: 16,
-    width: (width / 2) - 22,
-  },
-  cardSmallHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  cardSmallTitle: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  cardSmallSub: {
     color: '#8E8E93',
-    fontSize: 12,
-    marginBottom: 4,
   },
-  cardSmallValue: {
-    fontSize: 28,
+  trendValue: {
+    color: '#FFFFFF',
+    fontSize: 32,
     fontWeight: '800',
+    marginTop: -8,
   },
-  cardSmallUnit: {
+  trendSub: {
+    color: '#8E8E93',
     fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 16,
   },
   chartWrapper: {
-    marginTop: 16,
+    marginTop: 8,
     alignItems: 'center',
   },
-  sessionInner: {
-    marginTop: 12,
-  },
-  sessionIconWrap: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: COLOR_SESSION + '20',
+  workoutRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  sessionDate: {
-    color: '#8E8E93',
-    fontSize: 12,
-    marginTop: 12,
-  },
-  awardInner: {
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  awardHex: {
-    width: 60,
-    height: 60,
-    transform: [{rotate: '30deg'}],
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  awardText: {
-    transform: [{rotate: '-30deg'}],
-    color: '#000',
-    fontWeight: '900',
-    fontSize: 18,
-  },
-  awardTitle: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  errorCard: {
-    backgroundColor: '#FA114F20',
+    backgroundColor: '#000000',
     padding: 16,
     borderRadius: 16,
-    marginTop: 8,
   },
-  errorText: {
-    color: COLOR_CALORIES,
+  workoutIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#A4FF28', // Green for workouts
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  workoutInfo: {
+    flex: 1,
+  },
+  workoutTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  workoutDate: {
+    color: '#8E8E93',
+    fontSize: 14,
+  },
+  workoutStats: {
+    alignItems: 'flex-end',
+  },
+  workoutDist: {
+    color: '#A4FF28',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  emptyText: {
+    color: '#8E8E93',
+    fontSize: 15,
     textAlign: 'center',
-    fontSize: 13,
+    paddingVertical: 20,
   },
   consentOverlay: {
     flex: 1,
@@ -558,7 +525,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: COLOR_STEPS + '20',
+    backgroundColor: COLOR_MOVE + '20',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -580,7 +547,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     width: '100%',
     paddingVertical: 16,
     borderRadius: 16,
-    backgroundColor: COLOR_STEPS,
+    backgroundColor: COLOR_MOVE,
     alignItems: 'center',
     marginBottom: 12,
   },
