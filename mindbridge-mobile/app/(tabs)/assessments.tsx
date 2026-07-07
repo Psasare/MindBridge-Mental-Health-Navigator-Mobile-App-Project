@@ -333,6 +333,7 @@ export default function AssessmentsScreen() {
   const [calculatedResult, setCalculatedResult] = useState<{ score: number; severity: string } | null>(null);
   const [personalizedQuestions, setPersonalizedQuestions] = useState<any[]>([]);
   const [personalizedFeedback, setPersonalizedFeedback] = useState<any>(null);
+  const [insightContext, setInsightContext] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -365,6 +366,7 @@ export default function AssessmentsScreen() {
     try {
       const res = await api.get(`/ai/personalized-assessment?type=${id}`);
       setPersonalizedQuestions(res.data.questions || []);
+      setInsightContext(res.data.insightContext || null);
       setAnswers(new Array(res.data.questions?.length || 0).fill(-1));
     } catch (e) {
       Alert.alert('Error', 'Failed to generate assessment questions.');
@@ -509,6 +511,13 @@ export default function AssessmentsScreen() {
 
         {/* Question Card */}
         <ScrollView contentContainerStyle={styles.questionScroll} showsVerticalScrollIndicator={false}>
+          {insightContext && currentQuestionIndex === 0 && (
+            <View style={{ marginBottom: 20, padding: 16, backgroundColor: getActiveColor() + '15', borderRadius: 12 }}>
+              <Text style={{ color: theme.colors.text.primary, fontSize: 16, lineHeight: 24, fontStyle: 'italic' }}>
+                "{insightContext}"
+              </Text>
+            </View>
+          )}
           <View style={styles.questionCard}>
             <Text style={styles.questionText}>{currentQuestion.question}</Text>
           </View>

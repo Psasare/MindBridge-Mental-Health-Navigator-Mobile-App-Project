@@ -387,8 +387,8 @@ export const getPersonalizedAssessment = async (req: Request, res: Response) => 
       take: 3
     });
 
-    const questions = await generatePersonalizedAssessment(userId, { onboarding, recentMoods, recentJournal }, testType);
-    res.json({ questions });
+    const assessmentData = await generatePersonalizedAssessment(userId, { onboarding, recentMoods, recentJournal }, testType);
+    res.json(assessmentData);
   } catch (error) {
     console.error('Error getting personalized assessment:', error);
     res.status(500).json({ error: 'Failed to generate assessment' });

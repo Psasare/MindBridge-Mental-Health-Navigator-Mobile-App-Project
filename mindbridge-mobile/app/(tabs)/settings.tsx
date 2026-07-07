@@ -39,6 +39,7 @@ export default function SettingsScreen() {
   const [isFeedbackVisible, setIsFeedbackVisible] = React.useState(false);
   const [isAboutVisible, setIsAboutVisible] = React.useState(false);
   const [isHelpVisible, setIsHelpVisible] = React.useState(false);
+  const [isLanguageModalVisible, setIsLanguageModalVisible] = React.useState(false);
   
   const [feedback, setFeedback] = React.useState('');
   const [isSendingFeedback, setIsSendingFeedback] = React.useState(false);
@@ -107,19 +108,12 @@ export default function SettingsScreen() {
   };
 
   const changeLanguage = () => {
-    Alert.alert(
-      t('settings.select_language'),
-      t('settings.language_desc'),
-      [
-        { text: "English", onPress: () => setLanguage('English') },
-        { text: "French", onPress: () => setLanguage('French') },
-        { text: "Twi", onPress: () => setLanguage('Twi') },
-        { text: "Ewe", onPress: () => setLanguage('Ewe') },
-        { text: "Ga", onPress: () => setLanguage('Ga') },
-        { text: "Hausa", onPress: () => setLanguage('Hausa') },
-        { text: "Cancel", style: "cancel" }
-      ]
-    );
+    setIsLanguageModalVisible(true);
+  };
+
+  const handleSelectLanguage = (lang: string) => {
+    setLanguage(lang as any);
+    setIsLanguageModalVisible(false);
   };
 
 
@@ -493,6 +487,51 @@ export default function SettingsScreen() {
           </View>
         </View>
       </Modal>
+      {/* Language Modal */}
+      <Modal visible={isLanguageModalVisible} animationType="slide" transparent={true}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('settings.select_language')}</Text>
+              <TouchableOpacity onPress={() => setIsLanguageModalVisible(false)} style={styles.modalCloseBtn}>
+                <X color={colors.text.primary} size={24} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalDesc}>{t('settings.language_desc')}</Text>
+            
+            <View style={styles.languageList}>
+              {[
+                { id: 'English', label: 'English', icon: '🇬🇧' },
+                { id: 'French', label: 'Français', icon: '🇫🇷' },
+                { id: 'Twi', label: 'Twi (Akan)', icon: '🇬🇭' },
+                { id: 'Ga', label: 'Ga', icon: '🇬🇭' },
+                { id: 'Ewe', label: 'Ewe', icon: '🇬🇭' },
+                { id: 'Hausa', label: 'Hausa', icon: '🇳🇬' }
+              ].map((lang) => (
+                <TouchableOpacity
+                  key={lang.id}
+                  style={[
+                    styles.languageOption,
+                    language === lang.id && { backgroundColor: colors.plum + '20', borderColor: colors.plum }
+                  ]}
+                  onPress={() => handleSelectLanguage(lang.id)}
+                >
+                  <Text style={styles.languageOptionIcon}>{lang.icon}</Text>
+                  <Text style={[
+                    styles.languageOptionText, 
+                    { color: colors.text.primary },
+                    language === lang.id && { fontWeight: '700', color: colors.plum }
+                  ]}>
+                    {lang.label}
+                  </Text>
+                  {language === lang.id && <ShieldCheck color={colors.plum} size={20} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
     </View>
   );
 }
@@ -593,6 +632,27 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   themeOptionTextActive: {
     color: '#FFF',
+  },
+  languageList: {
+    marginTop: 15,
+    gap: 12,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.isDark ? '#333' : '#E5E7EB',
+    backgroundColor: theme.isDark ? '#2A2A2A' : '#F9FAFB',
+  },
+  languageOptionIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  languageOptionText: {
+    flex: 1,
+    fontSize: 16,
   },
   logoutBtn: {
     marginHorizontal: 24,

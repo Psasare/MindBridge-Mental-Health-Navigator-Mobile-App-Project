@@ -566,6 +566,7 @@ INSTRUCTIONS:
 3. Provide 4 options for each question, ranging from positive/healthy to negative/struggling.
 4. Output MUST be valid JSON and exactly match this schema:
 {
+  "insightContext": "string",
   "questions": [
     {
       "question": "string",
@@ -573,6 +574,7 @@ INSTRUCTIONS:
     }
   ]
 }
+In the "insightContext" field, provide a very short, empathetic introductory sentence explaining WHY you are asking these specific questions based on their recent logs (e.g., "I noticed your mood was low today, let's check in...").
 Do not output any markdown formatting, just the raw JSON object.`;
 
     const result = await withRetry(() => model.generateContent(prompt), 3, 2000);
@@ -582,15 +584,18 @@ Do not output any markdown formatting, just the raw JSON object.`;
     } else if (jsonStr.startsWith('\`\`\`')) {
       jsonStr = jsonStr.replace(/\`\`\`/g, '').trim();
     }
-    return JSON.parse(jsonStr).questions;
+    return JSON.parse(jsonStr);
   } catch (error) {
     console.error(`[BACKEND] Error generating personalized assessment:`, error);
     // Fallback assessment
-    return [
-      { question: "How have you been feeling overall over the past few days?", options: ["Great", "Okay", "Struggling a bit", "Very overwhelmed"] },
-      { question: "How well have you been sleeping lately?", options: ["Very well", "Alright", "Tossing and turning", "Barely sleeping"] },
-      { question: "Are you finding time to disconnect and relax?", options: ["Yes, plenty", "Sometimes", "Rarely", "Not at all"] }
-    ];
+    return {
+      insightContext: "Checking in on how you've been doing lately.",
+      questions: [
+        { question: "How have you been feeling overall over the past few days?", options: ["Great", "Okay", "Struggling a bit", "Very overwhelmed"] },
+        { question: "How well have you been sleeping lately?", options: ["Very well", "Alright", "Tossing and turning", "Barely sleeping"] },
+        { question: "Are you finding time to disconnect and relax?", options: ["Yes, plenty", "Sometimes", "Rarely", "Not at all"] }
+      ]
+    };
   }
 };
 
