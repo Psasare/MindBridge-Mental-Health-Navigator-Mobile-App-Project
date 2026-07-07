@@ -692,6 +692,27 @@ const createStyles = (theme: any) => StyleSheet.create({
     justifyContent: 'center',
     padding: 24,
   },
+  modalContainer: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: 32,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.8)',
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalDesc: {
+    fontSize: 15,
+    fontFamily: theme.typography.fonts.body,
+    color: theme.colors.text.secondary,
+    marginBottom: 8,
+  },
   modalCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: 32,
