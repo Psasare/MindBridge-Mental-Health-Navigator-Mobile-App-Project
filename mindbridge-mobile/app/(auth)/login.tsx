@@ -190,7 +190,6 @@ export default function LoginScreen() {
                     setEmail(txt);
                     if (errors.email) setErrors({ ...errors, email: undefined });
                   }}
-                  onBlur={() => validateField('email')}
                 />
               </Animated.View>
               <View style={styles.separator} />
@@ -206,7 +205,6 @@ export default function LoginScreen() {
                     setPassword(txt);
                     if (errors.password) setErrors({ ...errors, password: undefined });
                   }}
-                  onBlur={() => validateField('password')}
                 />
                 <TouchableOpacity activeOpacity={0.7} 
                   onPress={() => setShowPassword(!showPassword)}

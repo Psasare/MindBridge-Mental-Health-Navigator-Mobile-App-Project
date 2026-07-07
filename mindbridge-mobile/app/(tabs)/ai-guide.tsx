@@ -170,7 +170,7 @@ const MessageItem = ({ item, theme, router, t }: any) => {
               )}
             </View>
           )}
-          <Text style={[msgStyles.time, { color: theme.colors.text.tertiary }]}>{item.time}</Text>
+          <Text style={[msgStyles.time, { color: theme.colors.text.secondary }]}>{item.time}</Text>
         </View>
       </Animated.View>
     );
@@ -185,7 +185,7 @@ const MessageItem = ({ item, theme, router, t }: any) => {
       >
         <Text style={msgStyles.textUser}>{item.text}</Text>
       </TouchableOpacity>
-      <Text style={[msgStyles.timeUser, { color: theme.colors.text.tertiary }]}>{item.time}</Text>
+      <Text style={[msgStyles.timeUser, { color: theme.colors.text.secondary }]}>{item.time}</Text>
     </View>
   );
 };
@@ -196,8 +196,8 @@ const createMsgStyles = (theme: any) => StyleSheet.create({
   avatarSmall: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 10, flexShrink: 0 },
   bubbleAi: { maxWidth: width * 0.74, paddingHorizontal: 16, paddingVertical: 13, borderRadius: 20, borderBottomLeftRadius: 4, borderWidth: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   bubbleUser: { maxWidth: width * 0.74, paddingHorizontal: 16, paddingVertical: 13, borderRadius: 20, borderBottomRightRadius: 4 },
-  textAi: { fontSize: 15.5, lineHeight: 23, fontFamily: theme.typography.fonts.body },
-  textUser: { fontSize: 15.5, lineHeight: 23, color: '#FFF', fontFamily: theme.typography.fonts.body },
+  textAi: { fontSize: 15.5, lineHeight: 24, fontFamily: theme.typography.fonts.ui },
+  textUser: { fontSize: 15.5, lineHeight: 24, color: '#FFF', fontFamily: theme.typography.fonts.ui },
   time: { fontSize: 11, fontWeight: '500', marginTop: 5, marginLeft: 2, fontFamily: theme.typography.fonts.accent },
   timeUser: { fontSize: 11, fontWeight: '500', marginTop: 5, fontFamily: theme.typography.fonts.accent },
   crisisBubble: { maxWidth: width * 0.78, borderWidth: 1.5, borderColor: '#E60000', borderRadius: 20, borderBottomLeftRadius: 4, padding: 16, backgroundColor: 'rgba(230,0,0,0.06)' },
@@ -500,10 +500,10 @@ export default function AIGuideScreen() {
             </View>
           </View>
           <TouchableOpacity activeOpacity={0.7} style={[S.headerBtn, { marginRight: 4 }]} onPress={() => setIsHistoryVisible(true)}>
-            <History color={theme.colors.text.tertiary} size={19} />
+            <History color={theme.colors.text.secondary} size={19} />
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.7} style={S.headerBtn} onPress={handleClearChat}>
-            <RefreshCw color={theme.colors.text.tertiary} size={19} />
+            <RefreshCw color={theme.colors.text.secondary} size={19} />
           </TouchableOpacity>
         </View>
       </BlurView>
@@ -511,7 +511,7 @@ export default function AIGuideScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
         <View style={[S.disclaimer, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(123,97,255,0.06)', borderColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(123,97,255,0.14)' }]}>
           <Info color={theme.isDark ? theme.colors.accents.powderBlue : theme.colors.plum} size={13} />
-          <Text style={[S.disclaimerText, { color: theme.isDark ? theme.colors.text.secondary : theme.colors.text.tertiary }]}>{t('ai.disclaimer')}</Text>
+          <Text style={[S.disclaimerText, { color: theme.isDark ? theme.colors.text.primary : theme.colors.plum }]}>{t('ai.disclaimer')}</Text>
         </View>
 
 
@@ -519,7 +519,7 @@ export default function AIGuideScreen() {
         {showPrompts && (
           <Animated.View entering={FadeInUp.delay(300).duration(500)} style={S.prompts}>
             <View style={S.promptsHeader}>
-              <Text style={[S.promptsLabel, { color: theme.colors.text.tertiary }]}>Suggested Starters</Text>
+              <Text style={[S.promptsLabel, { color: theme.colors.text.secondary }]}>Suggested Starters</Text>
             </View>
             <View style={S.promptsGrid}>
               {SUGGESTED_PROMPTS.map((p, i) => (
@@ -549,7 +549,7 @@ export default function AIGuideScreen() {
               ref={inputRef}
               style={[S.input, { color: theme.colors.text.primary }]}
               placeholder={t('ai.placeholder')}
-              placeholderTextColor={theme.colors.text.disabled}
+              placeholderTextColor={theme.colors.text.secondary}
               value={message}
               onChangeText={setMessage}
               multiline
@@ -705,7 +705,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   headerSub: { fontSize: 12, fontFamily: theme.typography.fonts.body, fontWeight: '500' },
   headerBtn: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   disclaimer: { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 20, marginTop: 14, marginBottom: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, borderWidth: 1 },
-  disclaimerText: { flex: 1, fontSize: 12, lineHeight: 17, fontFamily: theme.typography.fonts.body, fontWeight: '500' },
+  disclaimerText: { flex: 1, fontSize: 13, lineHeight: 18, fontFamily: theme.typography.fonts.ui },
   modeToggle: { flexDirection: 'row', marginHorizontal: 20, marginBottom: 12, borderRadius: 20, padding: 4 },
   modeBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 16 },
   modeText: { fontSize: 13, fontFamily: theme.typography.fonts.header, fontWeight: '700' },
