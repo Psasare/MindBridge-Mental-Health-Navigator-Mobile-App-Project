@@ -53,7 +53,8 @@ import {
 
 import { AuthContext } from '../../src/context/AuthContext';
 import { useRouter } from 'expo-router';
-import { StreakManager, UserStats, BADGE_DEFINITIONS } from '../../src/utils/StreakManager';
+import { BADGE_DEFINITIONS } from '../../src/utils/StreakManager';
+import type { UserStats } from '../../src/utils/StreakManager';
 
 const springConfig = { damping: 15, stiffness: 150, mass: 0.8 };
 
@@ -307,12 +308,23 @@ export default function ProfileScreen() {
   }, []);
 
   const loadGamificationStats = async () => {
-    let stats = await StreakManager.getStats();
-    if (stats.totalCheckIns === 0) {
-      // Seed mock data for demonstration if empty
-      stats = await StreakManager.seedMockData();
+    try {
+      const res = await api.get('/goals/gamification');
+      const g = res.data;
+      setUserStats({
+        currentStreak: g.currentStreak || 0,
+        longestStreak: g.longestStreak || 0,
+        lastCheckInDate: g.lastCompletedAt || null,
+        totalCheckIns: g.totalPoints ? Math.floor(g.totalPoints / 10) : 0,
+        totalJournals: 0,
+        totalCrisisUses: 0,
+        totalPeerSupport: 0,
+        points: g.totalPoints || 0,
+        badges: g.badges || [],
+      });
+    } catch (e) {
+      console.log('Failed to load gamification stats from server', e);
     }
-    setUserStats(stats);
   };
 
   const fetchInsights = async () => {

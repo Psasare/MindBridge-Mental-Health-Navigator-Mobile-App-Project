@@ -53,7 +53,7 @@ import * as FileSystem from 'expo-file-system';
 import api from '../../src/services/api';
 import * as ImagePicker from 'expo-image-picker';
 import { BlurView } from 'expo-blur';
-import { StreakManager } from '../../src/utils/StreakManager';
+
 import { VideoCheckInModal } from '../../src/components/VideoCheckInModal';
 import { Typography } from '../../src/components/ui/Typography';
 import { Button } from '../../src/components/ui/Button';
@@ -267,7 +267,6 @@ export default function JournalScreen() {
         vocalMetrics: vocalMetrics,
       });
       
-      await StreakManager.logJournal();
 
       setEntries([response.data, ...entries]);
       setIsWriting(false);

@@ -73,7 +73,7 @@ import {
   SymptomCloud
 } from '../../src/components/TrackingComponents';
 import { VideoCheckInModal } from '../../src/components/VideoCheckInModal';
-import { StreakManager } from '../../src/utils/StreakManager';
+import { BADGE_DEFINITIONS } from '../../src/utils/StreakManager';
 import { Sprout, Leaf, TreePine, PlayCircle } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -306,40 +306,26 @@ export default function WellnessTrackerScreen() {
     </View>
   );
 
-  const calculateClientStreak = (logs: any[]) => {
-    if (logs.length === 0) return 0;
-    if (logs[0]._serverStreak) return logs[0]._serverStreak;
-    const sorted = [...logs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    let streak = 0;
-    let today = new Date();
-    today.setHours(0, 0, 0, 0);
-    let lastDate = new Date(today);
-    lastDate.setDate(lastDate.getDate() + 1);
-    for (let i = 0; i < sorted.length; i++) {
-      const logDate = new Date(sorted[i].createdAt);
-      logDate.setHours(0, 0, 0, 0);
-      const diffTime = lastDate.getTime() - logDate.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      if (diffDays === 0) {
-        continue;
-      } else if (diffDays === 1) {
-        streak++;
-        lastDate = logDate;
-      } else {
-        break;
+  // Server streak is now the single source of truth
+  const [serverStreak, setServerStreak] = useState(0);
+
+  // Load initial streak from dashboard cache or API
+  useEffect(() => {
+    const loadStreak = async () => {
+      try {
+        const cached = await AsyncStorage.getItem('dashboard_cache');
+        if (cached) {
+          const data = JSON.parse(cached);
+          if (data.gamification?.currentStreak) {
+            setServerStreak(data.gamification.currentStreak);
+          }
+        }
+      } catch (e) {
+        console.log('Failed to load cached streak', e);
       }
-    }
-    const mostRecent = sorted[0] ? new Date(sorted[0].createdAt) : null;
-    if (mostRecent) {
-      mostRecent.setHours(0, 0, 0, 0);
-      const diff = today.getTime() - mostRecent.getTime();
-      const days = diff / (1000 * 60 * 60 * 24);
-      if (days > 1) {
-        return 0;
-      }
-    }
-    return streak || 1;
-  };
+    };
+    loadStreak();
+  }, []);
 
   const startRecording = async () => {
     try {
@@ -467,14 +453,15 @@ export default function WellnessTrackerScreen() {
         }
       }
 
-      await StreakManager.logCheckIn();
-      if (note) await StreakManager.logJournal();
+      // Update the server streak state
+      if (response.data?.gamification) {
+        setServerStreak(response.data.gamification.currentStreak);
+      }
 
       const newLog = { 
         score: mood ? mood * 2 : 6, 
         emotions: selectedEmotion ? [selectedEmotion] : [], 
-        createdAt: new Date().toISOString(),
-        _serverStreak: newServerStreak
+        createdAt: new Date().toISOString()
       };
 
       setMoodLogs(prev => [newLog, ...prev]);
@@ -772,7 +759,7 @@ export default function WellnessTrackerScreen() {
   };
 
   const renderStep5 = () => {
-    const streak = calculateClientStreak(moodLogs);
+    const streak = serverStreak;
     return (
       <Animated.View entering={FadeIn.duration(500)} style={styles.successContainer}>
         <Animated.View entering={FadeInUp.springify().damping(12).mass(0.8)} style={styles.successIconWrap}>
@@ -835,7 +822,7 @@ export default function WellnessTrackerScreen() {
       <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top }]}>
         <ScreenHeader title={t('tracker.title')} subtitle={t('tracker.subtitle')} />
 
-        <GardenVisualizer streak={calculateClientStreak(moodLogs)} totalLogs={totalCount} theme={theme} />
+        <GardenVisualizer streak={serverStreak} totalLogs={totalCount} theme={theme} />
 
         <TrackerHeader totalCount={totalCount} theme={theme} />
 
