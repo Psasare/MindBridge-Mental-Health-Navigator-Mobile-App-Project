@@ -20,6 +20,7 @@ import {
   X
 } from 'lucide-react-native';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
+import { ThemeToggle } from '../../src/components/ThemeToggle';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ScrollView, Switch, Alert, Modal, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { AuthContext } from '../../src/context/AuthContext';
@@ -190,17 +191,6 @@ export default function SettingsScreen() {
     </TouchableOpacity>
   );
 
-  const ThemeOption = ({ optionMode, icon: Icon, label }: any) => (
-    <TouchableOpacity  
-      style={[styles.themeOption, mode === optionMode && styles.themeOptionActive]}
-      onPress={() => setMode(optionMode)}
-      activeOpacity={0.8}
-    >
-      <Icon color={mode === optionMode ? '#FFF' : colors.text.secondary} size={20} />
-      <Text style={[styles.themeOptionText, mode === optionMode && styles.themeOptionTextActive]}>{label}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
       <ScrollView 
@@ -215,10 +205,17 @@ export default function SettingsScreen() {
         {/* ── Theme Section ── */}
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>App Appearance</Text>
-          <View style={styles.themeCard}>
-            <ThemeOption optionMode="system" icon={Smartphone} label="System" />
-            <ThemeOption optionMode="light" icon={Sun} label="Light" />
-            <ThemeOption optionMode="dark" icon={Moon} label="Dark" />
+          <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={[styles.rowIconWrap, { backgroundColor: isDark ? colors.plum + '15' : '#FEF3C7' }]}>
+                {isDark ? <Moon color={colors.plum} size={20} /> : <Sun color="#F59E0B" size={20} />}
+              </View>
+              <Text style={styles.rowLabel}>{isDark ? 'Dark Mode' : 'Light Mode'}</Text>
+            </View>
+            <ThemeToggle 
+              isDark={isDark} 
+              onToggle={() => setMode(isDark ? 'light' : 'dark')} 
+            />
           </View>
         </View>
 
