@@ -75,25 +75,27 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({ isDark, onToggle }) =>
   }));
 
   return (
-    <AnimatedPressable onPress={onToggle} style={[styles.track, trackStyle]}>
-      {/* Background icons (inside track) */}
-      <Animated.View style={[styles.trackIcon, styles.trackIconLeft, sunStyle]}>
-        <Sun size={14} color="#F59E0B" />
-      </Animated.View>
-      <Animated.View style={[styles.trackIcon, styles.trackIconRight, moonStyle]}>
-        <Moon size={14} color="#818CF8" />
-      </Animated.View>
+    <Pressable onPress={onToggle}>
+      <Animated.View style={[styles.track, trackStyle]}>
+        {/* Background icons (inside track) */}
+        <Animated.View style={[styles.trackIcon, styles.trackIconLeft, sunStyle]}>
+          <Sun size={14} color="#F59E0B" />
+        </Animated.View>
+        <Animated.View style={[styles.trackIcon, styles.trackIconRight, moonStyle]}>
+          <Moon size={14} color="#818CF8" />
+        </Animated.View>
 
-      {/* Sliding knob */}
-      <Animated.View style={[styles.knob, knobStyle]}>
-        <Animated.View style={[styles.knobIconWrap, sunStyle, { position: 'absolute' }]}>
-          <Sun size={16} color="#F59E0B" />
-        </Animated.View>
-        <Animated.View style={[styles.knobIconWrap, moonStyle, { position: 'absolute' }]}>
-          <Moon size={16} color="#6366F1" />
+        {/* Sliding knob */}
+        <Animated.View style={[styles.knob, knobStyle]}>
+          <Animated.View style={[styles.knobIconWrap, sunStyle]}>
+            <Sun size={16} color="#F59E0B" />
+          </Animated.View>
+          <Animated.View style={[styles.knobIconWrap, moonStyle]}>
+            <Moon size={16} color="#6366F1" />
+          </Animated.View>
         </Animated.View>
       </Animated.View>
-    </AnimatedPressable>
+    </Pressable>
   );
 };
 
@@ -103,23 +105,26 @@ const styles = StyleSheet.create({
     height: TRACK_HEIGHT,
     borderRadius: TRACK_HEIGHT / 2,
     borderWidth: 1.5,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 3,
+    justifyContent: 'center',
     position: 'relative',
+    overflow: 'hidden',
   },
   trackIcon: {
     position: 'absolute',
-    alignItems: 'center',
+    height: '100%',
     justifyContent: 'center',
+    alignItems: 'center',
   },
   trackIconLeft: {
-    left: 7,
+    left: 8,
   },
   trackIconRight: {
-    right: 7,
+    right: 8,
   },
   knob: {
+    position: 'absolute',
+    left: 3,
+    top: 1.5, // (34 - 1.5*2 - 28) / 2 = 1.5 (centers it vertically inside the border)
     width: KNOB_SIZE,
     height: KNOB_SIZE,
     borderRadius: KNOB_SIZE / 2,
@@ -132,6 +137,9 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   knobIconWrap: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
