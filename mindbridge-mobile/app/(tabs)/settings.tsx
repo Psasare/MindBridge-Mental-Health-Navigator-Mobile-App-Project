@@ -205,12 +205,14 @@ export default function SettingsScreen() {
         {/* ── Theme Section ── */}
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>App Appearance</Text>
-          <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14 }]}>
+          <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 16 }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <View style={[styles.rowIconWrap, { backgroundColor: isDark ? colors.plum + '15' : '#FEF3C7' }]}>
                 {isDark ? <Moon color={colors.plum} size={20} /> : <Sun color="#F59E0B" size={20} />}
               </View>
-              <Text style={styles.rowLabel}>{isDark ? 'Dark Mode' : 'Light Mode'}</Text>
+              <Text style={{ fontSize: 16, fontFamily: themeContext.typography.fonts.header, fontWeight: '600', color: colors.text.primary }}>
+                {isDark ? 'Dark Mode' : 'Light Mode'}
+              </Text>
             </View>
             <ThemeToggle 
               isDark={isDark} 
