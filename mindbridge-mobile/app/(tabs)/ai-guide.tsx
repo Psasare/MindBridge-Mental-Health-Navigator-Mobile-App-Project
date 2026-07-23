@@ -39,10 +39,13 @@ import {
   X,
   Trash2,
   BrainCircuit,
-  Wind
+  Wind,
+  Check,
+  CheckCheck
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useAudioRecorder, useAudioRecorderState, requestRecordingPermissionsAsync, RecordingPresets, setAudioModeAsync } from 'expo-audio';
+import { withRepeat, withSequence, withTiming, withDelay, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 const TAB_BAR_HEIGHT = 64;
@@ -57,6 +60,26 @@ const SUGGESTED_PROMPTS = [
 ];
 
 // ─── Typing Indicator ─────────────────────────────────────────────────────────
+const TypingDot = ({ delay, theme }: any) => {
+  const y = useSharedValue(0);
+  useEffect(() => {
+    y.value = withDelay(delay, withRepeat(
+      withSequence(
+        withTiming(-5, { duration: 300 }),
+        withTiming(0, { duration: 300 })
+      ),
+      -1,
+      true
+    ));
+  }, []);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateY: y.value }]
+  }));
+
+  return <Animated.View style={[typingStyles.dot, { backgroundColor: theme.colors.plum }, style]} />;
+};
+
 const TypingIndicator = ({ theme }: any) => (
   <Animated.View entering={FadeIn.duration(300)} style={[typingStyles.row]}>
     <View style={[typingStyles.avatar, { backgroundColor: theme.colors.plum }]}>
@@ -67,9 +90,9 @@ const TypingIndicator = ({ theme }: any) => (
       borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
     }]}>
       <View style={typingStyles.dots}>
-        <View style={[typingStyles.dot, { backgroundColor: theme.colors.plum, opacity: 0.4 }]} />
-        <View style={[typingStyles.dot, { backgroundColor: theme.colors.plum, opacity: 0.7 }]} />
-        <View style={[typingStyles.dot, { backgroundColor: theme.colors.plum }]} />
+        <TypingDot delay={0} theme={theme} />
+        <TypingDot delay={150} theme={theme} />
+        <TypingDot delay={300} theme={theme} />
       </View>
     </View>
   </Animated.View>
@@ -84,7 +107,7 @@ const typingStyles = StyleSheet.create({
 });
 
 // ─── Individual Message ────────────────────────────────────────────────────────
-const MessageItem = ({ item, theme, router, t }: any) => {
+const MessageItem = ({ item, theme, router, t, handleSend }: any) => {
   const msgStyles = createMsgStyles(theme);
   const onLongPress = async () => {
     await Clipboard.setStringAsync(item.text);
@@ -178,14 +201,31 @@ const MessageItem = ({ item, theme, router, t }: any) => {
 
   return (
     <View style={msgStyles.rowUser}>
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onLongPress={onLongPress}
-        style={[msgStyles.bubbleUser, { backgroundColor: '#7B61FF' }]}
-      >
-        <Text style={msgStyles.textUser}>{item.text}</Text>
-      </TouchableOpacity>
-      <Text style={[msgStyles.timeUser, { color: theme.colors.text.secondary }]}>{item.time}</Text>
+      <View style={{ alignItems: 'flex-end' }}>
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onLongPress={onLongPress}
+          style={[msgStyles.bubbleUser, { backgroundColor: item.status === 'error' ? '#EF4444' : '#7B61FF' }]}
+        >
+          <Text style={msgStyles.textUser}>{item.text}</Text>
+        </TouchableOpacity>
+        
+        {item.status === 'error' && (
+          <TouchableOpacity style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center' }} onPress={() => handleSend(item.text, item.audioBase64, item.id)}>
+            <RefreshCw size={12} color="#EF4444" style={{ marginRight: 4 }} />
+            <Text style={{ fontSize: 11, color: '#EF4444', fontWeight: '700' }}>{item.error || 'Connection failed. Tap to retry.'}</Text>
+          </TouchableOpacity>
+        )}
+        
+        {item.status !== 'error' && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 5 }}>
+            <Text style={[msgStyles.timeUser, { color: theme.colors.text.secondary, marginRight: 4, marginTop: 0 }]}>{item.time}</Text>
+            {item.status === 'sending' && <Text style={{ fontSize: 10, color: theme.colors.text.tertiary, fontStyle: 'italic' }}>Sending...</Text>}
+            {item.status === 'delivered' && <CheckCheck size={12} color="#34D399" />}
+            {(!item.status || item.status === 'sent') && <Check size={12} color={theme.colors.text.tertiary} />}
+          </View>
+        )}
+      </View>
     </View>
   );
 };
@@ -335,13 +375,27 @@ export default function AIGuideScreen() {
     }
   };
 
-  const handleSend = async (textOverride?: string, audioBase64?: string) => {
+  const handleSend = async (textOverride?: string, audioBase64?: string, retryId?: string) => {
     const textToSend = textOverride || message;
     if (!textToSend.trim() && !audioBase64) return;
     
-    const userMsg = { id: 'user_' + Date.now() + '_' + Math.random(), text: textToSend, isAi: false, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
-    setMessages(prev => [...prev, userMsg]);
-    if (!textOverride) setMessage('');
+    const msgId = retryId || 'user_' + Date.now() + '_' + Math.random();
+
+    if (!retryId) {
+      const userMsg = { 
+        id: msgId, 
+        text: textToSend, 
+        isAi: false, 
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        status: 'sending',
+        audioBase64
+      };
+      setMessages(prev => [...prev, userMsg]);
+      if (!textOverride) setMessage('');
+    } else {
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: 'sending', error: null } : m));
+    }
+    
     setLoading(true);
 
     try {
@@ -358,10 +412,14 @@ export default function AIGuideScreen() {
         state: res.data.state,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
-      setMessages(prev => [...prev, aiMsg]);
+      
+      setMessages(prev => {
+        const marked = prev.map(m => m.id === msgId ? { ...m, status: 'delivered' } : m);
+        return [...marked, aiMsg];
+      });
     } catch (e: any) {
-      const errorMsg = e.response?.data?.message || 'Please try again in a moment.';
-      Alert.alert('Oracle is resting', errorMsg);
+      const errorMsg = e.response?.data?.message || 'Connection lost. Tap to retry.';
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: 'error', error: errorMsg } : m));
     } finally {
       setLoading(false);
     }
@@ -536,7 +594,7 @@ export default function AIGuideScreen() {
           style={{ flex: 1 }}
           data={listData}
           keyExtractor={item => item.id}
-          renderItem={({ item }) => <MessageItem item={item} theme={theme} router={router} t={t} />}
+          renderItem={({ item }) => <MessageItem item={item} theme={theme} router={router} t={t} handleSend={handleSend} />}
           contentContainerStyle={[S.listContent, { paddingBottom: (isKeyboardVisible ? 12 : bottomPad) + INPUT_AREA_HEIGHT + 12 }]}
           showsVerticalScrollIndicator={false}
           onLayout={scrollToEnd}
