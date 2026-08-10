@@ -18,6 +18,7 @@ import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StreakManager } from '../../src/utils/StreakManager';
 import { AuthContext } from '../../src/context/AuthContext';
+import { DashboardSkeleton } from '../../src/components/DashboardSkeleton';
 import { LanguageContext } from '../../src/context/LanguageContext';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -438,6 +439,7 @@ export default function DashboardScreen() {
   const [microGoals, setMicroGoals] = useState<string[]>([]);
   const [actionableCopingMechanisms, setActionableCopingMechanisms] = useState<string[]>([]);
   const [insightSeverity, setInsightSeverity] = useState<string>('mild');
+  const [isLoading, setIsLoading] = useState(true);
   
   // Gamification States
   const [dailyGoals, setDailyGoals] = useState<any[]>([]);
@@ -634,6 +636,8 @@ export default function DashboardScreen() {
       if (authData) {
         setUserData(prev => ({ ...prev, name: authData.name || 'Friend' }));
       }
+    } finally {
+      setIsLoading(false);
     }
   }, [authData, userData, gamification, aiPrompt, suggestedResources, actionableCopingMechanisms, insightSeverity, microGoals, dailyGoals, completedGoalIds, recentLocation]);
 
@@ -715,6 +719,11 @@ export default function DashboardScreen() {
         <View style={[styles.bgBlob, { bottom: 100, left: -50, backgroundColor: theme.colors.accents.powderBlue + '05' }]} />
       </View>
 
+      {isLoading ? (
+        <Animated.View entering={FadeIn.duration(400)} exiting={FadeIn.duration(300)} style={{ flex: 1, paddingTop: insets.top }}>
+          <DashboardSkeleton />
+        </Animated.View>
+      ) : (
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top }]} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
@@ -985,6 +994,7 @@ export default function DashboardScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      )}
 
       {/* Interventions & Celebrations */}
       <InterventionModal 

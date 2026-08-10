@@ -1,3 +1,14 @@
+import { Dimensions, PixelRatio } from 'react-native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// Base width on a standard iPhone (e.g., iPhone 13/14)
+const scale = SCREEN_WIDTH / 390;
+
+export function RFValue(size: number) {
+  const newSize = size * scale;
+  return Math.round(PixelRatio.roundToNearestPixel(newSize));
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MindBridge Official Design System (Apple HIG Inspired)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -202,48 +213,48 @@ export const typography = {
     caption:  'Montserrat-Medium',
     captionMedium: 'Montserrat-SemiBold',
   },
-  h1: { fontSize: 34, fontFamily: 'ProductSans-Bold', letterSpacing: 0.36 },
-  h2: { fontSize: 28, fontFamily: 'ProductSans-Bold', letterSpacing: 0.38 },
-  h3: { fontSize: 22, fontFamily: 'ProductSans-Bold', letterSpacing: -0.26 },
-  h4: { fontSize: 17, fontFamily: 'ProductSans-Bold', letterSpacing: -0.41 },
+  h1: { fontSize: RFValue(34), fontFamily: 'ProductSans-Bold', letterSpacing: 0.36 },
+  h2: { fontSize: RFValue(28), fontFamily: 'ProductSans-Bold', letterSpacing: 0.38 },
+  h3: { fontSize: RFValue(22), fontFamily: 'ProductSans-Bold', letterSpacing: -0.26 },
+  h4: { fontSize: RFValue(17), fontFamily: 'ProductSans-Bold', letterSpacing: -0.41 },
   body: {
-    fontSize: 17,
+    fontSize: RFValue(17),
     fontFamily: 'Montserrat-Regular',
-    lineHeight: 22,
+    lineHeight: RFValue(22),
     letterSpacing: -0.41,
   },
   bodyBold: {
-    fontSize: 17,
+    fontSize: RFValue(17),
     fontFamily: 'Montserrat-Bold',
-    lineHeight: 22,
+    lineHeight: RFValue(22),
     letterSpacing: -0.41,
   },
   ui: {
-    fontSize: 15,
+    fontSize: RFValue(15),
     fontFamily: 'Poppins-Medium',
-    lineHeight: 20,
+    lineHeight: RFValue(20),
     letterSpacing: -0.24,
   },
   caption: {
-    fontSize: 13,
+    fontSize: RFValue(13),
     fontFamily: 'Montserrat-Medium',
     letterSpacing: -0.08,
   },
   captionMedium: {
-    fontSize: 13,
+    fontSize: RFValue(13),
     fontFamily: 'Montserrat-SemiBold',
     letterSpacing: -0.08,
   },
   label: {
-    fontSize: 12,
+    fontSize: RFValue(12),
     fontFamily: 'Poppins-SemiBold',
     textTransform: 'uppercase' as const,
     letterSpacing: 1.0,
   },
   // Legacy aliases
-  content: { fontSize: 16, fontFamily: 'Montserrat-Regular', lineHeight: 26 },
-  secondary: { fontSize: 15, fontFamily: 'Montserrat-Regular', lineHeight: 22 },
-  humanist: { fontSize: 15, fontFamily: 'Poppins-Medium', lineHeight: 22 },
+  content: { fontSize: RFValue(16), fontFamily: 'Montserrat-Regular', lineHeight: RFValue(26) },
+  secondary: { fontSize: RFValue(15), fontFamily: 'Montserrat-Regular', lineHeight: RFValue(22) },
+  humanist: { fontSize: RFValue(15), fontFamily: 'Poppins-Medium', lineHeight: RFValue(22) },
 };
 
 export const theme = {
