@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ghost, ShieldCheck, Brain, Bot, Lock } from 'lucide-react-native';
+import { VenetianMask, ShieldCheck, Brain, Bot, Lock } from 'lucide-react-native';
 
 import { useTheme } from '../../src/context/ThemeContext';
 
@@ -225,12 +225,12 @@ export default function WelcomeScreen() {
           {/* Anonymous/Guest Option */}
           {activeSlide === SLIDES.length - 1 && (
             <TouchableOpacity  
-              style={[styles.outlineBtn, { borderColor: slide.accentColor }]}
+              style={[styles.secondaryBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}
               onPress={() => router.push('/(auth)/login?anonymous=true')}
               activeOpacity={0.8}
             >
-              <Ghost color={slide.accentColor} size={20} strokeWidth={2.5} />
-              <Text style={[styles.outlineBtnText, { color: slide.accentColor }]}>
+              <VenetianMask color={theme.isDark ? '#FFFFFF' : '#1F2937'} size={20} strokeWidth={2.5} />
+              <Text style={[styles.secondaryBtnText, { color: theme.isDark ? '#FFFFFF' : '#1F2937' }]}>
                 Explore Anonymously
               </Text>
             </TouchableOpacity>
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   copyBlock: { alignItems: 'center', width: '100%', paddingHorizontal: 8 },
   overline: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: 'Montserrat-Bold',
     letterSpacing: 1.5,
     marginBottom: 16,
     textAlign: 'center',
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
   },
   headlineText: {
     fontSize: 40,
-    fontWeight: '800',
+    fontFamily: 'Montserrat-ExtraBold',
     letterSpacing: -1,
     lineHeight: 48,
     textAlign: 'center',
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   highlightText: {
     fontSize: 40,
-    fontWeight: '800',
+    fontFamily: 'Montserrat-ExtraBold',
     color: '#FFFFFF',
     letterSpacing: -1,
     lineHeight: 48,
@@ -325,6 +325,7 @@ const styles = StyleSheet.create({
   bodyText: {
     textAlign: 'center',
     fontSize: 16,
+    fontFamily: 'Montserrat-Regular',
     lineHeight: 24,
     marginTop: 20,
     paddingHorizontal: 10,
@@ -334,34 +335,39 @@ const styles = StyleSheet.create({
   dotActive: { width: 24 },
   ctaSection: { paddingHorizontal: 28, paddingBottom: 8 },
   primaryBtn: {
-    height: 56,
-    borderRadius: 100,
+    height: 60,
+    borderRadius: 20, // Apple squircle aesthetic
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
   primaryBtnText: {
     color: '#FFFFFF',
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: 'Montserrat-Bold',
   },
-  outlineBtn: {
-    height: 56,
-    borderRadius: 100,
-    borderWidth: 1.5,
+  secondaryBtn: {
+    height: 60,
+    borderRadius: 20, // Apple squircle aesthetic
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
     gap: 8,
   },
-  outlineBtnText: {
+  secondaryBtnText: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: 'Montserrat-Bold',
   },
   signInRow: { height: 50, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
   signInText: {
     fontSize: 15,
+    fontFamily: 'Montserrat-Medium',
   },
   trustRow: {
     flexDirection: 'row',
@@ -373,5 +379,6 @@ const styles = StyleSheet.create({
   },
   trustText: {
     fontSize: 12,
+    fontFamily: 'Montserrat-Medium',
   }
 });

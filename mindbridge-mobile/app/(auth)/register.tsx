@@ -361,7 +361,7 @@ export default function RegisterScreen() {
 
           <Animated.View entering={FadeInUp.duration(800)} style={styles.formContainer}>
             <View style={styles.titleContainer}>
-              <Typography variant="h1" style={{ marginBottom: 8 }}>Join MindBridge</Typography>
+              <Typography variant="h1" style={{ marginBottom: 8, fontFamily: 'Montserrat-ExtraBold' }}>Join MindBridge</Typography>
               <Typography variant="body" color={themeContext.colors.text.secondary}>Let's personalize your experience.</Typography>
             </View>
 

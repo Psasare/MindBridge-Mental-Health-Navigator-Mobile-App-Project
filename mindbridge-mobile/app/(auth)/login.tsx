@@ -9,7 +9,8 @@ import {
   Platform,
   ScrollView,
   Dimensions,
-  StatusBar
+  StatusBar,
+  ActivityIndicator
 } from 'react-native';
 import { useState, useContext } from 'react';
 import { AuthContext } from '../../src/context/AuthContext';
@@ -18,7 +19,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import api from '../../src/services/api';
 import Animated, { FadeInUp, FadeIn, useSharedValue, useAnimatedStyle, withSequence, withTiming, withSpring } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Eye, EyeOff, ChevronLeft, AlertCircle, Ghost, ArrowRight } from 'lucide-react-native';
+import { Eye, EyeOff, ChevronLeft, AlertCircle, VenetianMask, ArrowRight } from 'lucide-react-native';
 import { Typography } from '../../src/components/ui/Typography';
 import { Button } from '../../src/components/ui/Button';
 import { BlurView } from 'expo-blur';
@@ -171,7 +172,7 @@ export default function LoginScreen() {
           {/* Form Content */}
           <Animated.View entering={FadeInUp.duration(800).springify()} style={styles.formContainer}>
             <View style={styles.titleContainer}>
-              <Typography variant="h1" style={{ marginBottom: 12 }}>Sign In</Typography>
+              <Typography variant="h1" style={{ marginBottom: 12, fontFamily: 'Montserrat-ExtraBold' }}>Sign In</Typography>
               <Typography variant="body" color={themeContext.colors.text.secondary}>Enter your credentials to continue your journey.</Typography>
             </View>
 
@@ -245,17 +246,26 @@ export default function LoginScreen() {
                 Continue
               </Button>
 
-              <Button
-                variant="outline"
-                size="large"
+              <TouchableOpacity  
+                style={[
+                  styles.actionBtnSecondary, 
+                  { backgroundColor: themeContext.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }
+                ]}
                 onPress={handleAnonymousLogin}
+                activeOpacity={0.8}
                 disabled={loading}
-                loading={loading}
-                style={styles.actionBtnOutline}
-                icon={<Ghost color={themeContext.isDark ? '#FFF' : themeContext.colors.text.primary} size={20} />}
               >
-                Continue Anonymously
-              </Button>
+                {loading ? (
+                  <ActivityIndicator color={themeContext.isDark ? '#FFFFFF' : '#1F2937'} />
+                ) : (
+                  <>
+                    <VenetianMask color={themeContext.isDark ? '#FFFFFF' : '#1F2937'} size={20} strokeWidth={2.5} />
+                    <Typography variant="h4" style={{ fontFamily: 'Montserrat-Bold', color: themeContext.isDark ? '#FFFFFF' : '#1F2937' }}>
+                      Continue Anonymously
+                    </Typography>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
 
             <TouchableOpacity activeOpacity={0.7} 
@@ -369,12 +379,16 @@ const createStyles = (theme: any) => StyleSheet.create({
     gap: 12,
   },
   actionBtn: {
-    borderRadius: 16,
+    height: 60,
+    borderRadius: 20,
   },
-  actionBtnOutline: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: theme.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
+  actionBtnSecondary: {
+    height: 60,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   signUpContainer: { 
     marginTop: 32, 

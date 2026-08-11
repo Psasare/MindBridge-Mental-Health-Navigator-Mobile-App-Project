@@ -497,8 +497,17 @@ export default function DashboardScreen() {
   const checkStatus = useCallback(async () => {
     try {
       const todayStr = new Date().toDateString();
-      const res = await api.get('/ai/oracle-context');
-      const moodsRes = await api.get('/mood');
+      // Run all API requests concurrently for maximum speed
+      const [coreRes, [aiRes, gamificationRes, goalsRes]] = await Promise.all([
+        Promise.all([api.get('/ai/oracle-context'), api.get('/mood')]),
+        Promise.allSettled([
+          api.get('/ai/proactive-insights'),
+          api.get('/goals/gamification'),
+          api.get('/goals/daily')
+        ])
+      ]);
+      
+      const [res, moodsRes] = coreRes;
       
       const logs = res.data.recentJournal || [];
       const newMoodHistory = moodsRes.data || [];
@@ -514,13 +523,6 @@ export default function DashboardScreen() {
         const onboardingName = res.data.onboarding.firstName;
         newUserData.name = (onboardingName === 'TESTKW' && authData?.name) ? authData.name : onboardingName;
       }
-      
-      // Parallel unblocking requests
-      const [aiRes, gamificationRes, goalsRes] = await Promise.allSettled([
-        api.get('/ai/proactive-insights'),
-        api.get('/goals/gamification'),
-        api.get('/goals/daily')
-      ]);
 
       let newAiPrompt = aiPrompt;
       let newSuggested = suggestedResources;
