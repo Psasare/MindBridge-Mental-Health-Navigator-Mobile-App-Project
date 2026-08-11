@@ -11,7 +11,8 @@ import {
   Dimensions,
   Modal,
   FlatList,
-  StatusBar
+  StatusBar,
+  ActivityIndicator
 } from 'react-native';
 import { useState, useContext } from 'react';
 import { AuthContext } from '../../src/context/AuthContext';
@@ -22,7 +23,6 @@ import Animated, { FadeInUp, FadeIn, useSharedValue, useAnimatedStyle, withSeque
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Eye, EyeOff, ChevronLeft, AlertCircle, Search, Check, X, Heart } from 'lucide-react-native';
 import { Typography } from '../../src/components/ui/Typography';
-import { Button } from '../../src/components/ui/Button';
 import { BlurView } from 'expo-blur';
 
 const { height, width } = Dimensions.get('window');
@@ -538,16 +538,20 @@ export default function RegisterScreen() {
               </Typography>
             </View>
 
-            <Button
-              variant="primary"
-              size="large"
+            <TouchableOpacity
+              style={[styles.actionBtnPrimary, { backgroundColor: themeContext.colors.plum, marginTop: 24 }]}
               onPress={handleRegister}
+              activeOpacity={0.8}
               disabled={loading}
-              loading={loading}
-              style={{ marginTop: 24 }}
             >
-              Create Account
-            </Button>
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Typography variant="h4" style={{ fontFamily: 'Montserrat-Bold', color: '#FFFFFF' }}>
+                  Create Account
+                </Typography>
+              )}
+            </TouchableOpacity>
 
             <TouchableOpacity activeOpacity={0.7} onPress={() => router.push('/(auth)/login')} style={styles.signUpContainer}>
               <Typography variant="body" color={themeContext.colors.text.secondary}>
@@ -665,4 +669,17 @@ const createStyles = (theme: any) => StyleSheet.create({
 
   personalizationNote: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', padding: 16, borderRadius: 14, marginTop: 8, gap: 12 },
   signUpContainer: { marginTop: 16, alignItems: 'center', marginBottom: 20 },
+  actionBtnPrimary: {
+    height: 60,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
+  }
 });

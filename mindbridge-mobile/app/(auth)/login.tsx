@@ -233,18 +233,23 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <View style={styles.actionsContainer}>
-              <Button
-                variant="primary"
-                size="large"
+              <TouchableOpacity
+                style={[styles.actionBtnPrimary, { backgroundColor: themeContext.colors.plum }]}
                 onPress={handleLogin}
+                activeOpacity={0.8}
                 disabled={loading}
-                loading={loading}
-                style={styles.actionBtn}
-                icon={<ArrowRight color="#FFF" size={20} />}
-                iconPosition="right"
               >
-                Continue
-              </Button>
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <>
+                    <Typography variant="h4" style={{ fontFamily: 'Montserrat-Bold', color: '#FFFFFF' }}>
+                      Continue
+                    </Typography>
+                    <ArrowRight color="#FFFFFF" size={20} strokeWidth={2.5} />
+                  </>
+                )}
+              </TouchableOpacity>
 
               <TouchableOpacity  
                 style={[
@@ -378,9 +383,18 @@ const createStyles = (theme: any) => StyleSheet.create({
   actionsContainer: {
     gap: 12,
   },
-  actionBtn: {
+  actionBtnPrimary: {
     height: 60,
     borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
   actionBtnSecondary: {
     height: 60,
