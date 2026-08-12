@@ -389,13 +389,7 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
       <View style={StyleSheet.absoluteFillObject}>
-        <LinearGradient 
-          colors={theme.isDark 
-            ? [theme.colors.background, theme.colors.backgroundSecondary, '#080C18'] 
-            : [theme.colors.background, theme.colors.backgroundSecondary, '#E0E3EB']
-          } 
-          style={StyleSheet.absoluteFillObject} 
-        />
+        
         <View style={[styles.bgBlob, { top: -80, left: -80, backgroundColor: theme.colors.plum + '08' }]} />
         <View style={[styles.bgBlob, { bottom: 0, right: -100, backgroundColor: theme.colors.accents.softMint + '05' }]} />
       </View>

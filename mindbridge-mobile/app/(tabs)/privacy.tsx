@@ -63,13 +63,7 @@ export default function PrivacyScreen() {
   return (
     <View style={styles.container}>
       <View style={StyleSheet.absoluteFillObject}>
-        <LinearGradient 
-          colors={theme.isDark 
-            ? [theme.colors.background, theme.colors.backgroundSecondary, '#080C18'] 
-            : [theme.colors.background, theme.colors.backgroundSecondary, '#E0E3EB']
-          } 
-          style={StyleSheet.absoluteFillObject} 
-        />
+        
         <View style={[styles.bgBlob, { top: -50, right: -100, backgroundColor: theme.colors.semantic.success + '08' }]} />
       </View>
 

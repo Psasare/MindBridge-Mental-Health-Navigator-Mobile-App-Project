@@ -179,13 +179,7 @@ export default function BreathingScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
-      <LinearGradient 
-        colors={theme.isDark 
-          ? [theme.colors.background, theme.colors.backgroundSecondary] 
-          : [theme.colors.background, theme.colors.backgroundSecondary]
-        } 
-        style={StyleSheet.absoluteFillObject} 
-      />
+      
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>

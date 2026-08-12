@@ -728,13 +728,7 @@ export default function AssessmentsScreen() {
     <View style={styles.container}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
       <View style={StyleSheet.absoluteFillObject}>
-        <LinearGradient 
-          colors={theme.isDark 
-            ? [theme.colors.background, theme.colors.backgroundSecondary, '#080C18'] 
-            : [theme.colors.background, theme.colors.backgroundSecondary, '#E0E3EB']
-          } 
-          style={StyleSheet.absoluteFillObject} 
-        />
+        
         <View style={[styles.bgBlob, { top: -50, left: -100, backgroundColor: theme.colors.accents.powderBlue + '08' }]} />
         <View style={[styles.bgBlob, { bottom: -100, right: -100, backgroundColor: theme.colors.plum + '08' }]} />
       </View>

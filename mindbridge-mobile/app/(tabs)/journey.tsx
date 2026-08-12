@@ -42,14 +42,7 @@ export default function JourneyScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
-      <LinearGradient 
-        colors={theme.isDark 
-          ? ['rgba(123, 97, 255, 0.15)', theme.colors.background, theme.colors.backgroundSecondary]
-          : ['rgba(123, 97, 255, 0.08)', theme.colors.background, theme.colors.backgroundSecondary]
-        } 
-        locations={[0, 0.2, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
+      
 
       <ScrollView 
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}

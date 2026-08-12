@@ -223,14 +223,7 @@ export default function CrisisSupportScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={themeContext.isDark ? "light-content" : "dark-content"} />
-      <LinearGradient 
-        colors={themeContext.isDark 
-          ? ['rgba(110, 136, 176, 0.15)', themeContext.colors.background, themeContext.colors.backgroundSecondary]
-          : ['rgba(110, 136, 176, 0.1)', themeContext.colors.background, themeContext.colors.backgroundSecondary]
-        } 
-        locations={[0, 0.2, 1]}
-        style={StyleSheet.absoluteFillObject} 
-      />
+      
 
       <ScrollView 
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}

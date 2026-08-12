@@ -938,15 +938,7 @@ export default function ResourcesScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.isDark ? 'light-content' : 'dark-content'} />
-      <LinearGradient
-        colors={
-          theme.isDark
-            ? ['rgba(99, 102, 241, 0.08)', theme.colors.background, theme.colors.backgroundSecondary]
-            : ['rgba(99, 102, 241, 0.05)', theme.colors.background, theme.colors.backgroundSecondary]
-        }
-        locations={[0, 0.25, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
+      
 
       <AudioPlayerModal
         meditation={selectedMeditation}

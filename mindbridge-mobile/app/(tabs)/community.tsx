@@ -382,14 +382,7 @@ export default function CommunityScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
-      <LinearGradient 
-        colors={theme.isDark 
-          ? ['rgba(216, 164, 143, 0.15)', theme.colors.background, theme.colors.backgroundSecondary]
-          : ['rgba(216, 164, 143, 0.05)', theme.colors.background, theme.colors.backgroundSecondary]
-        } 
-        locations={[0, 0.2, 1]}
-        style={StyleSheet.absoluteFillObject} 
-      />
+      
 
       <View style={{ paddingTop: insets.top + 20 }}>
         <ScreenHeader 
