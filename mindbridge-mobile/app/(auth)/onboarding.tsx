@@ -840,4 +840,5 @@ const createStyles = (theme: any) => StyleSheet.create({
   // Primary Action
   primaryBtn: { backgroundColor: theme.colors.plum, paddingVertical: 20, borderRadius: 24, alignItems: 'center', justifyContent: 'center', width: '100%' },
   primaryBtnText: { color: theme.colors.text.onPrimary || '#FFF', fontSize: 17, fontFamily: 'Montserrat-ExtraBold', textAlign: 'center' },
+  exitText: { textAlign: 'center' },
 });
