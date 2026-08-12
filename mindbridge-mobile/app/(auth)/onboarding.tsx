@@ -257,8 +257,10 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const themeContext = useTheme();
-    const { updateUserData, userData: authData, signOut } = useContext(AuthContext) as any;
+    const { updateUserData, userData: authData, signOut, userToken } = useContext(AuthContext) as any;
     const styles = createStyles(themeContext);
+    const isAnonymous = userToken?.startsWith('guest');
+    const activeSteps = ONBOARDING_STEPS.filter(step => !(isAnonymous && step.id === 'q1'));
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, any>>({
       stressors: {}
@@ -270,17 +272,17 @@ export default function OnboardingScreen() {
     const preferredLanguage = (authData?.preferredLanguage as Language) || 'English';
     const t: TranslationSchema = translations[preferredLanguage] || translations.English;
 
-    const step = ONBOARDING_STEPS[currentStepIndex];
+    const step = activeSteps[currentStepIndex];
 
-    // Questions 1 to 10 mapped to index 1 to 10
-    const isQuestionStep = currentStepIndex > 0 && currentStepIndex < ONBOARDING_STEPS.length - 1;
+    // Questions 1 to 10 mapped to index 1 to 10 (or 1 to 9 if anonymous)
+    const isQuestionStep = currentStepIndex > 0 && currentStepIndex < activeSteps.length - 1;
     const questionNumber = currentStepIndex;
 
     useEffect(() => {
       let progress = 0;
       if (isQuestionStep) {
         progress = questionNumber / 10;
-      } else if (currentStepIndex === ONBOARDING_STEPS.length - 1) {
+      } else if (currentStepIndex === activeSteps.length - 1) {
         progress = 1;
       }
       Animated.spring(progressAnim, {
@@ -295,7 +297,7 @@ export default function OnboardingScreen() {
         
         // Map frontend answers to backend schema
         const payload = {
-          firstName: answers['q1'],
+          firstName: isAnonymous ? 'Guest' : (answers['q1'] || 'User'),
           university: answers['q2'],
           level: answers['q3'],
           program: answers['q4'],
@@ -330,7 +332,7 @@ export default function OnboardingScreen() {
     };
 
   const handleNext = () => {
-    if (currentStepIndex < ONBOARDING_STEPS.length - 1) {
+    if (currentStepIndex < activeSteps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
     } else {
       finishOnboarding();
