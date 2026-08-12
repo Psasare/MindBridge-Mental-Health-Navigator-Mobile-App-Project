@@ -223,6 +223,7 @@ export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
 
+  const nameShake = useSharedValue(0);
   const usernameShake = useSharedValue(0);
   const emailShake = useSharedValue(0);
   const phoneShake = useSharedValue(0);
@@ -231,7 +232,8 @@ export default function RegisterScreen() {
 
   const shake = (field: string) => {
     let sv;
-    if (field === 'username') sv = usernameShake;
+    if (field === 'name') sv = nameShake;
+    else if (field === 'username') sv = usernameShake;
     else if (field === 'email') sv = emailShake;
     else if (field === 'phoneNumber') sv = phoneShake;
     else if (field === 'password') sv = passwordShake;
@@ -248,6 +250,7 @@ export default function RegisterScreen() {
     }
   };
 
+  const nameStyle = useAnimatedStyle(() => ({ transform: [{ translateX: nameShake.value }] }));
   const usernameStyle = useAnimatedStyle(() => ({ transform: [{ translateX: usernameShake.value }] }));
   const emailStyle = useAnimatedStyle(() => ({ transform: [{ translateX: emailShake.value }] }));
   const phoneStyle = useAnimatedStyle(() => ({ transform: [{ translateX: phoneShake.value }] }));
@@ -256,6 +259,10 @@ export default function RegisterScreen() {
 
   const validateField = (field: string) => {
     let newErrors = { ...errors };
+    if (field === 'name') {
+      if (!name.trim()) newErrors.name = 'Required';
+      else delete newErrors.name;
+    }
     if (field === 'username') {
       if (!username) newErrors.username = 'Required';
       else delete newErrors.username;
@@ -289,6 +296,7 @@ export default function RegisterScreen() {
     let newErrors: Record<string, string> = {};
     let valid = true;
 
+    if (!name.trim()) { newErrors.name = 'Required'; valid = false; }
     if (!username) { newErrors.username = 'Required'; valid = false; }
     if (!email) { newErrors.email = 'Required'; valid = false; }
     else if (!/\S+@\S+\.\S+/.test(email)) { newErrors.email = 'Invalid email'; valid = false; }
@@ -366,16 +374,18 @@ export default function RegisterScreen() {
             </View>
 
             <FormSection title="Account Details" theme={themeContext}>
-              <View style={styles.inputRow}>
+              <Animated.View style={[styles.inputRow, nameStyle]}>
                 <Typography variant="body" style={styles.inputLabel}>Name</Typography>
                 <TextInput
                   style={styles.input}
-                  placeholder="Optional"
+                  placeholder="Required"
                   placeholderTextColor={themeContext.colors.text.disabled}
                   value={name}
-                  onChangeText={setName}
+                  onChangeText={(txt) => { setName(txt); if (errors.name) setErrors({ ...errors, name: undefined }); }}
+                  onBlur={() => validateField('name')}
                 />
-              </View>
+              </Animated.View>
+              <ErrorMessage message={errors.name} theme={themeContext} />
               <View style={styles.separator} />
 
               <Animated.View style={[styles.inputRow, usernameStyle]}>
