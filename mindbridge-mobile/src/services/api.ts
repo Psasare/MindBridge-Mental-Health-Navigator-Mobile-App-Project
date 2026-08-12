@@ -29,6 +29,12 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response && error.response.status === 401) {
+      const token = await AsyncStorage.getItem('userToken');
+      if (token && token.startsWith('guest')) {
+        // Guest users are expected to fail auth routes, don't sign them out
+        return Promise.reject(error);
+      }
+
       // Handle session expiry (e.g., clear token, redirect to login)
       await AsyncStorage.removeItem('userToken');
       // Dispatch an event so AuthContext can cleanly sign out
