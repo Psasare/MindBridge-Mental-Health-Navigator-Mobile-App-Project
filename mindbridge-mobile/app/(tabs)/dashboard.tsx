@@ -65,6 +65,7 @@ import {
   Calendar,
 } from 'lucide-react-native';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
+import { AppTourModal } from '../../src/components/AppTourModal';
 import { ReadMoreText } from '../../src/components/ReadMoreText';
 import { InterventionModal } from '../../src/components/InterventionModal';
 import { CelebrationModal } from '../../src/components/CelebrationModal';
@@ -440,6 +441,7 @@ export default function DashboardScreen() {
   const [actionableCopingMechanisms, setActionableCopingMechanisms] = useState<string[]>([]);
   const [insightSeverity, setInsightSeverity] = useState<string>('mild');
   const [isLoading, setIsLoading] = useState(true);
+  const [showTour, setShowTour] = useState(false);
   
   // Gamification States
   const [dailyGoals, setDailyGoals] = useState<any[]>([]);
@@ -666,6 +668,20 @@ export default function DashboardScreen() {
       }
     };
     checkSteps();
+  }, []);
+
+  useEffect(() => {
+    const checkTour = async () => {
+      try {
+        const hasSeenTour = await AsyncStorage.getItem('@app_tour_seen');
+        if (hasSeenTour !== 'true') {
+          setShowTour(true);
+        }
+      } catch (e) {
+        console.error('Error checking tour state:', e);
+      }
+    };
+    setTimeout(checkTour, 500); // Slight delay for smoother entry
   }, []);
 
   useFocusEffect(
@@ -1013,6 +1029,15 @@ export default function DashboardScreen() {
         onClose={() => setShowCelebration(false)}
         milestone={celebData.milestone}
         type={celebData.type}
+      />
+
+      <AppTourModal 
+        visible={showTour} 
+        theme={theme} 
+        onClose={async () => {
+          setShowTour(false);
+          await AsyncStorage.setItem('@app_tour_seen', 'true');
+        }} 
       />
     </View>
   );
