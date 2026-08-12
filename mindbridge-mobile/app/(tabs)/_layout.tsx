@@ -20,9 +20,10 @@ export default function TabLayout() {
         bottom: 0,
         left: 0,
         right: 0,
-        height: 60 + insets.bottom,
+        height: 64 + insets.bottom,
         borderTopWidth: 0,
         elevation: 0,
+        paddingTop: 0,
         paddingBottom: insets.bottom,
       },
       tabBarBackground: () => (
@@ -44,7 +45,9 @@ export default function TabLayout() {
       tabBarItemStyle: {
         justifyContent: 'center',
         alignItems: 'center',
-        height: 60,
+        paddingTop: 0,
+        paddingBottom: 0,
+        marginTop: 4, // Nudge down slightly for visual centering
       },
       headerShown: false,
     }}>
@@ -55,9 +58,9 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? `${colors.plum}20` : 'transparent',
-              width: 44,
-              height: 44,
-              borderRadius: 22,
+              width: 36,
+              height: 36,
+              borderRadius: 18,
               justifyContent: 'center',
               alignItems: 'center'
             }}>
@@ -73,9 +76,9 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? `${colors.plum}20` : 'transparent',
-              width: 44,
-              height: 44,
-              borderRadius: 22,
+              width: 36,
+              height: 36,
+              borderRadius: 18,
               justifyContent: 'center',
               alignItems: 'center'
             }}>
@@ -91,9 +94,9 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? `${colors.plum}20` : 'transparent',
-              width: 44,
-              height: 44,
-              borderRadius: 22,
+              width: 36,
+              height: 36,
+              borderRadius: 18,
               justifyContent: 'center',
               alignItems: 'center'
             }}>
@@ -109,9 +112,9 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? `${colors.plum}20` : 'transparent',
-              width: 44,
-              height: 44,
-              borderRadius: 22,
+              width: 36,
+              height: 36,
+              borderRadius: 18,
               justifyContent: 'center',
               alignItems: 'center'
             }}>
@@ -127,9 +130,9 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? `${colors.plum}20` : 'transparent',
-              width: 44,
-              height: 44,
-              borderRadius: 22,
+              width: 36,
+              height: 36,
+              borderRadius: 18,
               justifyContent: 'center',
               alignItems: 'center'
             }}>
