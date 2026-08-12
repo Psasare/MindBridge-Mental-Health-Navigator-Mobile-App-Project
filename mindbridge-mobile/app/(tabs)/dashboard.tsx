@@ -446,6 +446,11 @@ export default function DashboardScreen() {
   const [completedGoalIds, setCompletedGoalIds] = useState<string[]>([]);
   const [gamification, setGamification] = useState({ totalPoints: 0, currentStreak: 0 });
 
+  const formatText = (text: string | null | undefined) => {
+    if (!text) return '';
+    return text.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+  };
+
   const completedCount = completedGoalIds.length;
   
   // Modals state
@@ -783,7 +788,7 @@ export default function DashboardScreen() {
                     key={goal.id}
                     theme={theme} 
                     icon={Activity} 
-                    title={goal.name} 
+                    title={formatText(goal.name)} 
                     subtitle={`${goal.duration} min • ${goal.points} pts`} 
                     done={isDone} 
                     onPress={() => {

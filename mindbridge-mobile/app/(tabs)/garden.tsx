@@ -192,6 +192,11 @@ export default function WellnessTrackerScreen() {
   const isRecording = recorderState.isRecording;
   
   const [audioUri, setAudioUri] = useState<string | null>(null);
+
+  const formatText = (text: string | null | undefined) => {
+    if (!text) return '';
+    return text.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+  };
   const [isPlaying, setIsPlaying] = useState(false);
   const [player, setPlayer] = useState<AudioPlayer | null>(null);
 
@@ -740,7 +745,7 @@ export default function WellnessTrackerScreen() {
         </View>
 
         <View style={styles.envRow}>
-          <View style={styles.envTag}><MapPin size={14} color={theme.colors.plum} /><Text style={[styles.envText, { color: theme.colors.text.secondary }]}>{location || 'Locating...'}</Text></View>
+          <View style={styles.envTag}><MapPin size={14} color={theme.colors.plum} /><Text style={[styles.envText, { color: theme.colors.text.secondary }]}>{formatText(location) || 'Locating...'}</Text></View>
           <View style={styles.envTag}><Cloud size={14} color={theme.colors.plum} /><Text style={[styles.envText, { color: theme.colors.text.secondary }]}>{weather || 'Syncing...'}</Text></View>
         </View>
 
