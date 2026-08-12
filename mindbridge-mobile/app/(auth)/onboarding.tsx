@@ -22,7 +22,6 @@ import { FadeInUp, FadeInRight, FadeOutLeft } from 'react-native-reanimated';
 import Reanimated from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../src/context/ThemeContext';
 import { 
   ChevronRight, ChevronLeft, ShieldCheck, User, CheckCircle2,
@@ -653,14 +652,6 @@ export default function OnboardingScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <StatusBar barStyle={themeContext.isDark ? "light-content" : "dark-content"} />
-      <LinearGradient 
-        colors={themeContext.isDark 
-          ? ['rgba(123, 97, 255, 0.15)', themeContext.colors.background, themeContext.colors.backgroundSecondary]
-          : ['rgba(123, 97, 255, 0.12)', themeContext.colors.background, themeContext.colors.backgroundSecondary]
-        } 
-        locations={[0, 0.3, 1]}
-        style={StyleSheet.absoluteFillObject} 
-      />
 
       {/* Header with Back and Progress */}
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
@@ -788,64 +779,63 @@ const createStyles = (theme: any) => StyleSheet.create({
   commitmentCard: { backgroundColor: theme.isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)', borderRadius: 24, padding: 24, borderLeftWidth: 4, borderLeftColor: theme.colors.plum, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 1 },
   consentCommitmentTitle: { fontSize: 14, fontWeight: '800', color: theme.colors.plum, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1.5 },
   consentCommitmentText: { fontSize: 14, color: theme.colors.text.secondary, lineHeight: 22, fontWeight: '500' },
-  exitText: { fontSize: 15, fontWeight: '700', color: theme.colors.text.tertiary, textDecorationLine: 'underline', marginTop: 10 },
   // Options
-  optionBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface, paddingHorizontal: 20, paddingVertical: 18, borderRadius: 20, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0.2 : 0.04, shadowRadius: 12, elevation: 2 },
-  optionBtnActive: { backgroundColor: theme.isDark ? 'rgba(140, 160, 185, 0.15)' : 'rgba(123, 97, 255, 0.05)', borderColor: theme.isDark ? 'rgba(140, 160, 185, 0.3)' : 'rgba(123, 97, 255, 0.15)' },
-  optionLabel: { flex: 1, fontSize: 16, fontWeight: '600', color: theme.colors.text.primary },
-  optionLabelActive: { color: theme.colors.plum, fontWeight: '700' },
+  optionBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface, paddingHorizontal: 20, paddingVertical: 20, borderRadius: 24, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', marginBottom: 12 },
+  optionBtnActive: { backgroundColor: theme.isDark ? 'rgba(123, 97, 255, 0.15)' : 'rgba(123, 97, 255, 0.08)', borderColor: theme.isDark ? 'rgba(123, 97, 255, 0.4)' : 'rgba(123, 97, 255, 0.2)' },
+  optionLabel: { flex: 1, fontSize: 16, fontFamily: 'Montserrat-SemiBold', color: theme.colors.text.primary },
+  optionLabelActive: { color: theme.colors.plum, fontFamily: 'Montserrat-Bold' },
   
   // Checkbox
-  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: theme.colors.plum, alignItems: 'center', justifyContent: 'center' },
+  checkbox: { width: 24, height: 24, borderRadius: 8, borderWidth: 2, borderColor: theme.colors.plum, alignItems: 'center', justifyContent: 'center' },
   checkboxActive: { backgroundColor: theme.colors.plum },
   
   // Input
-  textInput: { backgroundColor: theme.colors.surface, borderRadius: 20, paddingHorizontal: 20, paddingVertical: 18, fontSize: 18, color: theme.colors.text.primary, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0.2 : 0.04, shadowRadius: 12, elevation: 2, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)' },
+  textInput: { backgroundColor: theme.colors.surface, borderRadius: 24, paddingHorizontal: 20, paddingVertical: 20, fontSize: 18, fontFamily: 'Montserrat-Medium', color: theme.colors.text.primary, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
   
   // Sliders
-  sliderItem: { marginBottom: 24, backgroundColor: theme.colors.surface, padding: 20, borderRadius: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0.2 : 0.04, shadowRadius: 12, elevation: 2, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)' },
-  sliderLabel: { fontSize: 16, fontWeight: '600', color: theme.colors.text.primary, marginBottom: 16 },
+  sliderItem: { marginBottom: 24, backgroundColor: theme.colors.surface, padding: 24, borderRadius: 24, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
+  sliderLabel: { fontSize: 16, fontFamily: 'Montserrat-SemiBold', color: theme.colors.text.primary, marginBottom: 16 },
   sliderContainer: { position: 'relative', width: '100%', height: 40, justifyContent: 'center' },
-  sliderTrack: { position: 'absolute', top: 19, left: 10, right: 10, height: 2, backgroundColor: theme.colors.accents.softLilac },
-  sliderDot: { width: 34, height: 34, borderRadius: 17, backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.colors.accents.softLilac, alignItems: 'center', justifyContent: 'center' },
+  sliderTrack: { position: 'absolute', top: 19, left: 10, right: 10, height: 4, borderRadius: 2, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' },
+  sliderDot: { width: 34, height: 34, borderRadius: 17, backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', alignItems: 'center', justifyContent: 'center' },
   sliderDotActive: { backgroundColor: theme.colors.plum, borderColor: theme.colors.plum },
-  sliderDotText: { fontSize: 13, fontWeight: '700', color: theme.colors.text.secondary },
+  sliderDotText: { fontSize: 14, fontFamily: 'Montserrat-Bold', color: theme.colors.text.secondary },
   sliderDotTextActive: { color: theme.colors.text.onPrimary || '#FFF' },
 
   // Why We Ask
-  whyWeAskBox: { flexDirection: 'row', backgroundColor: theme.isDark ? 'rgba(140, 160, 185, 0.1)' : 'rgba(123, 97, 255, 0.1)', padding: 16, borderRadius: 12, marginTop: 24, alignItems: 'center' },
-  whyWeAskText: { flex: 1, fontSize: 14, color: theme.colors.plum, marginLeft: 12, fontWeight: '500', lineHeight: 20 },
+  whyWeAskBox: { flexDirection: 'row', backgroundColor: theme.isDark ? 'rgba(123, 97, 255, 0.1)' : 'rgba(123, 97, 255, 0.08)', padding: 16, borderRadius: 16, marginTop: 24, alignItems: 'center' },
+  whyWeAskText: { flex: 1, fontSize: 14, color: theme.colors.plum, marginLeft: 12, fontFamily: 'Montserrat-Medium', lineHeight: 20 },
 
   // Summary
-  summaryGreeting: { fontSize: 22, fontWeight: '700', color: theme.colors.text.primary, marginBottom: 24 },
-  summaryBox: { backgroundColor: theme.colors.surface, padding: 24, borderRadius: 24, width: '100%', marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0.2 : 0.04, shadowRadius: 12, elevation: 3, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)' },
-  summaryBoxTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.plum, marginBottom: 12 },
-  summaryItem: { flex: 1, fontSize: 15, color: theme.colors.text.secondary, marginBottom: 8, lineHeight: 22 },
+  summaryGreeting: { fontSize: 24, fontFamily: 'Montserrat-Bold', color: theme.colors.text.primary, marginBottom: 24 },
+  summaryBox: { backgroundColor: theme.colors.surface, padding: 24, borderRadius: 24, width: '100%', marginBottom: 16, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
+  summaryBoxTitle: { fontSize: 16, fontFamily: 'Montserrat-Bold', color: theme.colors.plum, marginBottom: 12 },
+  summaryItem: { flex: 1, fontSize: 15, fontFamily: 'Montserrat-Medium', color: theme.colors.text.secondary, marginBottom: 8, lineHeight: 22 },
   summaryItemRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  editLabel: { fontSize: 13, fontWeight: '700', color: theme.colors.plum, marginLeft: 10, backgroundColor: theme.isDark ? 'rgba(140, 160, 185, 0.1)' : 'rgba(123, 97, 255, 0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  editLabel: { fontSize: 13, fontFamily: 'Montserrat-Bold', color: theme.colors.plum, marginLeft: 10, backgroundColor: theme.isDark ? 'rgba(123, 97, 255, 0.15)' : 'rgba(123, 97, 255, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
   summaryFooterBox: { width: '100%', paddingHorizontal: 10, marginTop: 10 },
 
   // Modals
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  modalContent: { backgroundColor: theme.colors.surface, borderRadius: 32, padding: 32, width: '100%', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
-  modalTitle: { fontSize: 22, fontWeight: '800', color: theme.colors.text.primary, marginBottom: 12 },
-  modalText: { fontSize: 16, color: theme.colors.text.secondary, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
-  modalPrimaryBtn: { backgroundColor: theme.colors.plum, paddingVertical: 16, paddingHorizontal: 32, borderRadius: 20, width: '100%', alignItems: 'center' },
-  modalPrimaryBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
-  modalSecondaryBtn: { paddingVertical: 16, width: '100%', alignItems: 'center', marginTop: 8 },
-  modalSecondaryBtnText: { color: theme.colors.text.tertiary, fontSize: 15, fontWeight: '600' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalContent: { backgroundColor: theme.colors.surface, borderRadius: 32, padding: 32, width: '100%', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.5, shadowRadius: 30, elevation: 20 },
+  modalTitle: { fontSize: 24, fontFamily: 'Montserrat-ExtraBold', color: theme.colors.text.primary, marginBottom: 12 },
+  modalText: { fontSize: 16, fontFamily: 'Montserrat-Medium', color: theme.colors.text.secondary, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
+  modalPrimaryBtn: { backgroundColor: theme.colors.plum, paddingVertical: 18, paddingHorizontal: 32, borderRadius: 24, width: '100%', alignItems: 'center' },
+  modalPrimaryBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Montserrat-Bold' },
+  modalSecondaryBtn: { paddingVertical: 18, width: '100%', alignItems: 'center', marginTop: 8 },
+  modalSecondaryBtnText: { color: theme.colors.text.tertiary, fontSize: 15, fontFamily: 'Montserrat-SemiBold' },
 
   // Footer
-  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, justifyContent: 'space-between', backgroundColor: theme.colors.surface, borderTopWidth: 1, borderTopColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: theme.isDark ? 0.3 : 0.05, shadowRadius: 12, elevation: 8, zIndex: 100 },
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 24, paddingTop: 16, justifyContent: 'space-between', backgroundColor: theme.colors.surface, borderTopWidth: 1, borderTopColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', zIndex: 100 },
   leftFooterActions: { flexDirection: 'row', alignItems: 'center' },
-  skipBtn: { paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1.5, borderColor: theme.colors.plumLight, borderRadius: 30, marginLeft: 12 },
-  skipText: { fontSize: 15, fontWeight: '700', color: theme.colors.plumLight },
-  backFooterBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: theme.isDark ? 'rgba(140, 160, 185, 0.1)' : 'rgba(123, 97, 255, 0.08)', alignItems: 'center', justifyContent: 'center' },
-  nextBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.plum, paddingVertical: 14, paddingHorizontal: 20, borderRadius: 30 },
+  skipBtn: { paddingVertical: 12, paddingHorizontal: 16, borderWidth: 1.5, borderColor: theme.colors.plumLight, borderRadius: 24, marginLeft: 12 },
+  skipText: { fontSize: 15, fontFamily: 'Montserrat-Bold', color: theme.colors.plumLight },
+  backFooterBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: theme.isDark ? 'rgba(123, 97, 255, 0.1)' : 'rgba(123, 97, 255, 0.08)', alignItems: 'center', justifyContent: 'center' },
+  nextBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.plum, paddingVertical: 16, paddingHorizontal: 24, borderRadius: 24 },
   nextBtnDisabled: { opacity: 0.5 },
-  nextBtnText: { fontSize: 16, fontWeight: '700', color: theme.colors.text.onPrimary || '#FFF', marginRight: 8 },
+  nextBtnText: { fontSize: 16, fontFamily: 'Montserrat-Bold', color: theme.colors.text.onPrimary || '#FFF', marginRight: 8 },
   
   // Primary Action
-  primaryBtn: { backgroundColor: theme.colors.plum, paddingVertical: 18, borderRadius: 20, alignItems: 'center', justifyContent: 'center', width: '100%', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0.3 : 0.15, shadowRadius: 8, elevation: 6 },
-  primaryBtnText: { color: theme.colors.text.onPrimary || '#FFF', fontSize: 17, fontWeight: '800', textAlign: 'center' },
+  primaryBtn: { backgroundColor: theme.colors.plum, paddingVertical: 20, borderRadius: 24, alignItems: 'center', justifyContent: 'center', width: '100%' },
+  primaryBtnText: { color: theme.colors.text.onPrimary || '#FFF', fontSize: 17, fontFamily: 'Montserrat-ExtraBold', textAlign: 'center' },
 });
