@@ -217,7 +217,7 @@ export default function JournalScreen() {
             onPress: async () => {
               const { granted } = await requestRecordingPermissionsAsync();
               if (granted) {
-                await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+                await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true, shouldRouteThroughEarpiece: false });
                 await recorder.prepareToRecordAsync();
                 recorder.record();
                 micScale.value = withRepeat(withSequence(withTiming(1.2), withTiming(1)), -1, true);

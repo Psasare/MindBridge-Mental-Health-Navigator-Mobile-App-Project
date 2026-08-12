@@ -331,7 +331,7 @@ export default function WellnessTrackerScreen() {
     try {
       const { granted } = await requestRecordingPermissionsAsync();
       if (granted) {
-        await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+        await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true, shouldRouteThroughEarpiece: false });
         await recorder.prepareToRecordAsync();
         recorder.record();
       }
