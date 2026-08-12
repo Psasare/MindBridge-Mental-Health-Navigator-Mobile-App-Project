@@ -314,7 +314,9 @@ export default function OnboardingScreen() {
           preferredLanguage: preferredLanguage,
         };
 
-        await api.post('/onboarding', payload);
+        if (!isAnonymous) {
+          await api.post('/onboarding', payload);
+        }
         await AsyncStorage.setItem('onboarding_completed', 'true');
         await AsyncStorage.setItem('onboarding_answers', JSON.stringify(answers));
         
