@@ -112,7 +112,7 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: 5,
-      select: { location: true, createdAt: true, score: true }
+      select: { location: true, createdAt: true, score: true, emotions: true, note: true }
     }).catch(() => []);
     const recentJournal = await prisma.journal.findMany({
       where: { userId },

@@ -184,6 +184,10 @@ export const generateOracleResponse = async (userMessage: string, context: any, 
           (latestMood.facialMetrics ? ` [Video Check-in detected: ${Math.round(latestMood.facialMetrics.smileProbability * 100)}% smile frequency, ${Math.round(latestMood.facialMetrics.eyeOpenProbability * 100)}% eye contact]` : '')
         : 'No mood logs yet.';
 
+      const recentMoodsSummary = context.recentMoods && context.recentMoods.length > 0
+        ? context.recentMoods.map((m: any, i: number) => `${i + 1}. ${new Date(m.createdAt).toLocaleDateString('en-GB', { weekday: 'short', hour: 'numeric' })} - Score: ${m.score}/10, Emotions: ${m.emotions?.join(', ') || 'none'}, Note: ${m.note || 'none'}`).join('\n')
+        : 'No recent checkins.';
+
       const journalSummary = recentJournal.length > 0
         ? recentJournal.map((j: any, i: number) => `${i + 1}. "${j.title || 'Untitled'}" (${j.mood || 'no mood tag'}) — ${new Date(j.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`).join('\n')
         : 'No journal entries yet.';
@@ -268,6 +272,9 @@ PROFILE:
 
 EMOTIONAL DATA:
   ${moodSummary}
+
+RECENT CHECKINS (Last 5):
+  ${recentMoodsSummary}
 
 RECENT JOURNAL THEMES:
   ${journalSummary}

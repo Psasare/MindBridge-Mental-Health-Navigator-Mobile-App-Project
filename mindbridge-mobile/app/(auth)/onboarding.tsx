@@ -257,7 +257,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const themeContext = useTheme();
-    const { updateUserData, userData: authData } = useContext(AuthContext);
+    const { updateUserData, userData: authData, signOut } = useContext(AuthContext) as any;
     const styles = createStyles(themeContext);
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<string, any>>({
@@ -453,7 +453,7 @@ export default function OnboardingScreen() {
                 Agree and Continue
               </Button>
               
-              <TouchableOpacity  onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={{ marginBottom: 20, alignSelf: 'center' }} activeOpacity={0.6}>
+              <TouchableOpacity  onPress={async () => { await signOut(); router.replace('/(auth)/welcome'); }} style={{ marginBottom: 20, alignSelf: 'center' }} activeOpacity={0.6}>
                 <Typography variant="bodyBold" color={themeContext.colors.text.tertiary} style={styles.exitText}>Decline and Exit</Typography>
               </TouchableOpacity>
             </ScrollView>

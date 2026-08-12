@@ -266,6 +266,11 @@ export const GoalService = {
       newStreak = 1;
     }
 
+    if (alreadyCheckedInToday && newStreak === 0) {
+      newStreak = 1;
+      alreadyCheckedInToday = false; // Force an update to save the streak of 1
+    }
+
     longestStreak = Math.max(longestStreak, newStreak);
 
     if (!alreadyCheckedInToday) {
