@@ -17,39 +17,34 @@ export default function TabLayout() {
       tabBarStyle: { 
         position: 'absolute',
         backgroundColor: 'transparent',
-        bottom: Math.max(insets.bottom, 20),
-        left: 20,
-        right: 20,
-        height: 70,
-        borderRadius: 35,
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: 60 + insets.bottom,
         borderTopWidth: 0,
-        elevation: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.15,
-        shadowRadius: 20,
-        paddingBottom: 0,
+        elevation: 0,
+        paddingBottom: insets.bottom,
       },
       tabBarBackground: () => (
-        <View style={{ flex: 1, borderRadius: 35, overflow: 'hidden' }}>
+        <View style={{ flex: 1, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden' }}>
           <BlurView 
-            intensity={isDark ? 80 : 60} 
+            intensity={isDark ? 80 : 70} 
             tint={isDark ? 'dark' : 'light'} 
             style={StyleSheet.absoluteFill} 
           />
-          {/* Subtle border to enhance the glass effect */}
           <View style={{
             ...StyleSheet.absoluteFillObject,
-            borderRadius: 35,
-            borderWidth: 1,
-            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)',
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+            borderTopWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.4)',
           }} />
         </View>
       ),
       tabBarItemStyle: {
         justifyContent: 'center',
         alignItems: 'center',
-        height: 70,
+        height: 60,
       },
       headerShown: false,
     }}>
@@ -60,8 +55,11 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? `${colors.plum}20` : 'transparent',
-              padding: 12,
-              borderRadius: 20,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              justifyContent: 'center',
+              alignItems: 'center'
             }}>
               <Home color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
             </View>
@@ -75,8 +73,11 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? `${colors.plum}20` : 'transparent',
-              padding: 12,
-              borderRadius: 20,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              justifyContent: 'center',
+              alignItems: 'center'
             }}>
               <LayoutGrid color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
             </View>
@@ -90,8 +91,11 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? `${colors.plum}20` : 'transparent',
-              padding: 12,
-              borderRadius: 20,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              justifyContent: 'center',
+              alignItems: 'center'
             }}>
               <MessageCircle color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
             </View>
@@ -105,8 +109,11 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? `${colors.plum}20` : 'transparent',
-              padding: 12,
-              borderRadius: 20,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              justifyContent: 'center',
+              alignItems: 'center'
             }}>
               <Activity color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
             </View>
@@ -120,8 +127,11 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               backgroundColor: focused ? `${colors.plum}20` : 'transparent',
-              padding: 12,
-              borderRadius: 20,
+              width: 44,
+              height: 44,
+              borderRadius: 22,
+              justifyContent: 'center',
+              alignItems: 'center'
             }}>
               <User color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
             </View>
