@@ -12,63 +12,120 @@ export default function TabLayout() {
   return (
     <Tabs screenOptions={{
       tabBarActiveTintColor: colors.plum,
-      tabBarInactiveTintColor: colors.text.secondary,
-      tabBarShowLabel: true,
-      tabBarLabelStyle: { 
-        fontFamily: typography.fonts.header, 
-        fontSize: 10,
-        marginBottom: 4
-      },
+      tabBarInactiveTintColor: isDark ? '#A0A0A0' : '#8E8E93',
+      tabBarShowLabel: false,
       tabBarStyle: { 
         position: 'absolute',
-        backgroundColor: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)',
+        backgroundColor: 'transparent',
+        bottom: Math.max(insets.bottom, 20),
+        left: 20,
+        right: 20,
+        height: 70,
+        borderRadius: 35,
         borderTopWidth: 0,
-        height: 64 + insets.bottom,
-        paddingBottom: insets.bottom,
-        elevation: 0,
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15,
+        shadowRadius: 20,
+        paddingBottom: 0,
       },
       tabBarBackground: () => (
-        <BlurView 
-          intensity={isDark ? 50 : 80} 
-          tint={isDark ? 'dark' : 'light'} 
-          style={StyleSheet.absoluteFill} 
-        />
+        <View style={{ flex: 1, borderRadius: 35, overflow: 'hidden' }}>
+          <BlurView 
+            intensity={isDark ? 80 : 60} 
+            tint={isDark ? 'dark' : 'light'} 
+            style={StyleSheet.absoluteFill} 
+          />
+          {/* Subtle border to enhance the glass effect */}
+          <View style={{
+            ...StyleSheet.absoluteFillObject,
+            borderRadius: 35,
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.5)',
+          }} />
+        </View>
       ),
+      tabBarItemStyle: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 70,
+      },
       headerShown: false,
     }}>
       <Tabs.Screen 
         name="dashboard" 
         options={{ 
           title: t('tabs.today'),
-          tabBarIcon: ({ color }) => <Home color={color} size={24} strokeWidth={2.2} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{
+              backgroundColor: focused ? `${colors.plum}20` : 'transparent',
+              padding: 12,
+              borderRadius: 20,
+            }}>
+              <Home color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          )
         }} 
       />
       <Tabs.Screen 
         name="explore" 
         options={{ 
           title: t('tools.title') || 'Explore',
-          tabBarIcon: ({ color, focused }) => <LayoutGrid color={color} size={24} strokeWidth={focused ? 2.2 : 1.8} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{
+              backgroundColor: focused ? `${colors.plum}20` : 'transparent',
+              padding: 12,
+              borderRadius: 20,
+            }}>
+              <LayoutGrid color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          )
         }} 
       />
       <Tabs.Screen 
         name="ai-guide" 
         options={{ 
           title: t('tabs.oracle') || 'Oracle',
-          tabBarIcon: ({ color }) => <MessageCircle color={color} size={24} strokeWidth={2} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{
+              backgroundColor: focused ? `${colors.plum}20` : 'transparent',
+              padding: 12,
+              borderRadius: 20,
+            }}>
+              <MessageCircle color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          )
         }} 
       />
       <Tabs.Screen 
         name="garden" 
         options={{ 
           title: t('tabs.tracker') || 'Tracker',
-          tabBarIcon: ({ color }) => <Activity color={color} size={24} strokeWidth={2} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{
+              backgroundColor: focused ? `${colors.plum}20` : 'transparent',
+              padding: 12,
+              borderRadius: 20,
+            }}>
+              <Activity color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          )
         }} 
       />
       <Tabs.Screen 
         name="profile" 
         options={{ 
           title: t('tabs.profile') || 'Profile',
-          tabBarIcon: ({ color }) => <User color={color} size={24} strokeWidth={2} />
+          tabBarIcon: ({ color, focused }) => (
+            <View style={{
+              backgroundColor: focused ? `${colors.plum}20` : 'transparent',
+              padding: 12,
+              borderRadius: 20,
+            }}>
+              <User color={color} size={24} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          )
         }} 
       />
       
