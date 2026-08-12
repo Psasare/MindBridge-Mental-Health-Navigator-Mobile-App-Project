@@ -20,6 +20,7 @@ import { AuthContext } from '../../src/context/AuthContext';
 import { translations, Language, TranslationSchema } from '../../src/utils/translations';
 import { FadeInUp, FadeInRight, FadeOutLeft } from 'react-native-reanimated';
 import Reanimated from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/context/ThemeContext';
@@ -105,6 +106,7 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
     whyWeAsk: "Some programs have unique pressures we want to understand",
     options: [
       { label: "Engineering", value: "Engineering" },
+      { label: "Computer Science / Information Technology", value: "Computer Science / Information Technology" },
       { label: "Medicine/Health Sciences", value: "Medicine/Health Sciences" },
       { label: "Business/Economics", value: "Business/Economics" },
       { label: "Arts/Humanities", value: "Arts/Humanities" },
@@ -332,6 +334,7 @@ export default function OnboardingScreen() {
     };
 
   const handleNext = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentStepIndex < activeSteps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
     } else {
@@ -354,16 +357,19 @@ export default function OnboardingScreen() {
   };
 
   const handleBack = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (currentStepIndex > 0) {
       setCurrentStepIndex(currentStepIndex - 1);
     }
   };
 
   const handleSelectSingle = (value: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setAnswers({ ...answers, [step.id]: value });
   };
 
   const handleSelectMultiple = (value: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const currentList = answers[step.id] || [];
     if (currentList.includes(value)) {
       setAnswers({ ...answers, [step.id]: currentList.filter((v: string) => v !== value) });
@@ -374,6 +380,7 @@ export default function OnboardingScreen() {
   };
 
   const handleSliderChange = (key: string, value: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setAnswers({
       ...answers,
       stressors: {
@@ -691,8 +698,8 @@ export default function OnboardingScreen() {
       <View style={styles.content}>
         <Reanimated.View 
           key={currentStepIndex} 
-          entering={FadeInRight.duration(400)} 
-          exiting={FadeOutLeft.duration(300)}
+          entering={FadeInRight.springify().damping(18).stiffness(150)} 
+          exiting={FadeOutLeft.springify().damping(18).stiffness(150)}
           style={{ flex: 1 }}
         >
           {renderContent()}
@@ -765,10 +772,10 @@ const createStyles = (theme: any) => StyleSheet.create({
   stepContainer: { flex: 1, paddingTop: 10 },
   
   // Shared
-  iconCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: theme.isDark ? 0.2 : 0.08, shadowRadius: 16, elevation: 8 },
-  stepIconWrap: { width: 52, height: 52, borderRadius: 18, backgroundColor: theme.colors.plum + '12', alignItems: 'center', justifyContent: 'center', marginBottom: 16, alignSelf: 'center' },
-  title: { fontSize: 30, fontWeight: '800', color: theme.colors.text.primary, marginBottom: 12, textAlign: 'center', letterSpacing: -0.5 },
-  subtitle: { fontSize: 16, color: theme.colors.text.secondary, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
+  iconCircle: { width: 88, height: 88, borderRadius: 44, backgroundColor: theme.colors.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: theme.isDark ? 0.3 : 0.06, shadowRadius: 24, elevation: 12 },
+  stepIconWrap: { width: 56, height: 56, borderRadius: 20, backgroundColor: theme.colors.plum + '12', alignItems: 'center', justifyContent: 'center', marginBottom: 20, alignSelf: 'center' },
+  title: { fontSize: 34, fontWeight: '900', color: theme.colors.text.primary, marginBottom: 16, textAlign: 'center', letterSpacing: -1 },
+  subtitle: { fontSize: 18, color: theme.colors.text.secondary, textAlign: 'center', lineHeight: 26, marginBottom: 40, fontWeight: '500' },
   
   // Privacy / Consent
   privacyText: { fontSize: 15, color: theme.colors.text.primary, lineHeight: 28, textAlign: 'center', paddingHorizontal: 10 },
@@ -782,9 +789,9 @@ const createStyles = (theme: any) => StyleSheet.create({
   consentCommitmentTitle: { fontSize: 14, fontWeight: '800', color: theme.colors.plum, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1.5 },
   consentCommitmentText: { fontSize: 14, color: theme.colors.text.secondary, lineHeight: 22, fontWeight: '500' },
   // Options
-  optionBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface, paddingHorizontal: 20, paddingVertical: 20, borderRadius: 24, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)', marginBottom: 12 },
-  optionBtnActive: { backgroundColor: theme.isDark ? 'rgba(123, 97, 255, 0.15)' : 'rgba(123, 97, 255, 0.08)', borderColor: theme.isDark ? 'rgba(123, 97, 255, 0.4)' : 'rgba(123, 97, 255, 0.2)' },
-  optionLabel: { flex: 1, fontSize: 16, fontFamily: 'Montserrat-SemiBold', color: theme.colors.text.primary },
+  optionBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.surface, paddingHorizontal: 22, paddingVertical: 22, borderRadius: 28, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', marginBottom: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 8, elevation: 1 },
+  optionBtnActive: { backgroundColor: theme.isDark ? 'rgba(123, 97, 255, 0.15)' : 'rgba(123, 97, 255, 0.06)', borderColor: theme.colors.plum, shadowOpacity: 0.08, shadowRadius: 16, elevation: 4 },
+  optionLabel: { flex: 1, fontSize: 17, fontFamily: 'Montserrat-SemiBold', color: theme.colors.text.primary },
   optionLabelActive: { color: theme.colors.plum, fontFamily: 'Montserrat-Bold' },
   
   // Checkbox
@@ -795,12 +802,12 @@ const createStyles = (theme: any) => StyleSheet.create({
   textInput: { backgroundColor: theme.colors.surface, borderRadius: 24, paddingHorizontal: 20, paddingVertical: 20, fontSize: 18, fontFamily: 'Montserrat-Medium', color: theme.colors.text.primary, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
   
   // Sliders
-  sliderItem: { marginBottom: 24, backgroundColor: theme.colors.surface, padding: 24, borderRadius: 24, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
-  sliderLabel: { fontSize: 16, fontFamily: 'Montserrat-SemiBold', color: theme.colors.text.primary, marginBottom: 16 },
-  sliderContainer: { position: 'relative', width: '100%', height: 40, justifyContent: 'center' },
-  sliderTrack: { position: 'absolute', top: 19, left: 10, right: 10, height: 4, borderRadius: 2, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' },
-  sliderDot: { width: 34, height: 34, borderRadius: 17, backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)', alignItems: 'center', justifyContent: 'center' },
-  sliderDotActive: { backgroundColor: theme.colors.plum, borderColor: theme.colors.plum },
+  sliderItem: { marginBottom: 28, backgroundColor: theme.colors.surface, padding: 28, borderRadius: 32, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.03, shadowRadius: 16, elevation: 2 },
+  sliderLabel: { fontSize: 17, fontFamily: 'Montserrat-Bold', color: theme.colors.text.primary, marginBottom: 20 },
+  sliderContainer: { position: 'relative', width: '100%', height: 44, justifyContent: 'center' },
+  sliderTrack: { position: 'absolute', top: 20, left: 14, right: 14, height: 6, borderRadius: 3, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' },
+  sliderDot: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.surface, borderWidth: 2, borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
+  sliderDotActive: { backgroundColor: theme.colors.plum, borderColor: theme.colors.plum, transform: [{ scale: 1.1 }] },
   sliderDotText: { fontSize: 14, fontFamily: 'Montserrat-Bold', color: theme.colors.text.secondary },
   sliderDotTextActive: { color: theme.colors.text.onPrimary || '#FFF' },
 
