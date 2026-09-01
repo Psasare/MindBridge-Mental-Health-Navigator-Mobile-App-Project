@@ -87,7 +87,7 @@ export const getOracleContext = async (req: Request, res: Response) => {
 export const chatWithOracle = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const { message, audioBase64 } = req.body;
+    const { message, audioBase64, sessionId } = req.body;
 
     if (!message && !audioBase64) {
       return res.status(400).json({ error: 'Message or audio is required' });
@@ -135,9 +135,17 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Account not found. Please log out and back in." });
     }
 
-    // 3. Save User Message
+    // 3. Handle Session & Save User Message
+    let activeSessionId = sessionId;
+    if (!activeSessionId) {
+      // Create a new session, using the first 30 chars of the message as title
+      const title = message ? (message.substring(0, 30) + (message.length > 30 ? '...' : '')) : 'Audio Note';
+      const newSession = await AiRepository.createChatSession(userId, title);
+      activeSessionId = newSession.id;
+    }
+
     await prisma.chatMessage.create({
-      data: { userId, role: 'user', content: message }
+      data: { sessionId: activeSessionId, role: 'user', content: message || 'Audio message' }
     });
 
     const contextForOracle: any = {
@@ -168,7 +176,7 @@ export const chatWithOracle = async (req: Request, res: Response) => {
 
     // 5. Save Results to DB
     await prisma.chatMessage.create({
-      data: { userId, role: 'model', content: aiResponse }
+      data: { sessionId: activeSessionId, role: 'model', content: aiResponse }
     });
 
     try {
@@ -207,11 +215,12 @@ export const chatWithOracle = async (req: Request, res: Response) => {
       return res.json({
         response: "I'm hearing a lot of pain in your words, and I'm very concerned about you. You don't have to carry this alone. Please reach out to one of the professionals on our Crisis Support page immediately — they are ready to help right now.",
         suggestCrisis: true,
-        state: currentState
+        state: currentState,
+        sessionId: activeSessionId
       });
     }
 
-    res.json({ response: aiResponse, state: currentState });
+    res.json({ response: aiResponse, state: currentState, sessionId: activeSessionId });
   } catch (error: any) {
     if (error?.status === 503 || error?.status === 429) {
       console.warn(`Warning: Gemini API rate limited or unavailable (${error.status}) in Oracle chat.`);
@@ -231,6 +240,49 @@ export const clearChatHistory = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error clearing chat history:', error);
     res.status(500).json({ error: 'Failed to clear chat history' });
+  }
+};
+
+export const getChatSessions = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const sessions = await AiRepository.getChatSessions(userId);
+    res.json(sessions);
+  } catch (error) {
+    console.error('Error fetching chat sessions:', error);
+    res.status(500).json({ error: 'Failed to fetch chat sessions' });
+  }
+};
+
+export const getSessionMessages = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const { id } = req.params;
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'Session ID is required' });
+    }
+    
+    // getChatHistory with limit 100 to fetch full session history
+    const messages = await AiRepository.getChatHistory(userId, 100, id);
+    res.json(messages);
+  } catch (error) {
+    console.error('Error fetching session messages:', error);
+    res.status(500).json({ error: 'Failed to fetch session messages' });
+  }
+};
+
+export const deleteChatSession = async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const { id } = req.params;
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ error: 'Session ID is required' });
+    }
+    await AiRepository.deleteChatSession(userId, id);
+    res.json({ success: true, message: 'Session deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting chat session:', error);
+    res.status(500).json({ error: 'Failed to delete session' });
   }
 };
 

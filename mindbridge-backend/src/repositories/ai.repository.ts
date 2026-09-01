@@ -68,11 +68,34 @@ export class AiRepository {
   }
 
   /**
-   * Fetches the last N chat messages for context.
+   * Fetches the last N chat messages for context (from the most recent session if no session ID provided).
+   * Or if a sessionId is provided, fetches messages for that specific session.
    */
-  static async getChatHistory(userId: string, limit: number = 10) {
-    return await prisma.chatMessage.findMany({
+  static async getChatHistory(userId: string, limit: number = 10, sessionId?: string) {
+    if (sessionId) {
+      return await prisma.chatMessage.findMany({
+        where: { sessionId, session: { userId } },
+        take: limit,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          role: true,
+          content: true,
+          createdAt: true,
+        }
+      });
+    }
+
+    // Default to the most recently updated session
+    const latestSession = await prisma.chatSession.findFirst({
       where: { userId },
+      orderBy: { updatedAt: 'desc' }
+    });
+
+    if (!latestSession) return [];
+
+    return await prisma.chatMessage.findMany({
+      where: { sessionId: latestSession.id },
       take: limit,
       orderBy: { createdAt: 'desc' },
       select: {
@@ -84,9 +107,46 @@ export class AiRepository {
     });
   }
 
+  /**
+   * Fetches all chat sessions for a user.
+   */
+  static async getChatSessions(userId: string) {
+    return await prisma.chatSession.findMany({
+      where: { userId },
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+  }
+
+  /**
+   * Creates a new chat session.
+   */
+  static async createChatSession(userId: string, title?: string) {
+    return await prisma.chatSession.create({
+      data: {
+        userId,
+        title: title || 'New Conversation'
+      }
+    });
+  }
+
+  /**
+   * Deletes a specific chat session and all its messages (cascade).
+   */
+  static async deleteChatSession(userId: string, sessionId: string) {
+    return await prisma.chatSession.delete({
+      where: { id: sessionId, userId }
+    });
+  }
+
   static async deleteChatMessage(userId: string, messageId: string) {
-    return await prisma.chatMessage.delete({
-      where: { id: messageId, userId }
+    return await prisma.chatMessage.deleteMany({
+      where: { id: messageId, session: { userId } }
     });
   }
 
@@ -95,15 +155,15 @@ export class AiRepository {
    */
   static async deleteChatMessages(userId: string, messageIds: string[]) {
     return await prisma.chatMessage.deleteMany({
-      where: { id: { in: messageIds }, userId }
+      where: { id: { in: messageIds }, session: { userId } }
     });
   }
 
   /**
-   * Clears all chat messages for a user.
+   * Clears all chat messages and sessions for a user.
    */
   static async clearChatHistory(userId: string) {
-    return await prisma.chatMessage.deleteMany({
+    return await prisma.chatSession.deleteMany({
       where: { userId }
     });
   }

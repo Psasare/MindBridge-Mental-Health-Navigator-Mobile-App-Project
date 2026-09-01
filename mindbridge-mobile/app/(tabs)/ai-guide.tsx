@@ -40,6 +40,7 @@ import {
   Trash2,
   BrainCircuit,
   Wind,
+  Plus,
   Check,
   CheckCheck
 } from 'lucide-react-native';
@@ -272,7 +273,8 @@ export default function AIGuideScreen() {
   const inputRef = useRef<TextInput>(null);
   const [inputHeight, setInputHeight] = useState(44);
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
-  const [history, setHistory] = useState<any[]>([]);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isHistoryVisible, setIsHistoryVisible] = useState(false);
 
   useEffect(() => {
@@ -292,6 +294,44 @@ export default function AIGuideScreen() {
 
   const bottomPad = TAB_BAR_HEIGHT + insets.bottom;
   const INPUT_AREA_HEIGHT = inputHeight + 32;
+
+  const fetchSessions = async () => {
+    try {
+      const response = await api.get('/ai/sessions');
+      setSessions(response.data);
+    } catch (e) {
+      console.error('Failed to fetch sessions');
+    }
+  };
+
+  const loadSession = async (sessionId: string) => {
+    setLoading(true);
+    setActiveSessionId(sessionId);
+    try {
+      const response = await api.get(`/ai/sessions/${sessionId}`);
+      const sessionMessages = (response.data || []).reverse().map((msg: any, idx: number) => ({
+        id: msg.id || `msg-${idx}`,
+        isAi: msg.role === 'model',
+        text: msg.content,
+        createdAt: msg.createdAt,
+        time: msg.createdAt 
+          ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : 'Past'
+      }));
+      setMessages(sessionMessages);
+    } catch (e) {
+      console.error('Failed to load session messages');
+    } finally {
+      setLoading(false);
+      setIsHistoryVisible(false);
+    }
+  };
+
+  const startNewChat = () => {
+    setActiveSessionId(null);
+    const firstName = authData?.name?.split(' ')[0] || 'Friend';
+    setMessages([{ id: 'welcome', isAi: true, text: t('ai.greetingWelcome').replace('{name}', firstName), time: 'Now', suggestCrisis: false }]);
+  };
 
   useEffect(() => {
     const fetchContext = async () => {
@@ -316,32 +356,10 @@ export default function AIGuideScreen() {
           greeting = t('ai.greetingWelcome').replace('{name}', firstName);
         }
 
-        const historyMessages = (data.history || []).reverse().map((msg: any, idx: number) => ({
-          id: msg.id || `hist-${idx}`,
-          isAi: msg.role === 'model',
-          text: msg.content,
-          createdAt: msg.createdAt,
-          time: msg.createdAt 
-            ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            : 'Past'
-        }));
-
-        setHistory(historyMessages);
-        setMessages(prev => {
-          const hasWelcome = prev.length > 0 && prev[0].id === 'welcome';
-          if (hasWelcome) {
-            const updated = [...prev];
-            updated[0] = { ...updated[0], text: greeting };
-            return updated;
-          }
-          return [{ id: 'welcome', isAi: true, text: greeting, time: 'Now', suggestCrisis: false }, ...prev];
-        });
+        setMessages([{ id: 'welcome', isAi: true, text: greeting, time: 'Now', suggestCrisis: false }]);
+        await fetchSessions();
       } catch {
-        setMessages(prev => {
-          const hasWelcome = prev.length > 0 && prev[0].id === 'welcome';
-          if (hasWelcome) return prev;
-          return [{ id: 'welcome', text: t('ai.greetingWelcome').replace('{name}', authData?.name || 'Friend'), isAi: true, time: 'Now' }, ...prev];
-        });
+        setMessages([{ id: 'welcome', text: t('ai.greetingWelcome').replace('{name}', authData?.name || 'Friend'), isAi: true, time: 'Now' }]);
       }
     };
     fetchContext();
@@ -403,7 +421,17 @@ export default function AIGuideScreen() {
       if (audioBase64) {
         payload.audioBase64 = audioBase64;
       }
+      if (activeSessionId) {
+        payload.sessionId = activeSessionId;
+      }
       const res = await api.post('/ai/chat', payload);
+      
+      if (res.data.sessionId && res.data.sessionId !== activeSessionId) {
+        setActiveSessionId(res.data.sessionId);
+        // Refresh sessions list in background
+        fetchSessions();
+      }
+
       const aiMsg = {
         id: 'ai_' + Date.now() + '_' + Math.random(),
         text: res.data.response,
@@ -429,70 +457,29 @@ export default function AIGuideScreen() {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
-  const handleClearChat = () => {
-    Alert.alert('New Conversation', 'Start fresh with the Oracle?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Clear',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await api.delete('/ai/history');
-            setHistory([]);
-            setMessages([{ id: 'reset', isAi: true, text: "Conversation cleared. I've refreshed my memory. What's on your mind?", time: 'Now' }]);
-          } catch (error) {
-            Alert.alert('Error', 'Failed to clear history.');
-          }
-        },
-      },
-    ]);
-  };
 
-  const handleDeleteMessage = (messageId: string) => {
-    Alert.alert('Delete Message', 'Are you sure you want to delete this message from history?', [
+  const handleDeleteSession = (sessionId: string) => {
+    Alert.alert('Delete Session', 'Are you sure you want to delete this chat session?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
           try {
-            await api.delete(`/ai/history/${messageId}`);
-            setHistory(prev => prev.filter(msg => msg.id !== messageId));
+            await api.delete(`/ai/sessions/${sessionId}`);
+            setSessions(prev => prev.filter(s => s.id !== sessionId));
+            if (activeSessionId === sessionId) {
+              startNewChat();
+            }
           } catch (error) {
-            Alert.alert('Error', 'Failed to delete message.');
+            Alert.alert('Error', 'Failed to delete session.');
           }
         },
       },
     ]);
   };
 
-  const handleDeleteGroup = (groupLabel: string, messageIds: string[]) => {
-    if (messageIds.length === 0) {
-      Alert.alert('No messages', 'There are no messages in this group to delete.');
-      return;
-    }
-    Alert.alert(
-      'Delete Group',
-      `Are you sure you want to delete all messages under "${groupLabel}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete All',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await api.delete('/ai/history/bulk-delete', { data: { ids: messageIds } });
-              setHistory(prev => prev.filter(msg => !messageIds.includes(msg.id)));
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete message group.');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const getGroupedHistory = () => {
+  const getGroupedSessions = () => {
     const groups: { [key: string]: any[] } = {
       'Today': [],
       'Yesterday': [],
@@ -513,21 +500,21 @@ export default function AIGuideScreen() {
       return d > sevenDaysAgo;
     };
 
-    history.forEach(msg => {
+    sessions.forEach(session => {
       let dateKey = 'Older';
-      if (msg.createdAt) {
-        const msgDate = new Date(msg.createdAt);
-        if (isToday(msgDate)) {
+      if (session.updatedAt || session.createdAt) {
+        const date = new Date(session.updatedAt || session.createdAt);
+        if (isToday(date)) {
           dateKey = 'Today';
-        } else if (isYesterday(msgDate)) {
+        } else if (isYesterday(date)) {
           dateKey = 'Yesterday';
-        } else if (isWithin7Days(msgDate)) {
+        } else if (isWithin7Days(date)) {
           dateKey = 'Previous 7 Days';
         }
       } else {
         dateKey = 'Today';
       }
-      groups[dateKey].push(msg);
+      groups[dateKey].push(session);
     });
 
     return groups;
@@ -557,11 +544,11 @@ export default function AIGuideScreen() {
               <Text style={[S.headerSub, { color: theme.colors.text.secondary }]}>{loading ? 'Reflecting…' : 'Always here for you'}</Text>
             </View>
           </View>
-          <TouchableOpacity activeOpacity={0.7} style={[S.headerBtn, { marginRight: 4 }]} onPress={() => setIsHistoryVisible(true)}>
-            <History color={theme.colors.text.secondary} size={19} />
+          <TouchableOpacity activeOpacity={0.7} style={[S.headerBtn, { marginRight: 4 }]} onPress={startNewChat}>
+            <Plus color={theme.colors.text.secondary} size={22} />
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.7} style={S.headerBtn} onPress={handleClearChat}>
-            <RefreshCw color={theme.colors.text.secondary} size={19} />
+          <TouchableOpacity activeOpacity={0.7} style={S.headerBtn} onPress={() => setIsHistoryVisible(true)}>
+            <History color={theme.colors.text.secondary} size={19} />
           </TouchableOpacity>
         </View>
       </BlurView>
@@ -647,11 +634,11 @@ export default function AIGuideScreen() {
               </TouchableOpacity>
             </View>
 
-            {history.length === 0 ? (
+            {sessions.length === 0 ? (
               <View style={S.emptyHistory}>
                 <MessageCircle color={theme.colors.text.disabled} size={40} strokeWidth={1.5} />
                 <Text style={[S.emptyText, { color: theme.colors.text.secondary }]}>No past conversations found.</Text>
-                <Text style={[S.emptySub, { color: theme.colors.text.secondary }]}>Your messages will appear here as history.</Text>
+                <Text style={[S.emptySub, { color: theme.colors.text.secondary }]}>Your sessions will appear here.</Text>
               </View>
             ) : (
               <ScrollView 
@@ -659,83 +646,44 @@ export default function AIGuideScreen() {
                 showsVerticalScrollIndicator={false}
               >
                 {(() => {
-                  const grouped = getGroupedHistory();
+                  const grouped = getGroupedSessions();
                   return ['Today', 'Yesterday', 'Previous 7 Days', 'Older'].map(category => {
                     const items = grouped[category];
                     if (!items || items.length === 0) return null;
                     
-                    const sortedItems = [...items].reverse();
-
                     return (
                       <View key={category} style={S.historyGroup}>
                         <View style={S.groupLabelRow}>
                           <Text style={[S.groupLabelText, { color: theme.colors.plum }]}>{category}</Text>
                           <View style={[S.groupLabelLine, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
-                          <TouchableOpacity  
-                            onPress={() => handleDeleteGroup(category, sortedItems.map(item => item.id).filter(id => !id.toString().startsWith('hist-')))} 
-                            style={S.groupDeleteBtn}
-                            activeOpacity={0.7}
-                          >
-                            <Trash2 color="#EF4444" size={12} />
-                            <Text style={[S.groupDeleteText, { color: '#EF4444' }]}>Delete Group</Text>
-                          </TouchableOpacity>
                         </View>
 
-                        {sortedItems.map((msg, index) => {
-                          if (msg.isAi) {
-                            return (
-                              <View 
-                                key={msg.id || index} 
-                                style={[
-                                  S.historyBubble, 
-                                  S.historyAiBubble,
-                                  { 
-                                    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
-                                    borderColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)',
-                                    borderWidth: 1,
-                                    marginVertical: 4
-                                  }
-                                ]}
-                              >
-                                <View style={S.historyBubbleHeader}>
-                                  <Text style={[S.historySender, { color: theme.isDark ? theme.colors.accents.powderBlue : theme.colors.plum }]}>Oracle</Text>
-                                  {msg.id && !msg.id.toString().startsWith('hist-') && (
-                                    <TouchableOpacity activeOpacity={0.7} onPress={() => handleDeleteMessage(msg.id)} style={{ padding: 4 }}>
-                                      <Trash2 color={theme.colors.text.tertiary} size={12} />
-                                    </TouchableOpacity>
-                                  )}
-                                </View>
-                                <Text style={[S.historyText, { color: theme.colors.text.primary }]}>
-                                  {msg.text}
-                                </Text>
-                              </View>
-                            );
-                          }
-
+                        {items.map((session, index) => {
+                          const isActive = session.id === activeSessionId;
                           return (
                             <TouchableOpacity 
-                              key={msg.id || index}
-                              activeOpacity={0.95}
-                              style={{ alignSelf: 'flex-end', maxWidth: '85%', marginVertical: 4 }}
+                              key={session.id || index}
+                              activeOpacity={0.7}
+                              onPress={() => loadSession(session.id)}
+                              style={[
+                                S.sessionItem,
+                                { 
+                                  backgroundColor: isActive ? (theme.isDark ? 'rgba(123,97,255,0.15)' : 'rgba(123,97,255,0.08)') : (theme.isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF'),
+                                  borderColor: isActive ? theme.colors.plum : (theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'),
+                                }
+                              ]}
                             >
-                              <LinearGradient
-                                colors={theme.isDark ? ['#8E6BE6', '#6941C6'] : ['#7F56D9', '#5B37B3']}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 1 }}
-                                style={S.historyBubble}
-                              >
-                                <View style={S.historyBubbleHeader}>
-                                  <Text style={[S.historySender, { color: '#FFF' }]}>You</Text>
-                                  {msg.id && !msg.id.toString().startsWith('hist-') && (
-                                    <TouchableOpacity activeOpacity={0.7} onPress={() => handleDeleteMessage(msg.id)} style={{ padding: 4 }}>
-                                      <Trash2 color="rgba(255,255,255,0.7)" size={12} />
-                                    </TouchableOpacity>
-                                  )}
-                                </View>
-                                <Text style={[S.historyText, { color: '#FFF' }]}>
-                                  {msg.text}
+                              <View style={{ flex: 1 }}>
+                                <Text style={[S.sessionTitle, { color: isActive ? theme.colors.plum : theme.colors.text.primary }]} numberOfLines={1}>
+                                  {session.title || 'New Conversation'}
                                 </Text>
-                              </LinearGradient>
+                                <Text style={[S.sessionDate, { color: theme.colors.text.secondary }]}>
+                                  {new Date(session.updatedAt || session.createdAt).toLocaleDateString()}
+                                </Text>
+                              </View>
+                              <TouchableOpacity activeOpacity={0.7} onPress={() => handleDeleteSession(session.id)} style={{ padding: 8 }}>
+                                <Trash2 color={theme.colors.text.tertiary} size={16} />
+                              </TouchableOpacity>
                             </TouchableOpacity>
                           );
                         })}
@@ -791,16 +739,11 @@ const createStyles = (theme: any) => StyleSheet.create({
   emptyText: { fontSize: 16, fontFamily: theme.typography.fonts.header, fontWeight: '700', marginTop: 12 },
   emptySub: { fontSize: 13, fontFamily: theme.typography.fonts.body, marginTop: 4, textAlign: 'center', opacity: 0.8 },
   modalScrollContent: { paddingBottom: 40, gap: 14 },
-  historyBubble: { borderRadius: 20, padding: 16, maxWidth: '85%' },
-  historyAiBubble: { alignSelf: 'flex-start', backgroundColor: 'rgba(123,97,255,0.06)' },
-  historyUserBubble: { alignSelf: 'flex-end' },
-  historyBubbleHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 12 },
-  historySender: { fontSize: 11, fontFamily: theme.typography.fonts.accent, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
-  historyText: { fontSize: 14, fontFamily: theme.typography.fonts.body, lineHeight: 20 },
   historyGroup: { marginVertical: 8 },
   groupLabelRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 12, gap: 10 },
   groupLabelText: { fontSize: 12, fontFamily: theme.typography.fonts.accent, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   groupLabelLine: { flex: 1, height: 1 },
-  groupDeleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: 'rgba(239,68,68,0.06)' },
-  groupDeleteText: { fontSize: 11, fontFamily: theme.typography.fonts.accent, fontWeight: '700' },
+  sessionItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderRadius: 16, borderWidth: 1, marginVertical: 6 },
+  sessionTitle: { fontSize: 15, fontFamily: theme.typography.fonts.body, fontWeight: '600', marginBottom: 4 },
+  sessionDate: { fontSize: 12, fontFamily: theme.typography.fonts.accent, fontWeight: '500' },
 });

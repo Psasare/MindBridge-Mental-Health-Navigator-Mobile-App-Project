@@ -19,7 +19,7 @@ model User {
   updatedAt           DateTime              @updatedAt
   username            String?               @unique
   assessmentResults   AssessmentResult[]
-  chatMessages        ChatMessage[]
+  chatSessions        ChatSession[]
   communityPosts      CommunityPost[]
   journalEntries      Journal[]
   moodLogs            MoodLog[]
@@ -150,15 +150,27 @@ model Resource {
   userHistory        UserResourceHistory[]
 }
 
-model ChatMessage {
-  id        String   @id @default(uuid())
+model ChatSession {
+  id        String        @id @default(uuid())
   userId    String
+  title     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model ChatMessage {
+  id        String      @id @default(uuid())
+  sessionId String
   role      String
   content   String
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime    @default(now())
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
-  @@index([userId, createdAt(sort: Desc)])
+  @@index([sessionId, createdAt(sort: Asc)])
 }
 
 model MentalStateLog {
