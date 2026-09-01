@@ -42,9 +42,9 @@ export const lightColors = {
   surfaceCool: P.frost,             
 
   text: {
-    primary:   '#000000',           // iOS Label Light
-    secondary: '#8E8E93',           // iOS Secondary Label Light
-    tertiary:  '#C7C7CC',           // iOS Tertiary Label Light
+    primary:   '#000000',           
+    secondary: '#4B5563',           // Darker gray for readability
+    tertiary:  '#8A8A8E',           // Distinct but readable gray (fixes #C7C7CC low contrast)
     onPrimary: '#FFFFFF',           
     onWarm:    P.mossVelvet,        
     onCool:    P.ocean,             
@@ -105,9 +105,9 @@ export const darkColors = {
   surfaceCool: '#141C28',           
 
   text: {
-    primary:   '#FFFFFF',           // Pure White
-    secondary: '#C4C4C6',         // Crisp light silver (removes transparency ashiness)
-    tertiary:  '#8E8E93',           // Distinct readable gray
+    primary:   '#FFFFFF',           
+    secondary: '#E5E7EB',           // Crisp light silver for dark mode
+    tertiary:  '#9CA3AF',           // Lighter distinct gray
     onPrimary: '#000000',             
     onWarm:    '#D4B89A',           
     onCool:    '#8BC0D0',           

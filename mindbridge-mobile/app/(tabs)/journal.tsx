@@ -48,6 +48,7 @@ import {
   Activity,
   Sparkles
 } from 'lucide-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 
 import api from '../../src/services/api';
@@ -143,13 +144,25 @@ export default function JournalScreen() {
 
   const fetchEntries = async () => {
     try {
+      const cached = await AsyncStorage.getItem('dashboard_cache');
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (data.journalHistory && data.journalHistory.length > 0) {
+          setEntries(data.journalHistory);
+          setFilteredEntries(data.journalHistory);
+          setLoading(false);
+        }
+      }
+      
       const response = await api.get('/journal');
       setEntries(response.data);
       setFilteredEntries(response.data);
     } catch (error: any) {
       console.warn('Network timeout when fetching journal entries.');
-      setEntries([]);
-      setFilteredEntries([]);
+      if (entries.length === 0) {
+        setEntries([]);
+        setFilteredEntries([]);
+      }
     } finally {
       setLoading(false);
     }

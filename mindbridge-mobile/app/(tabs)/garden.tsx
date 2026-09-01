@@ -1051,26 +1051,27 @@ export default function WellnessTrackerScreen() {
                 <View style={[styles.analysisCard, { backgroundColor: theme.colors.surface }]}>
                   <Text style={[styles.analysisCardTitle, { color: theme.colors.text.primary }]}>Emotion Frequency</Text>
                   <Text style={[styles.analysisCardSub, { color: theme.colors.text.tertiary }]}>Your most common emotional states</Text>
-                  <View style={{ marginTop: 24, gap: 16 }}>
+                  <View style={{ marginTop: 16 }}>
                     {sorted.map(([emotion, count], idx) => {
                       const color = moodColors[emotion] || theme.colors.plum;
                       const percentage = ((count as number) / (totalFreq as number) * 100).toFixed(0);
+                      const isLast = idx === sorted.length - 1;
                       return (
-                      <Animated.View key={emotion} entering={FadeInUp.delay(idx * 150).springify().mass(0.8)} style={{ backgroundColor: color + '08', padding: 18, borderRadius: 24, borderWidth: 1, borderColor: color + '15' }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                          <View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: color + '15', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
-                            {getMoodIcon(emotion, 22, color)}
+                      <Animated.View key={emotion} entering={FadeInUp.delay(idx * 150).springify().mass(0.8)} style={{ paddingVertical: 14, borderBottomWidth: isLast ? 0 : 1, borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                          <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: color + '15', alignItems: 'center', justifyContent: 'center', marginRight: 14 }}>
+                            {getMoodIcon(emotion, 20, color)}
                           </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 17, fontFamily: theme.typography.fonts.header, color: theme.colors.text.primary, marginBottom: 3 }}>{emotion.charAt(0).toUpperCase() + emotion.slice(1)}</Text>
-                            <Text style={{ fontSize: 13, fontFamily: theme.typography.fonts.body, color: theme.colors.text.tertiary }}>{count} {count === 1 ? 'log' : 'logs'}</Text>
-                          </View>
-                          <View style={{ backgroundColor: color + '15', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
-                            <Text style={{ color: color, fontFamily: theme.typography.fonts.header, fontSize: 13, fontWeight: '700' }}>{percentage}%</Text>
+                          <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <View>
+                              <Text style={{ fontSize: 16, fontFamily: theme.typography.fonts.header, color: theme.colors.text.primary, marginBottom: 2 }}>{emotion.charAt(0).toUpperCase() + emotion.slice(1)}</Text>
+                              <Text style={{ fontSize: 13, fontFamily: theme.typography.fonts.body, color: theme.colors.text.secondary }}>{count} {count === 1 ? 'log' : 'logs'}</Text>
+                            </View>
+                            <Text style={{ color: theme.colors.text.primary, fontFamily: theme.typography.fonts.header, fontSize: 15, fontWeight: '700' }}>{percentage}%</Text>
                           </View>
                         </View>
-                        <View style={{ height: 8, borderRadius: 4, backgroundColor: color + '1A', overflow: 'hidden' }}>
-                          <Animated.View style={{ height: '100%', borderRadius: 4, backgroundColor: color, width: `${((count as number) / (max as number)) * 100}%` }} />
+                        <View style={{ height: 6, borderRadius: 3, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+                          <Animated.View style={{ height: '100%', borderRadius: 3, backgroundColor: color, width: `${((count as number) / (max as number)) * 100}%` }} />
                         </View>
                       </Animated.View>
                     )})}

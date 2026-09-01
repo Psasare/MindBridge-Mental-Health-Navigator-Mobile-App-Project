@@ -491,6 +491,9 @@ export default function DashboardScreen() {
         if (data.completedGoalIds) setCompletedGoalIds(data.completedGoalIds);
         if (data.rituals) setRituals(data.rituals);
         if (data.userData) setUserData(data.userData);
+        
+        // Immediately drop the skeleton loader since we have cached data to show!
+        setIsLoading(false);
       }
     } catch (e) {
       console.warn('Failed to load dashboard cache:', e);

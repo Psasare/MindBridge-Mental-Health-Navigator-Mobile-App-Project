@@ -285,7 +285,7 @@ export default function CrisisSupportScreen() {
               onPress={() => handleCall(institution.number)}
               activeOpacity={0.8}
             >
-              <Phone color="#FFF" size={20} style={{ marginRight: 8 }} />
+              <Phone color={themeContext.colors.text.onPrimary} size={20} style={{ marginRight: 8 }} />
               <Text style={styles.primaryCallText}>Call {institution.secondaryNumber ? 'Primary Line' : 'Counseling Services'}</Text>
             </TouchableOpacity>
 
@@ -295,7 +295,7 @@ export default function CrisisSupportScreen() {
                 onPress={() => handleCall(institution.secondaryNumber)}
                 activeOpacity={0.8}
               >
-                <Phone color="#FFF" size={20} style={{ marginRight: 8 }} />
+                <Phone color={themeContext.colors.text.onPrimary} size={20} style={{ marginRight: 8 }} />
                 <Text style={styles.primaryCallText}>Call Secondary Line</Text>
               </TouchableOpacity>
             )}

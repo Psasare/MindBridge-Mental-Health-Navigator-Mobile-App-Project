@@ -17,6 +17,7 @@ import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { SkeletonLoader } from '../../src/components/SkeletonLoader';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../src/services/api';
 import { useRouter } from 'expo-router';
 import { 
@@ -338,11 +339,20 @@ export default function AssessmentsScreen() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
+        const cached = await AsyncStorage.getItem('dashboard_cache');
+        if (cached) {
+          const data = JSON.parse(cached);
+          if (data.assessments && data.assessments.length > 0) {
+            setResults(data.assessments);
+            setLoading(false);
+          }
+        }
+        
         const response = await api.get('/ai/oracle-context');
         setResults(response.data.assessments || []);
       } catch (error: any) {
         console.warn('Network timeout when fetching assessment results.');
-        setResults([]);
+        if (results.length === 0) setResults([]);
       } finally {
         setLoading(false);
       }
