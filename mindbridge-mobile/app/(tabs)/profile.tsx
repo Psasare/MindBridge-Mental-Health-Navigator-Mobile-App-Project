@@ -388,11 +388,7 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
-      <View style={StyleSheet.absoluteFillObject}>
-        
-        <View style={[styles.bgBlob, { top: -80, left: -80, backgroundColor: theme.colors.plum + '08' }]} />
-        <View style={[styles.bgBlob, { bottom: 0, right: -100, backgroundColor: theme.colors.accents.softMint + '05' }]} />
-      </View>
+
 
       <ScrollView 
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top }]}

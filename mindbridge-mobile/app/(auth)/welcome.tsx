@@ -46,13 +46,13 @@ export default function WelcomeScreen() {
     ).start();
   }, [pulseAnim]);
 
-  // The custom Dribbble Palette for the Welcome Screen
+  // Map to global theme colors for consistency
   const C = {
-    bg: theme.isDark ? '#121212' : '#FDFBF7',
-    textPrimary: theme.isDark ? '#FDFBF7' : '#1F2937',
-    textSecondary: theme.isDark ? '#A8B8C8' : '#6B7A8A',
-    brandGreen: theme.isDark ? '#5A8A70' : '#6A9C47',
-    highlightText: '#FFFFFF',
+    bg: theme.colors.background,
+    textPrimary: theme.colors.text.primary,
+    textSecondary: theme.colors.text.secondary,
+    brandGreen: theme.colors.plum,
+    highlightText: theme.colors.text.onPrimary,
     dotInactive: theme.isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
   };
 
@@ -229,8 +229,8 @@ export default function WelcomeScreen() {
               onPress={() => router.push('/(auth)/login?anonymous=true')}
               activeOpacity={0.8}
             >
-              <VenetianMask color={theme.isDark ? '#FFFFFF' : '#1F2937'} size={20} strokeWidth={2.5} />
-              <Text style={[styles.secondaryBtnText, { color: theme.isDark ? '#FFFFFF' : '#1F2937' }]}>
+              <VenetianMask color={theme.colors.text.primary} size={20} strokeWidth={2.5} />
+              <Text style={[styles.secondaryBtnText, { color: theme.colors.text.primary }]}>
                 Explore Anonymously
               </Text>
             </TouchableOpacity>

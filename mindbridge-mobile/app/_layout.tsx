@@ -1,5 +1,5 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { useEffect, useContext } from 'react';
+import { useEffect, useContext, useState } from 'react';
 import { AuthProvider, AuthContext } from '../src/context/AuthContext';
 import { LanguageProvider } from '../src/context/LanguageContext';
 import { View } from 'react-native';
@@ -119,7 +119,10 @@ const InitialLayout = () => {
     };
   }, [userToken, segments]);
 
-  if (isLoading || !fontsLoaded) {
+  const [isSplashDismissed, setIsSplashDismissed] = useState(false);
+
+  // Initial render when fonts are not ready yet
+  if (!fontsLoaded) {
     return <AnimatedLogoLoader />;
   }
 
@@ -139,15 +142,24 @@ const InitialLayout = () => {
   };
 
   return (
-    <NavigationProvider value={navigationTheme}>
-      <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="+not-found" />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="goal-execution" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
-      </Stack>
-    </NavigationProvider>
+    <View style={{ flex: 1 }}>
+      <NavigationProvider value={navigationTheme}>
+        <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="goal-execution" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        </Stack>
+      </NavigationProvider>
+
+      {!isSplashDismissed && (
+        <AnimatedLogoLoader 
+          isReady={!isLoading} 
+          onComplete={() => setIsSplashDismissed(true)} 
+        />
+      )}
+    </View>
   );
 };
 

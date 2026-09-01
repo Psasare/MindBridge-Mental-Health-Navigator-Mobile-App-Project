@@ -51,11 +51,7 @@ export default function InsightsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={StyleSheet.absoluteFillObject}>
-        
-        <View style={[styles.bgBlob, { top: -100, right: -100, backgroundColor: theme.colors.accents.powderBlue + '0A' }]} />
-        <View style={[styles.bgBlob, { bottom: 0, left: -100, backgroundColor: theme.colors.accents.softLilac + '0A' }]} />
-      </View>
+
 
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top }]} showsVerticalScrollIndicator={false}>
         <View style={styles.headerRow}>

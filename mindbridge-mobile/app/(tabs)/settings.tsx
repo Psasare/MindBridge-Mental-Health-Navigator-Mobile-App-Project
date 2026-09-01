@@ -202,22 +202,39 @@ export default function SettingsScreen() {
       >
         <ScreenHeader title="Settings" subtitle="Customize your wellness experience" />
 
-        {/* ── Theme Section ── */}
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>App Appearance</Text>
-          <View style={[styles.card, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 16 }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={[styles.rowIconWrap, { backgroundColor: isDark ? colors.plum + '15' : '#FEF3C7' }]}>
-                {isDark ? <Moon color={colors.plum} size={20} /> : <Sun color="#F59E0B" size={20} />}
-              </View>
-              <Text style={{ fontSize: 16, fontFamily: themeContext.typography.fonts.header, fontWeight: '600', color: colors.text.primary }}>
-                {isDark ? 'Dark Mode' : 'Light Mode'}
-              </Text>
+          <View style={[styles.card, { padding: 12 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', borderRadius: 12, padding: 4 }}>
+              {(['system', 'light', 'dark'] as const).map((m) => (
+                <TouchableOpacity
+                  key={m}
+                  activeOpacity={0.7}
+                  onPress={() => setMode(m)}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 10,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: mode === m ? (isDark ? 'rgba(255,255,255,0.1)' : '#FFFFFF') : 'transparent',
+                    borderRadius: 8,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: mode === m && !isDark ? 0.1 : 0,
+                    shadowRadius: 2,
+                    elevation: mode === m && !isDark ? 2 : 0,
+                  }}
+                >
+                  <Text style={{ 
+                    fontFamily: themeContext.typography.fonts.ui, 
+                    fontWeight: mode === m ? '600' : '500', 
+                    color: mode === m ? colors.text.primary : colors.text.tertiary 
+                  }}>
+                    {m === 'system' ? 'Auto' : m === 'light' ? 'Light' : 'Dark'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <ThemeToggle 
-              isDark={isDark} 
-              onToggle={() => setMode(isDark ? 'light' : 'dark')} 
-            />
           </View>
         </View>
 
@@ -661,14 +678,14 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    paddingVertical: 18,
-    borderRadius: 24,
-    backgroundColor: '#FF4444',
-    shadowColor: '#FF4444',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    paddingVertical: 16,
+    borderRadius: 16,
+    backgroundColor: theme.colors.semantic.danger,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   logoutText: {
     fontSize: 16,

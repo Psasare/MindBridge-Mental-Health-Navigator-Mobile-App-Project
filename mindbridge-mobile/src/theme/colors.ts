@@ -105,13 +105,13 @@ export const darkColors = {
   surfaceCool: '#141C28',           
 
   text: {
-    primary:   '#FFFFFF',           // iOS Label Dark
-    secondary: '#EBEBF599',         // iOS Secondary Label Dark (60% opacity)
-    tertiary:  '#48484A',           // iOS Tertiary Label Dark
+    primary:   '#FFFFFF',           // Pure White
+    secondary: '#C4C4C6',         // Crisp light silver (removes transparency ashiness)
+    tertiary:  '#8E8E93',           // Distinct readable gray
     onPrimary: '#000000',             
     onWarm:    '#D4B89A',           
     onCool:    '#8BC0D0',           
-    disabled:  '#EBEBF54D',         // iOS Disabled Label Dark (30% opacity)
+    disabled:  '#636366',         // Solid disabled gray
   },
 
   accents: {

@@ -555,9 +555,9 @@ export default function RegisterScreen() {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={themeContext.colors.text.onPrimary} />
               ) : (
-                <Typography variant="h4" style={{ fontFamily: 'Montserrat-Bold', color: '#FFFFFF' }}>
+                <Typography variant="h4" style={{ fontFamily: 'Montserrat-Bold', color: themeContext.colors.text.onPrimary }}>
                   Create Account
                 </Typography>
               )}
@@ -576,7 +576,7 @@ export default function RegisterScreen() {
 }
 
 const createStyles = (theme: any) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.isDark ? '#000000' : '#F2F2F7' },
+  container: { flex: 1, backgroundColor: theme.colors.background },
   scrollContent: { paddingHorizontal: 20, minHeight: height },
   header: { marginTop: 10, marginBottom: 40 },
   backButton: { 
@@ -603,21 +603,16 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: 4,
   },
   groupedList: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: theme.isDark ? 0.3 : 0.05,
     shadowRadius: 10,
-    elevation: 2,
+    elevation: theme.isDark ? 4 : 2,
   },
-  groupedListDark: {
-    backgroundColor: '#1C1C1E',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    elevation: 4,
-  },
+  groupedListDark: {},
   inputRow: { 
     flexDirection: 'row', 
     alignItems: 'center', 

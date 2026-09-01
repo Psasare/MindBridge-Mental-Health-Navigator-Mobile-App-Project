@@ -20,7 +20,7 @@ import { AuthContext } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp, FadeIn } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
+
 import { BlurView } from 'expo-blur';
 import * as Clipboard from 'expo-clipboard';
 import * as FileSystem from 'expo-file-system';
@@ -78,13 +78,13 @@ const TypingDot = ({ delay, theme }: any) => {
     transform: [{ translateY: y.value }]
   }));
 
-  return <Animated.View style={[typingStyles.dot, { backgroundColor: theme.colors.plum }, style]} />;
+  return <Animated.View style={[typingStyles.dot, { backgroundColor: theme.colors.text.primary }, style]} />;
 };
 
 const TypingIndicator = ({ theme }: any) => (
   <Animated.View entering={FadeIn.duration(300)} style={[typingStyles.row]}>
-    <View style={[typingStyles.avatar, { backgroundColor: theme.colors.plum }]}>
-      <Bot color="#FFF" size={13} />
+    <View style={[typingStyles.avatar, { backgroundColor: theme.colors.text.primary }]}>
+      <Bot color={theme.colors.background} size={13} />
     </View>
     <View style={[typingStyles.bubble, {
       backgroundColor: theme.colors.surface,
@@ -120,8 +120,8 @@ const MessageItem = ({ item, theme, router, t, handleSend }: any) => {
   if (item.isAi) {
     return (
       <Animated.View entering={FadeInDown.duration(350).springify()} style={msgStyles.rowAi}>
-        <View style={[msgStyles.avatarSmall, { backgroundColor: theme.colors.plum }]}>
-          <Bot color="#FFF" size={13} />
+        <View style={[msgStyles.avatarSmall, { backgroundColor: theme.colors.text.primary }]}>
+          <Bot color={theme.colors.background} size={13} />
         </View>
         <View style={{ flex: 1 }}>
           {item.suggestCrisis ? (
@@ -158,12 +158,14 @@ const MessageItem = ({ item, theme, router, t, handleSend }: any) => {
               {/* Contextual Action Card based on Current State */}
               {item.state && item.state.primaryCondition && item.state.primaryCondition !== 'unknown' && item.state.primaryCondition !== 'neutral' && (
                 <Animated.View entering={FadeInUp.delay(300)} style={msgStyles.stateCard}>
-                  <View style={[msgStyles.stateHeader, { backgroundColor: theme.colors.plum + '15' }]}>
-                    <Activity size={12} color={theme.colors.plum} />
-                    <Text style={[msgStyles.stateLabel, { color: theme.colors.plum }]}>
+                  {item.state.label !== 'Stable' && (
+                  <View style={[msgStyles.stateHeader, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}>
+                    <Activity size={12} color={theme.colors.text.primary} />
+                    <Text style={[msgStyles.stateLabel, { color: theme.colors.text.primary }]}>
                       {item.state.severity?.toUpperCase()} {item.state.primaryCondition?.toUpperCase()} DETECTED
                     </Text>
                   </View>
+                  )}
                   
                   <Text style={[msgStyles.stateActionText, { color: theme.colors.text.secondary }]}>
                     {item.state.severity === 'severe' || item.state.severity === 'critical'
@@ -172,7 +174,7 @@ const MessageItem = ({ item, theme, router, t, handleSend }: any) => {
                   </Text>
 
                   <TouchableOpacity activeOpacity={0.7} 
-                    style={[msgStyles.stateActionBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : '#FFF', borderColor: theme.colors.plum + '30' }]}
+                    style={[msgStyles.stateActionBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
                     onPress={() => {
                       if (item.state.severity === 'severe' || item.state.severity === 'critical') router.push('/(tabs)/crisis');
                       else if (item.state.primaryCondition.toLowerCase().includes('anxi') || item.state.primaryCondition.toLowerCase().includes('stress')) router.push('/breathing');
@@ -180,9 +182,9 @@ const MessageItem = ({ item, theme, router, t, handleSend }: any) => {
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      {(item.state.severity === 'severe' || item.state.severity === 'critical') ? <MessageCircle size={16} color={theme.colors.plum} /> : 
-                       (item.state.primaryCondition.toLowerCase().includes('anxi') || item.state.primaryCondition.toLowerCase().includes('stress')) ? <Wind size={16} color={theme.colors.plum} /> : 
-                       <BrainCircuit size={16} color={theme.colors.plum} />}
+                      {(item.state.severity === 'severe' || item.state.severity === 'critical') ? <MessageCircle size={16} color={theme.colors.text.primary} /> : 
+                       (item.state.primaryCondition.toLowerCase().includes('anxi') || item.state.primaryCondition.toLowerCase().includes('stress')) ? <Wind size={16} color={theme.colors.text.primary} /> : 
+                       <BrainCircuit size={16} color={theme.colors.text.primary} />}
                       <Text style={[msgStyles.stateActionBtnText, { color: theme.colors.text.primary }]}>
                         {(item.state.severity === 'severe' || item.state.severity === 'critical') ? 'Contact Counseling' : 
                          (item.state.primaryCondition.toLowerCase().includes('anxi') || item.state.primaryCondition.toLowerCase().includes('stress')) ? 'Start Breathing Exercise' : 'Use Thought Reframer'}
@@ -206,9 +208,9 @@ const MessageItem = ({ item, theme, router, t, handleSend }: any) => {
         <TouchableOpacity
           activeOpacity={0.9}
           onLongPress={onLongPress}
-          style={[msgStyles.bubbleUser, { backgroundColor: item.status === 'error' ? '#EF4444' : '#7B61FF' }]}
+          style={[msgStyles.bubbleUser, { backgroundColor: item.status === 'error' ? '#EF4444' : theme.colors.text.primary }]}
         >
-          <Text style={msgStyles.textUser}>{item.text}</Text>
+          <Text style={[msgStyles.textUser, { color: theme.colors.background }]}>{item.text}</Text>
         </TouchableOpacity>
         
         {item.status === 'error' && (
@@ -238,7 +240,7 @@ const createMsgStyles = (theme: any) => StyleSheet.create({
   bubbleAi: { maxWidth: width * 0.74, paddingHorizontal: 16, paddingVertical: 13, borderRadius: 20, borderBottomLeftRadius: 4, borderWidth: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   bubbleUser: { maxWidth: width * 0.74, paddingHorizontal: 16, paddingVertical: 13, borderRadius: 20, borderBottomRightRadius: 4 },
   textAi: { fontSize: 15.5, lineHeight: 24, fontFamily: theme.typography.fonts.ui },
-  textUser: { fontSize: 15.5, lineHeight: 24, color: '#FFF', fontFamily: theme.typography.fonts.ui },
+  textUser: { fontSize: 16, fontFamily: theme.typography.fonts.body, lineHeight: 22 },
   time: { fontSize: 11, fontWeight: '500', marginTop: 5, marginLeft: 2, fontFamily: theme.typography.fonts.accent },
   timeUser: { fontSize: 11, fontWeight: '500', marginTop: 5, fontFamily: theme.typography.fonts.accent },
   crisisBubble: { maxWidth: width * 0.78, borderWidth: 1.5, borderColor: '#E60000', borderRadius: 20, borderBottomLeftRadius: 4, padding: 16, backgroundColor: 'rgba(230,0,0,0.06)' },
@@ -527,15 +529,10 @@ export default function AIGuideScreen() {
     <View style={[S.root, { backgroundColor: theme.colors.background }]}>
       <StatusBar barStyle={theme.isDark ? 'light-content' : 'dark-content'} />
 
-      <LinearGradient
-        colors={theme.isDark ? ['rgba(123,97,255,0.10)', theme.colors.background] : ['rgba(123,97,255,0.06)', theme.colors.background]}
-        style={StyleSheet.absoluteFillObject}
-      />
-
       <BlurView intensity={theme.isDark ? 60 : 80} tint={theme.isDark ? 'dark' : 'light'} style={[S.header, { paddingTop: insets.top + 10 }]}>
         <View style={S.headerInner}>
-          <View style={[S.headerAvatar, { backgroundColor: theme.colors.plum }]}>
-            <Bot color="#FFF" size={20} />
+          <View style={[S.headerAvatar, { backgroundColor: theme.colors.text.primary }]}>
+            <Bot color={theme.colors.background} size={20} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[S.headerTitle, { color: theme.colors.text.primary }]}>{t('ai.title')}</Text>
@@ -554,9 +551,9 @@ export default function AIGuideScreen() {
       </BlurView>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
-        <View style={[S.disclaimer, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(123,97,255,0.06)', borderColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(123,97,255,0.14)' }]}>
-          <Info color={theme.isDark ? theme.colors.accents.powderBlue : theme.colors.plum} size={13} />
-          <Text style={[S.disclaimerText, { color: theme.isDark ? theme.colors.text.primary : theme.colors.plum }]}>{t('ai.disclaimer')}</Text>
+        <View style={[S.disclaimer, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', borderColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]}>
+          <Info color={theme.colors.text.primary} size={13} />
+          <Text style={[S.disclaimerText, { color: theme.colors.text.primary }]}>{t('ai.disclaimer')}</Text>
         </View>
 
 
@@ -589,7 +586,7 @@ export default function AIGuideScreen() {
         />
 
         <View style={[S.inputPanel, { paddingBottom: isKeyboardVisible ? 8 : (bottomPad + 8), backgroundColor: theme.isDark ? 'rgba(18,18,18,0.97)' : 'rgba(255,255,255,0.97)' }]}>
-          <View style={[S.inputRow, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', borderColor: message.trim() ? '#7B61FF' : (theme.isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)') }]}>
+          <View style={[S.inputRow, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.05)', borderColor: message.trim() ? theme.colors.text.primary : (theme.isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)') }]}>
             <TextInput
               ref={inputRef}
               style={[S.input, { color: theme.colors.text.primary }]}
@@ -602,10 +599,10 @@ export default function AIGuideScreen() {
             />
             <View style={S.inputActions}>
               <TouchableOpacity activeOpacity={0.7} style={[S.micBtn, isRecording && { backgroundColor: '#EF4444' }]} onPress={isRecording ? stopRecording : startRecording}>
-                {isRecording ? <StopCircle color="#FFF" size={20} /> : <Mic color={theme.isDark ? theme.colors.accents.powderBlue : '#7B61FF'} size={20} />}
+                {isRecording ? <StopCircle color="#FFF" size={20} /> : <Mic color={theme.colors.text.primary} size={20} />}
               </TouchableOpacity>
-              <TouchableOpacity activeOpacity={0.7} style={[S.sendBtn, { backgroundColor: '#7B61FF' }, !message.trim() && !isRecording && { opacity: 0.5 }]} onPress={() => handleSend()} disabled={!message.trim() || loading}>
-                <Send color="#FFF" size={20} />
+              <TouchableOpacity activeOpacity={0.7} style={[S.sendBtn, { backgroundColor: theme.colors.text.primary }, !message.trim() && !isRecording && { opacity: 0.5 }]} onPress={() => handleSend()} disabled={!message.trim() || loading}>
+                <Send color={theme.colors.background} size={20} />
               </TouchableOpacity>
             </View>
           </View>
@@ -621,16 +618,16 @@ export default function AIGuideScreen() {
       >
         <View style={S.modalOverlay}>
           <BlurView intensity={100} tint={theme.isDark ? 'dark' : 'light'} style={S.modalContainer}>
-            <View style={[S.modalHeader, { borderBottomColor: '#7B61FF20' }]}>
+            <View style={[S.modalHeader, { borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
               <View style={S.modalHeaderLeft}>
-                <History color="#7B61FF" size={20} />
+                <History color={theme.colors.text.primary} size={20} />
                 <View style={{ marginLeft: 8 }}>
-                  <Text style={[S.modalTitle, { color: theme.colors.text.primary }]}>Chat History</Text>
+                  <Text style={[S.modalTitle, { color: theme.colors.text.primary }]}>Chat Sessions</Text>
                   <Text style={[S.modalSubtitle, { color: theme.colors.text.secondary }]}>Past interactions with Oracle</Text>
                 </View>
               </View>
-              <TouchableOpacity activeOpacity={0.7} onPress={() => setIsHistoryVisible(false)} style={[S.closeBtn, { backgroundColor: '#7B61FF15' }]}>
-                <X color="#7B61FF" size={18} />
+              <TouchableOpacity activeOpacity={0.7} onPress={() => setIsHistoryVisible(false)} style={[S.closeBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                <X color={theme.colors.text.primary} size={18} />
               </TouchableOpacity>
             </View>
 
@@ -654,7 +651,7 @@ export default function AIGuideScreen() {
                     return (
                       <View key={category} style={S.historyGroup}>
                         <View style={S.groupLabelRow}>
-                          <Text style={[S.groupLabelText, { color: theme.colors.plum }]}>{category}</Text>
+                          <Text style={[S.groupLabelText, { color: theme.colors.text.primary }]}>{category}</Text>
                           <View style={[S.groupLabelLine, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' }]} />
                         </View>
 
@@ -668,13 +665,13 @@ export default function AIGuideScreen() {
                               style={[
                                 S.sessionItem,
                                 { 
-                                  backgroundColor: isActive ? (theme.isDark ? 'rgba(123,97,255,0.15)' : 'rgba(123,97,255,0.08)') : (theme.isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF'),
-                                  borderColor: isActive ? theme.colors.plum : (theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'),
+                                  backgroundColor: isActive ? (theme.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.05)') : (theme.isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF'),
+                                  borderColor: isActive ? theme.colors.text.primary : (theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'),
                                 }
                               ]}
                             >
                               <View style={{ flex: 1 }}>
-                                <Text style={[S.sessionTitle, { color: isActive ? theme.colors.plum : theme.colors.text.primary }]} numberOfLines={1}>
+                                <Text style={[S.sessionTitle, { color: isActive ? theme.colors.text.primary : theme.colors.text.primary }]} numberOfLines={1}>
                                   {session.title || 'New Conversation'}
                                 </Text>
                                 <Text style={[S.sessionDate, { color: theme.colors.text.secondary }]}>

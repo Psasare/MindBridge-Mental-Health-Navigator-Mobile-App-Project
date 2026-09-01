@@ -164,7 +164,7 @@ export default function LoginScreen() {
               activeOpacity={0.7}
             >
               <View style={styles.backButtonIconBg}>
-                <ChevronLeft color={themeContext.isDark ? '#FFF' : '#000'} size={24} />
+                <ChevronLeft color={themeContext.colors.text.primary} size={24} />
               </View>
             </TouchableOpacity>
           </Animated.View>
@@ -240,13 +240,13 @@ export default function LoginScreen() {
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={themeContext.colors.text.onPrimary} />
                 ) : (
                   <>
-                    <Typography variant="h4" style={{ fontFamily: 'Montserrat-Bold', color: '#FFFFFF' }}>
+                    <Typography variant="h4" style={{ fontFamily: 'Montserrat-Bold', color: themeContext.colors.text.onPrimary }}>
                       Continue
                     </Typography>
-                    <ArrowRight color="#FFFFFF" size={20} strokeWidth={2.5} />
+                    <ArrowRight color={themeContext.colors.text.onPrimary} size={20} strokeWidth={2.5} />
                   </>
                 )}
               </TouchableOpacity>
@@ -261,11 +261,11 @@ export default function LoginScreen() {
                 disabled={loading}
               >
                 {loading ? (
-                  <ActivityIndicator color={themeContext.isDark ? '#FFFFFF' : '#1F2937'} />
+                  <ActivityIndicator color={themeContext.colors.text.primary} />
                 ) : (
                   <>
-                    <VenetianMask color={themeContext.isDark ? '#FFFFFF' : '#1F2937'} size={20} strokeWidth={2.5} />
-                    <Typography variant="h4" style={{ fontFamily: 'Montserrat-Bold', color: themeContext.isDark ? '#FFFFFF' : '#1F2937' }}>
+                    <VenetianMask color={themeContext.colors.text.primary} size={20} strokeWidth={2.5} />
+                    <Typography variant="h4" style={{ fontFamily: 'Montserrat-Bold', color: themeContext.colors.text.primary }}>
                       Continue Anonymously
                     </Typography>
                   </>
@@ -291,7 +291,7 @@ export default function LoginScreen() {
 const createStyles = (theme: any) => StyleSheet.create({
   container: { 
     flex: 1, 
-    backgroundColor: theme.isDark ? '#000000' : '#F2F2F7', 
+    backgroundColor: theme.colors.background, 
   },
   scrollContent: { 
     paddingHorizontal: 20, 
@@ -323,21 +323,16 @@ const createStyles = (theme: any) => StyleSheet.create({
     alignItems: 'flex-start',
   },
   groupedList: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: theme.isDark ? 0.3 : 0.05,
     shadowRadius: 10,
-    elevation: 2,
+    elevation: theme.isDark ? 4 : 2,
   },
-  groupedListDark: {
-    backgroundColor: '#1C1C1E',
-    shadowColor: '#000',
-    shadowOpacity: 0.3,
-    elevation: 4,
-  },
+  groupedListDark: {}, // Kept empty to not break the spread, or can remove
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',

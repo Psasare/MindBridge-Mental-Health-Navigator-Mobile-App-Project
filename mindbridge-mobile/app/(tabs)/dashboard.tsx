@@ -733,11 +733,7 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
-      <View style={StyleSheet.absoluteFillObject}>
-        
-        <View style={[styles.bgBlob, { top: -100, right: -100, backgroundColor: theme.colors.plum + '08' }]} />
-        <View style={[styles.bgBlob, { bottom: 100, left: -50, backgroundColor: theme.colors.accents.powderBlue + '05' }]} />
-      </View>
+
 
       {isLoading ? (
         <Animated.View entering={FadeIn.duration(400)} exiting={FadeIn.duration(300)} style={{ flex: 1, paddingTop: insets.top }}>

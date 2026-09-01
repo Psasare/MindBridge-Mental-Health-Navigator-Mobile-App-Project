@@ -727,11 +727,7 @@ export default function AssessmentsScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
-      <View style={StyleSheet.absoluteFillObject}>
-        
-        <View style={[styles.bgBlob, { top: -50, left: -100, backgroundColor: theme.colors.accents.powderBlue + '08' }]} />
-        <View style={[styles.bgBlob, { bottom: -100, right: -100, backgroundColor: theme.colors.plum + '08' }]} />
-      </View>
+
 
       <ScrollView 
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}

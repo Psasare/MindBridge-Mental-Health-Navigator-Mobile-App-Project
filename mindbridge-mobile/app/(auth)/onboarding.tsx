@@ -832,7 +832,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   modalTitle: { fontSize: 24, fontFamily: 'Montserrat-ExtraBold', color: theme.colors.text.primary, marginBottom: 12 },
   modalText: { fontSize: 16, fontFamily: 'Montserrat-Medium', color: theme.colors.text.secondary, textAlign: 'center', lineHeight: 24, marginBottom: 32 },
   modalPrimaryBtn: { backgroundColor: theme.colors.plum, paddingVertical: 18, paddingHorizontal: 32, borderRadius: 24, width: '100%', alignItems: 'center' },
-  modalPrimaryBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Montserrat-Bold' },
+  modalPrimaryBtnText: { color: theme.colors.text.onPrimary, fontSize: 16, fontFamily: 'Montserrat-Bold' },
   modalSecondaryBtn: { paddingVertical: 18, width: '100%', alignItems: 'center', marginTop: 8 },
   modalSecondaryBtnText: { color: theme.colors.text.tertiary, fontSize: 15, fontFamily: 'Montserrat-SemiBold' },
 

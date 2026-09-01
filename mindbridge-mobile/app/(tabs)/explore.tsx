@@ -132,10 +132,7 @@ export default function ToolsScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
-      <View style={StyleSheet.absoluteFillObject}>
-        
-        <View style={[styles.bgBlob, { top: -50, right: -100, backgroundColor: theme.colors.plum + '08' }]} />
-      </View>
+
 
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top }]}
