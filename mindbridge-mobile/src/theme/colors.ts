@@ -92,11 +92,11 @@ export const lightColors = {
 
 // ── Dark Mode ─────────────────────────────────────────────────────────────────
 export const darkColors = {
-  plum:      '#9EB4CC',             
-  plumLight: P.blueMirage,
-  sage:      '#5A8A70',             
-  ocean:     '#0099C0',             
-
+  plum:      '#5BA4FC',             // Brighter, more vibrant blue for dark mode
+  plumLight: '#8AB4F8',             // Bright pastel blue
+  sage:      '#66B086',             // Vibrant, brighter sage/mint
+  ocean:     '#00B4D8',             // Vibrant electric cyan/ocean
+  
   background:          '#000000',   // iOS Pure OLED Black
   backgroundSecondary: '#1C1C1E',   // iOS Grouped Background Dark       
   surface:             '#1C1C1E',   // iOS Elevated Surface Dark    
@@ -109,40 +109,40 @@ export const darkColors = {
     secondary: '#E5E7EB',           // Crisp light silver for dark mode
     tertiary:  '#9CA3AF',           // Lighter distinct gray
     onPrimary: '#000000',             
-    onWarm:    '#D4B89A',           
-    onCool:    '#8BC0D0',           
-    disabled:  '#636366',         // Solid disabled gray
+    onWarm:    '#F2D7B6',           // Brighter text for warm surfaces
+    onCool:    '#AEE2F2',           // Brighter text for cool surfaces
+    disabled:  '#636366',           // Solid disabled gray
   },
 
   accents: {
-    cloudMilk:  '#2A2A2A',          
-    dreamy:     '#1E2228',          
-    amberSmoke: '#2E2218',          
-    frost:      '#141C28',          
-    blueMirage: '#9EB4CC',          
-    matchaMist: '#2A3C2C',          
-    mossVelvet: '#4A7060',          
-    ocean:      '#0080A8',          
-    dustyCoal:  P.dustyCoal,        
-    abyss:      P.abyss,            
+    cloudMilk:  '#333333',          
+    dreamy:     '#262A33',          
+    amberSmoke: '#3D2D20',          
+    frost:      '#1A2536',          
+    blueMirage: '#6CA6F2',          // Vibrant blue mirage
+    matchaMist: '#385C40',          // Clearer green
+    mossVelvet: '#5CA684',          // Vibrant velvet
+    ocean:      '#00AEE0',          // Electric ocean
+    dustyCoal:  '#4A5568',          // Lighter coal
+    abyss:      '#232323',          
 
-    blueMirageLight: '#B0C8E0',
-    mossVelvetLight: '#5A8070',
-    oceanLight:      '#00A8C8',
-    matchaMistDark:  '#3A5040',
+    blueMirageLight: '#8CBDF2',
+    mossVelvetLight: '#7EC4A3',
+    oceanLight:      '#33D1F2',
+    matchaMistDark:  '#4A7353',
 
-    powderBlue:   '#7090B0',
-    softMint:     '#6A9C7A',
-    dustyRose:    '#A07878',
-    sand:         '#A08060',
-    terracotta:   '#C07858',
-    softGray:     '#6A7880',
-    gentlePeach:  '#C09080',
-    slate:        '#7090B0',
-    eucalyptus:   '#508068',
-    softLilac:    '#7880A8',
-    paleCoral:    '#B07868',
-    forestGreen:  '#3A5A48',
+    powderBlue:   '#86ADDF',
+    softMint:     '#8ED3A4',
+    dustyRose:    '#D89696',
+    sand:         '#CBAE8F',
+    terracotta:   '#E89274',
+    softGray:     '#8F9DA6',
+    gentlePeach:  '#ECA590',
+    slate:        '#86ADDF',
+    eucalyptus:   '#72AD8E',
+    softLilac:    '#9AA1CE',
+    paleCoral:    '#E39783',
+    forestGreen:  '#4D7A60',
   },
 
   semantic: {
