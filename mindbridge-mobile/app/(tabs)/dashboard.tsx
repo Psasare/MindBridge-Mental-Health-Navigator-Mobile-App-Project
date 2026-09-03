@@ -342,24 +342,50 @@ const DetailedOverviewCard = ({ title, value, label, icon: Icon, color, progress
 
 // ─── Main Screen ─────────────────────────────────────────────────────────────
 
-const QuestItem = ({ icon: Icon, title, subtitle, done, theme, isLast, onPress, styles }: any) => (
-  <TouchableOpacity 
-    style={[styles.questItem, isLast && { borderBottomWidth: 0 }]} 
-    onPress={onPress}
-    activeOpacity={0.7}
-  >
-    <View style={[styles.questIconWrap, { backgroundColor: done ? theme.colors.accents.eucalyptus + '15' : theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
-      <Icon size={20} color={done ? theme.colors.accents.eucalyptus : theme.colors.text.tertiary} />
+const QuestItem = ({ icon: Icon, goal, title, subtitle, done, theme, isLast, onPress, styles }: any) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  return (
+    <View style={[styles.questItemContainer, isLast && { borderBottomWidth: 0 }]}>
+      <TouchableOpacity 
+        style={styles.questItemRow} 
+        onPress={() => {
+          if (done) return;
+          if (goal?.description) {
+            setIsExpanded(!isExpanded);
+          } else if (onPress) {
+            onPress();
+          }
+        }}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.questIconWrap, { backgroundColor: done ? theme.colors.accents.eucalyptus + '15' : theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
+          <Icon size={20} color={done ? theme.colors.accents.eucalyptus : theme.colors.text.tertiary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.questTitle, done && { textDecorationLine: 'line-through', color: theme.colors.text.disabled }]}>{title}</Text>
+          <Text style={styles.questSubtitle}>{subtitle}</Text>
+        </View>
+        <View style={[styles.questCheck, done && { backgroundColor: theme.colors.accents.eucalyptus, borderColor: theme.colors.accents.eucalyptus }]}>
+          {done ? <CheckCircle2 size={16} color="#FFF" /> : (
+            goal?.description ? 
+              <ChevronDown size={16} color={theme.colors.text.disabled} style={{ transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }} /> 
+              : <ChevronRight size={16} color={theme.colors.text.disabled} />
+          )}
+        </View>
+      </TouchableOpacity>
+      
+      {isExpanded && !done && goal?.description && (
+        <Animated.View entering={FadeInUp.duration(300)} style={[styles.questExpandedContent, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }]}>
+          <Text style={[styles.questDescription, { color: theme.colors.text.secondary }]}>{goal.description}</Text>
+          <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={[styles.questStartBtn, { backgroundColor: theme.colors.plum }]}>
+            <Text style={styles.questStartBtnText}>Start Goal</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
     </View>
-    <View style={{ flex: 1 }}>
-      <Text style={[styles.questTitle, done && { textDecorationLine: 'line-through', color: theme.colors.text.disabled }]}>{title}</Text>
-      <Text style={styles.questSubtitle}>{subtitle}</Text>
-    </View>
-    <View style={[styles.questCheck, done && { backgroundColor: theme.colors.accents.eucalyptus, borderColor: theme.colors.accents.eucalyptus }]}>
-      {done && <CheckCircle2 size={16} color="#FFF" />}
-    </View>
-  </TouchableOpacity>
-);
+  );
+};
 
 const StreakJourney = ({ streak, theme, styles, completedCount }: any) => {
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -801,6 +827,7 @@ export default function DashboardScreen() {
                 return (
                   <QuestItem 
                     key={goal.id}
+                    goal={goal}
                     theme={theme} 
                     icon={Activity} 
                     title={formatText(goal.name)} 
@@ -1529,4 +1556,39 @@ const createStyles = (theme: any) => StyleSheet.create({
   bentoTextWrap: { marginTop: 'auto' },
   bentoTitle: { fontSize: 16, fontFamily: theme.typography.fonts.header, fontWeight: '800', marginBottom: 4 },
   bentoSub: { fontSize: 12, fontFamily: theme.typography.fonts.body, fontWeight: '500', opacity: 0.8 },
+  questItemContainer: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+  },
+  questItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 16,
+  },
+  questExpandedContent: {
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+  questDescription: {
+    fontSize: 14,
+    fontFamily: theme.typography.fonts.body,
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  questStartBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  questStartBtnText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontFamily: theme.typography.fonts.header,
+    fontWeight: '700',
+  },
 });

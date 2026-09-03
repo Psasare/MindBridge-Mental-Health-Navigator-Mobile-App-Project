@@ -42,11 +42,28 @@ export const GoalService = {
       where: { condition: primaryState }
     });
 
-    // If no goals found for the specific condition, fallback to 'anxiety' or any
-    let availableGoals = conditionGoals.length > 0 ? conditionGoals : await prisma.goal.findMany({ take: 25 });
+    // We need a large pool to pick diverse daily goals. If the condition alone 
+    // doesn't provide enough variety (e.g. 'stress' only has 1 goal in the DB), 
+    // we mix in a general pool of goals so it's not static every day.
+    let availableGoals = conditionGoals;
+    if (availableGoals.length < 15) {
+      const extraGoals = await prisma.goal.findMany({ take: 50 });
+      // Merge and deduplicate
+      const allIds = new Set(availableGoals.map((g: any) => g.id));
+      for (const eg of extraGoals) {
+        if (!allIds.has(eg.id)) {
+          availableGoals.push(eg);
+          allIds.add(eg.id);
+        }
+      }
+    }
 
-    // 4. Group by category and pick 1 per category
-    const categories = ['grounding', 'planning', 'connection', 'movement', 'nutrition', 'getting_up', 'self_care', 'accomplishment'];
+    // 4. Fetch distinct categories from the database to avoid hardcoding
+    const distinctCategories = await prisma.goal.findMany({
+      select: { category: true },
+      distinct: ['category']
+    });
+    const categories = distinctCategories.map(c => c.category);
     const selectedGoals: any[] = [];
 
     // Shuffle helper
@@ -58,8 +75,12 @@ export const GoalService = {
       return array;
     };
 
-    for (const category of categories) {
-      if (selectedGoals.length >= 5) break;
+    // Make sure we shuffle the categories too, so we don't always bias the first few categories
+    const shuffledCategories = [...categories];
+    shuffleArray(shuffledCategories);
+
+    for (const category of shuffledCategories) {
+      if (selectedGoals.length >= 3) break;
 
       const goalsInCategory = availableGoals.filter(g => g.category === category);
       if (goalsInCategory.length === 0) continue;
@@ -72,11 +93,11 @@ export const GoalService = {
       selectedGoals.push(poolToPickFrom[0]);
     }
 
-    // If we still don't have 5, fill with random ones
-    if (selectedGoals.length < 5) {
+    // If we still don't have 3, fill with random ones
+    if (selectedGoals.length < 3) {
       const remainingGoals = availableGoals.filter(g => !selectedGoals.find((sg: any) => sg.id === g.id));
       shuffleArray(remainingGoals);
-      selectedGoals.push(...remainingGoals.slice(0, 5 - selectedGoals.length));
+      selectedGoals.push(...remainingGoals.slice(0, 3 - selectedGoals.length));
     }
 
     // 5. Save the daily set

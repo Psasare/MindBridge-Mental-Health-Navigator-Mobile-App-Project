@@ -3,11 +3,12 @@ import { useTheme } from '../../src/context/ThemeContext';
 import { LayoutDashboard, User, Activity, MessageCircle, Settings, Compass, LayoutGrid, Users, Home } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
-import { StyleSheet, Platform, View, TouchableOpacity, Text } from 'react-native';
-import React, { useEffect } from 'react';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence } from 'react-native-reanimated';
+import { StyleSheet, Platform, View, TouchableOpacity, Text, Dimensions } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming, Easing } from 'react-native-reanimated';
 
 const APPLE_BLUE = '#007AFF';
+const { width } = Dimensions.get('window');
 
 const AnimatedTabBarIcon = ({ focused, color, IconComponent }: { focused: boolean, color: string, IconComponent: any }) => {
   const scale = useSharedValue(1);
@@ -46,14 +47,41 @@ const CustomTabBar = ({ state, descriptors, navigation, insets, theme, typograph
   // Filter out hidden routes
   const visibleRoutes = state.routes.filter((r: any) => !hiddenRoutes.includes(r.name));
   
-  // Split into left (main) and right (profile)
-  const mainRoutes = visibleRoutes.filter((r: any) => r.name !== 'profile');
-  const profileRoute = visibleRoutes.find((r: any) => r.name === 'profile');
+  // App Store iOS 18/26 "Liquid Glass" Tab Bar Design
+  const TAB_BAR_MARGIN = 20;
+  const TAB_BAR_WIDTH = width - (TAB_BAR_MARGIN * 2);
+  const TAB_WIDTH = TAB_BAR_WIDTH / visibleRoutes.length;
+  
+  const indicatorPosition = useSharedValue(state.index * TAB_WIDTH);
 
-  const renderTab = (route: any, isProfile: boolean) => {
+  useEffect(() => {
+    // Find the actual index of the focused route among the visible routes
+    const activeKey = state.routes[state.index].key;
+    const activeVisibleIndex = visibleRoutes.findIndex((r: any) => r.key === activeKey);
+    
+    if (activeVisibleIndex !== -1) {
+      indicatorPosition.value = withSpring(activeVisibleIndex * TAB_WIDTH, {
+        damping: 20,
+        stiffness: 250,
+        mass: 0.8
+      });
+    }
+  }, [state.index, visibleRoutes]);
+
+  const indicatorStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: indicatorPosition.value }],
+    };
+  });
+
+  const renderTab = (route: any, index: number) => {
     const { options } = descriptors[route.key];
     const isFocused = state.index === state.routes.findIndex((r: any) => r.key === route.key);
-    const color = isFocused ? APPLE_BLUE : (theme.isDark ? '#A0A0A0' : '#8E8E93');
+    
+    // Inactive color should be a high-contrast dark color in light mode (e.g. black or dark gray)
+    // and light color in dark mode.
+    const inactiveColor = theme.isDark ? '#EBEBF5' : '#1C1C1E';
+    const color = isFocused ? APPLE_BLUE : inactiveColor;
 
     const onPress = () => {
       const event = navigation.emit({
@@ -72,33 +100,30 @@ const CustomTabBar = ({ state, descriptors, navigation, insets, theme, typograph
     return (
       <TouchableOpacity 
         key={route.key}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
         accessibilityRole="button"
         accessibilityState={isFocused ? { selected: true } : {}}
         accessibilityLabel={options.tabBarAccessibilityLabel}
         testID={options.tabBarTestID}
         onPress={onPress}
         style={{
-          flex: isProfile ? 0 : 1,
+          flex: 1,
           alignItems: 'center',
           justifyContent: 'center',
-          paddingVertical: isProfile ? 0 : 8,
-          height: isProfile ? 56 : 'auto',
-          width: isProfile ? 56 : 'auto',
+          height: 64,
+          zIndex: 2,
         }}
       >
         {Icon && Icon({ focused: isFocused, color, size: 24 })}
-        {!isProfile && (
-          <Text style={{ 
-            color, 
-            fontSize: 10, 
-            fontFamily: typography.fonts.ui, 
-            fontWeight: '500', 
-            marginTop: 4 
-          }}>
-            {options.title}
-          </Text>
-        )}
+        <Text style={{ 
+          color, 
+          fontSize: 10, 
+          fontFamily: typography.fonts.ui, 
+          fontWeight: isFocused ? '600' : '500', 
+          marginTop: 4 
+        }}>
+          {options.title}
+        </Text>
       </TouchableOpacity>
     );
   };
@@ -107,45 +132,49 @@ const CustomTabBar = ({ state, descriptors, navigation, insets, theme, typograph
     <View style={{
       position: 'absolute',
       bottom: insets.bottom > 0 ? insets.bottom : 12,
-      left: 20,
-      right: 20,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 12,
+      left: TAB_BAR_MARGIN,
+      right: TAB_BAR_MARGIN,
       height: 64,
+      borderRadius: 32,
+      overflow: 'hidden',
     }}>
-      {/* Main Left Pill */}
-      <View style={{ flex: 1, height: 64, borderRadius: 32, overflow: 'hidden' }}>
-        <BlurView intensity={theme.isDark ? 80 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-        <View style={{
-          ...StyleSheet.absoluteFillObject,
-          borderRadius: 32,
-          borderWidth: 1,
-          borderColor: theme.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 8,
-        }}>
-          {mainRoutes.map((route: any) => renderTab(route, false))}
-        </View>
-      </View>
+      {/* Dynamic Blur Background */}
+      <BlurView 
+        intensity={theme.isDark ? 50 : 80} 
+        tint={theme.isDark ? 'dark' : 'light'} 
+        style={StyleSheet.absoluteFill} 
+      />
+      
+      {/* Semi-transparent border overlay for iOS premium feel */}
+      <View style={{
+        ...StyleSheet.absoluteFillObject,
+        borderRadius: 32,
+        borderWidth: 1,
+        borderColor: theme.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
+      }} />
 
-      {/* Profile Right Pill (Circle) */}
-      {profileRoute && (
-        <View style={{ width: 64, height: 64, borderRadius: 32, overflow: 'hidden' }}>
-          <BlurView intensity={theme.isDark ? 80 : 80} tint={theme.isDark ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
-          <View style={{
-            ...StyleSheet.absoluteFillObject,
-            borderRadius: 32,
-            borderWidth: 1,
-            borderColor: theme.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            {renderTab(profileRoute, true)}
-          </View>
-        </View>
-      )}
+      {/* Sliding Active Pill Background */}
+      <Animated.View style={[
+        {
+          position: 'absolute',
+          top: 6,
+          bottom: 6,
+          left: 6,
+          width: TAB_WIDTH - 12, // slightly inset from the boundaries
+          borderRadius: 24,
+          backgroundColor: theme.isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.06)',
+          zIndex: 1,
+        },
+        indicatorStyle
+      ]} />
+
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        ...StyleSheet.absoluteFillObject,
+      }}>
+        {visibleRoutes.map((route: any, index: number) => renderTab(route, index))}
+      </View>
     </View>
   );
 };

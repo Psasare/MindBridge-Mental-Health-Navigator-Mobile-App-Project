@@ -34,6 +34,7 @@ import {
   Mic,
   StopCircle,
   MapPin,
+  ShieldCheck,
   Cloud,
   History,
   ArrowRight,
@@ -1137,12 +1138,37 @@ export default function WellnessTrackerScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.modalHeader}>
-              <MapPin color={theme.colors.plum} size={32} />
+              <View style={[styles.statsIcon, { backgroundColor: theme.colors.plum + '15', width: 56, height: 56, borderRadius: 28 }]}>
+                <MapPin color={theme.colors.plum} size={28} />
+              </View>
             </View>
-            <Text style={[styles.modalTitle, { color: theme.colors.text.primary, marginBottom: 8 }]}>Campus Location Tracking</Text>
+            
+            <Text style={[styles.modalTitle, { color: theme.colors.text.primary, marginBottom: 8 }]}>Location Experience</Text>
             <Text style={[styles.modalLabel, { color: theme.colors.text.secondary, lineHeight: 22, marginBottom: 24 }]}>
-              We use this to suggest nearby resources. Only approximate campus locations (like "Dorm" or "Library") are stored, never exact GPS coordinates.
+              MindBridge uses your location to provide a tailored, campus-specific wellness experience. 
             </Text>
+            
+            <View style={{ backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', borderRadius: 20, padding: 16, marginBottom: 24, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+              
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12, gap: 12 }}>
+                <View style={{ marginTop: 2 }}>
+                  <ShieldCheck color={theme.colors.accents.eucalyptus} size={20} />
+                </View>
+                <Text style={{ flex: 1, fontSize: 14, color: theme.colors.text.primary, fontWeight: '600', lineHeight: 20, fontFamily: theme.typography.fonts.body }}>
+                  We only store approximate zones (e.g. "Library" or "Dorm"), never exact GPS coordinates.
+                </Text>
+              </View>
+              
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+                <View style={{ marginTop: 2 }}>
+                  <ShieldCheck color={theme.colors.accents.eucalyptus} size={20} />
+                </View>
+                <Text style={{ flex: 1, fontSize: 14, color: theme.colors.text.primary, fontWeight: '600', lineHeight: 20, fontFamily: theme.typography.fonts.body }}>
+                  Used strictly to suggest nearby mental health resources and events.
+                </Text>
+              </View>
+
+            </View>
             
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <TouchableOpacity activeOpacity={0.7} onPress={() => handleConsent(false)} style={[styles.saveBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', flex: 1 }]}>
