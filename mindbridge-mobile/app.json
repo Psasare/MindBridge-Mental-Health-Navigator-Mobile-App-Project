@@ -2,10 +2,10 @@
   "expo": {
     "name": "MindBridge",
     "owner": "mindbridge",
-    "slug": "mindbridge-mobile-dev",
-    "version": "1.0.1",
+    "slug": "mindbridge-app-v3",
+    "version": "1.0.5",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "mindbridgemobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -31,7 +31,7 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo.png"
     },
     "plugins": [
       "expo-router",
