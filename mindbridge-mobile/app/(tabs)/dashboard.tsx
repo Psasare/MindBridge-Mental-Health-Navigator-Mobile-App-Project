@@ -683,7 +683,9 @@ export default function DashboardScreen() {
   useEffect(() => {
     const checkSteps = async () => {
       try {
-        const { status } = await Pedometer.requestPermissionsAsync();
+        // Only CHECK permissions on mount to avoid blocking UI and unresponsiveness.
+        // We shouldn't request permissions until the user explicitly visits the Activity Tracker.
+        const { status } = await Pedometer.getPermissionsAsync();
         const isAvailable = await Pedometer.isAvailableAsync();
         if (isAvailable && status === 'granted') {
           const end = new Date();

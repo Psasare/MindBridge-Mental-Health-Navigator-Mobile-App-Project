@@ -1,5 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import api from '../../src/services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking } from 'react-native';
 import { 
   View, 
@@ -254,24 +255,75 @@ export default function ProfileScreen() {
   const [showHelp, setShowHelp] = useState(false);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
 
-  const fetchProfile = async () => {
+  const fetchProfileData = async () => {
     try {
-      setLoading(true);
-      const res = await api.get('/profile');
-      setProfile(res.data);
-      setEditData({
-        name: res.data.name,
-        phoneNumber: res.data.phoneNumber,
-        studentId: res.data.studentId,
-        username: res.data.username,
-        university: res.data.onboarding?.university,
-        program: res.data.onboarding?.program,
-        level: res.data.onboarding?.level,
-      });
+      // 1. Instantly load from cache for zero-delay rendering
+      const cached = await AsyncStorage.getItem('profile_cache');
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (data.profile) setProfile(data.profile);
+        if (data.insights) setInsights(data.insights);
+        if (data.userStats) setUserStats(data.userStats);
+        setLoading(false); // Drop loading immediately if cache exists
+      }
+
+      // 2. Fetch fresh data concurrently in the background
+      const [profileRes, insightsRes, gamificationRes] = await Promise.allSettled([
+        api.get('/profile'),
+        api.get('/mood/insights'),
+        api.get('/goals/gamification')
+      ]);
+
+      let newProfile = profile;
+      let newInsights = insights;
+      let newUserStats = userStats;
+
+      if (profileRes.status === 'fulfilled') {
+        newProfile = profileRes.value.data;
+        setProfile(newProfile);
+        setEditData({
+          name: newProfile.name,
+          phoneNumber: newProfile.phoneNumber,
+          studentId: newProfile.studentId,
+          username: newProfile.username,
+          university: newProfile.onboarding?.university,
+          program: newProfile.onboarding?.program,
+          level: newProfile.onboarding?.level,
+        });
+      }
+
+      if (insightsRes.status === 'fulfilled') {
+        newInsights = insightsRes.value.data;
+        setInsights(newInsights);
+      }
+
+      if (gamificationRes.status === 'fulfilled') {
+        const g = gamificationRes.value.data;
+        newUserStats = {
+          currentStreak: g.currentStreak || 0,
+          longestStreak: g.longestStreak || 0,
+          lastCheckInDate: g.lastCompletedAt || null,
+          totalCheckIns: g.totalPoints ? Math.floor(g.totalPoints / 10) : 0,
+          totalJournals: 0,
+          totalCrisisUses: 0,
+          totalPeerSupport: 0,
+          points: g.totalPoints || 0,
+          badges: g.badges || [],
+        };
+        setUserStats(newUserStats);
+      }
+
+      // 3. Save fresh data to cache
+      await AsyncStorage.setItem('profile_cache', JSON.stringify({
+        profile: newProfile,
+        insights: newInsights,
+        userStats: newUserStats
+      }));
+
     } catch (e: any) {
       console.warn('Network issue fetching profile:', e.message);
-      // Fallback to AuthContext data if network fails
-      if (userData) {
+      // Fallback to AuthContext data if network fails completely and no cache
+      if (!profile && userData) {
         setProfile({
           name: userData.name,
           username: userData.username,
@@ -281,13 +333,6 @@ export default function ProfileScreen() {
             program: userData.academic?.faculty,
             level: userData.academic?.level,
           }
-        });
-        setEditData({
-          name: userData.name,
-          username: userData.username,
-          university: userData.academic?.institution,
-          program: userData.academic?.faculty,
-          level: userData.academic?.level,
         });
       }
 
@@ -302,37 +347,8 @@ export default function ProfileScreen() {
   };
 
   useEffect(() => {
-    fetchProfile();
-    fetchInsights();
-    loadGamificationStats();
+    fetchProfileData();
   }, []);
-
-  const loadGamificationStats = async () => {
-    try {
-      const res = await api.get('/goals/gamification');
-      const g = res.data;
-      setUserStats({
-        currentStreak: g.currentStreak || 0,
-        longestStreak: g.longestStreak || 0,
-        lastCheckInDate: g.lastCompletedAt || null,
-        totalCheckIns: g.totalPoints ? Math.floor(g.totalPoints / 10) : 0,
-        totalJournals: 0,
-        totalCrisisUses: 0,
-        totalPeerSupport: 0,
-        points: g.totalPoints || 0,
-        badges: g.badges || [],
-      });
-    } catch (e) {
-      console.log('Failed to load gamification stats from server', e);
-    }
-  };
-
-  const fetchInsights = async () => {
-    try {
-      const res = await api.get('/mood/insights');
-      setInsights(res.data);
-    } catch (e) {}
-  };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -357,7 +373,7 @@ export default function ProfileScreen() {
     try {
       await api.put('/profile', editData);
       setIsEditing(false);
-      fetchProfile();
+      fetchProfileData();
       Alert.alert('Success', 'Profile updated successfully');
     } catch (e) {
       // Offline fallback: optimistically update the local state
