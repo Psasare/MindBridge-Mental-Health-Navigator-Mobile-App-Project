@@ -2,8 +2,8 @@
   "expo": {
     "name": "MindBridge",
     "owner": "mindbridge",
-    "slug": "mindbridge-app-v3",
-    "version": "1.0.5",
+    "slug": "mindbridge-app-v4",
+    "version": "1.0.6",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "mindbridgemobile",
