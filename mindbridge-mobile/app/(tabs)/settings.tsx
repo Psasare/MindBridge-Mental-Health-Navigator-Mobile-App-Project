@@ -161,35 +161,35 @@ export default function SettingsScreen() {
     }
   };
 
-  const SettingRow = ({ icon: Icon, color, label, value, onPress, isLast, type = 'link' }: any) => (
-    <TouchableOpacity 
-      activeOpacity={0.7} 
-      onPress={onPress}
-      disabled={type === 'switch'}
-      style={[styles.row, isLast && { borderBottomWidth: 0 }]}
-    >
-      <View style={[styles.rowIconWrap, { backgroundColor: color + '15' }]}>
-        <Icon color={color} size={20} />
+const SettingRow = ({ icon: Icon, color, label, value, onPress, isLast, type = 'link', colors, styles }: any) => (
+  <TouchableOpacity 
+    activeOpacity={0.7} 
+    onPress={onPress}
+    disabled={type === 'switch'}
+    style={[styles.row, isLast && { borderBottomWidth: 0 }]}
+  >
+    <View style={[styles.rowIconWrap, { backgroundColor: color + '15' }]}>
+      <Icon color={color} size={20} />
+    </View>
+    <Text style={styles.rowLabel}>{label}</Text>
+    
+    {type === 'link' && (
+      <View style={styles.rowRight}>
+        {value && <Text style={styles.rowValue}>{value}</Text>}
+        <ChevronRight color={colors.text.disabled} size={18} />
       </View>
-      <Text style={styles.rowLabel}>{label}</Text>
-      
-      {type === 'link' && (
-        <View style={styles.rowRight}>
-          {value && <Text style={styles.rowValue}>{value}</Text>}
-          <ChevronRight color={colors.text.disabled} size={18} />
-        </View>
-      )}
-      
-      {type === 'switch' && (
-        <Switch 
-          value={value} 
-          onValueChange={onPress}
-          trackColor={{ false: colors.text.disabled + '40', true: colors.plum + '60' }}
-          thumbColor={value ? colors.plum : '#f4f3f4'}
-        />
-      )}
-    </TouchableOpacity>
-  );
+    )}
+    
+    {type === 'switch' && (
+      <Switch 
+        value={value} 
+        onValueChange={onPress}
+        trackColor={{ false: colors.text.disabled + '40', true: colors.plum + '60' }}
+        thumbColor={value ? colors.plum : '#f4f3f4'}
+      />
+    )}
+  </TouchableOpacity>
+);
 
   return (
     <View style={styles.container}>
@@ -248,12 +248,16 @@ export default function SettingsScreen() {
               label={t('settings.personal_info')} 
               value="Manage" 
               onPress={() => router.push('/(tabs)/profile')}
+              colors={colors}
+              styles={styles}
             />
             <SettingRow 
               icon={Lock} 
               color={colors.accents.powderBlue} 
               label={t('settings.security_password')} 
               onPress={() => setIsPasswordModalVisible(true)}
+              colors={colors}
+              styles={styles}
             />
             <SettingRow 
               icon={ShieldCheck} 
@@ -262,6 +266,8 @@ export default function SettingsScreen() {
               type="switch" 
               value={biometrics} 
               onPress={toggleBiometrics} 
+              colors={colors}
+              styles={styles}
             />
             <SettingRow 
               icon={Shield} 
@@ -269,6 +275,8 @@ export default function SettingsScreen() {
               label={"Data & Privacy"} 
               onPress={() => router.push('/(tabs)/privacy')}
               isLast 
+              colors={colors}
+              styles={styles}
             />
           </View>
         </View>
@@ -284,6 +292,8 @@ export default function SettingsScreen() {
               type="switch" 
               value={notifications} 
               onPress={toggleNotifications} 
+              colors={colors}
+              styles={styles}
             />
             <SettingRow 
               icon={Globe} 
@@ -292,6 +302,8 @@ export default function SettingsScreen() {
               value={language} 
               onPress={changeLanguage}
               isLast 
+              colors={colors}
+              styles={styles}
             />
           </View>
         </View>
@@ -305,12 +317,16 @@ export default function SettingsScreen() {
               color={colors.accents.slate} 
               label={t('settings.help_center')} 
               onPress={() => setIsHelpVisible(true)}
+              colors={colors}
+              styles={styles}
             />
             <SettingRow 
               icon={MessageSquare} 
               color={colors.accents.forestGreen} 
               label={t('settings.feedback')} 
               onPress={() => setIsFeedbackVisible(true)}
+              colors={colors}
+              styles={styles}
             />
             <SettingRow 
               icon={Info} 
@@ -318,6 +334,8 @@ export default function SettingsScreen() {
               label={t('settings.about')} 
               onPress={() => setIsAboutVisible(true)}
               isLast 
+              colors={colors}
+              styles={styles}
             />
           </View>
         </View>
