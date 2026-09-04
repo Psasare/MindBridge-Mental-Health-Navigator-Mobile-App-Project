@@ -65,32 +65,31 @@ export default function GoalExecutionScreen() {
       const rawTimeSpent = (goal?.duration * 60) - timeLeft;
       const timeSpent = isNaN(rawTimeSpent) || rawTimeSpent < 0 ? 0 : rawTimeSpent;
 
-      const res = await api.post('/goals/complete', {
-        goalId: goal.id,
-        rating,
-        timeSpent
-      });
-
-      // Optimistically update the dashboard cache
-      try {
-        const cached = await AsyncStorage.getItem('dashboard_cache');
+      // Optimistically update the dashboard cache in the background (no await)
+      AsyncStorage.getItem('dashboard_cache').then(cached => {
         if (cached) {
           const data = JSON.parse(cached);
           if (data.completedGoalIds) {
             data.completedGoalIds = [...new Set([...data.completedGoalIds, goal.id])];
-            await AsyncStorage.setItem('dashboard_cache', JSON.stringify(data));
+            AsyncStorage.setItem('dashboard_cache', JSON.stringify(data));
           }
         }
-      } catch (cacheErr) {
+      }).catch(cacheErr => {
         console.warn('Failed to optimistically update dashboard cache', cacheErr);
-      }
+      });
+
+      // Add a 10 second timeout so Axios doesn't hang infinitely if the server is stuck
+      const res = await api.post('/goals/complete', {
+        goalId: goal.id,
+        rating,
+        timeSpent
+      }, { timeout: 10000 });
 
       setGamificationResult(res.data);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e) {
       console.error('Failed to submit goal completion', e);
       setIsSubmitting(false);
-      // Let them return anyway
       router.back();
     }
   };

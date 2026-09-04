@@ -270,10 +270,11 @@ export default function WellnessTrackerScreen() {
       }
 
       // 2. Fetch fresh data concurrently
+      const ts = skipCache ? `?_t=${Date.now()}` : '';
       const [contextRes, logsRes, insightsRes] = await Promise.all([
-        api.get('/ai/oracle-context'),
-        api.get('/mood'),
-        api.get('/mood/insights'),
+        api.get(`/ai/oracle-context${ts}`),
+        api.get(`/mood${ts}`),
+        api.get(`/mood/insights${ts}`),
       ]);
 
       const newTotalCount = contextRes.data.moodCount || 0;
@@ -287,7 +288,7 @@ export default function WellnessTrackerScreen() {
       setHistory(newHistory);
 
       // Fetch AI Proactive Insights in the background
-      api.get('/ai/proactive-insights').then(async res => {
+      api.get(`/ai/proactive-insights${ts}`).then(async res => {
         let newAiInsight = aiInsight;
         let newSuggested = suggestedResources;
         if (res.data?.gardenInsight) {
