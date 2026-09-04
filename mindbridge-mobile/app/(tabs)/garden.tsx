@@ -255,29 +255,68 @@ export default function WellnessTrackerScreen() {
 
   const fetchData = async () => {
     try {
+      // 1. Instant Cache Load
+      const cached = await AsyncStorage.getItem('garden_cache');
+      if (cached) {
+        const data = JSON.parse(cached);
+        if (data.totalCount !== undefined) setTotalCount(data.totalCount);
+        if (data.moodLogs) setMoodLogs(data.moodLogs);
+        if (data.insights) setInsights(data.insights);
+        if (data.history) setHistory(data.history);
+        if (data.aiInsight) setAiInsight(data.aiInsight);
+        if (data.suggestedResources) setSuggestedResources(data.suggestedResources);
+      }
+
+      // 2. Fetch fresh data concurrently
       const [contextRes, logsRes, insightsRes] = await Promise.all([
         api.get('/ai/oracle-context'),
         api.get('/mood'),
         api.get('/mood/insights'),
       ]);
 
-      setTotalCount(contextRes.data.moodCount || 0);
-      setMoodLogs(logsRes.data || []);
-      setInsights(insightsRes.data || null);
+      const newTotalCount = contextRes.data.moodCount || 0;
+      const newMoodLogs = logsRes.data || [];
+      const newInsights = insightsRes.data || null;
+      const newHistory = newMoodLogs.slice(0, 3);
+
+      setTotalCount(newTotalCount);
+      setMoodLogs(newMoodLogs);
+      setInsights(newInsights);
+      setHistory(newHistory);
 
       // Fetch AI Proactive Insights in the background
-      api.get('/ai/proactive-insights').then(res => {
+      api.get('/ai/proactive-insights').then(async res => {
+        let newAiInsight = aiInsight;
+        let newSuggested = suggestedResources;
         if (res.data?.gardenInsight) {
-          setAiInsight(res.data.gardenInsight);
+          newAiInsight = res.data.gardenInsight;
+          setAiInsight(newAiInsight);
         }
         if (res.data?.suggestedResources) {
-          setSuggestedResources(res.data.suggestedResources);
+          newSuggested = res.data.suggestedResources;
+          setSuggestedResources(newSuggested);
         }
+        
+        // Cache completely resolved state
+        await AsyncStorage.setItem('garden_cache', JSON.stringify({
+          totalCount: newTotalCount,
+          moodLogs: newMoodLogs,
+          insights: newInsights,
+          history: newHistory,
+          aiInsight: newAiInsight,
+          suggestedResources: newSuggested
+        }));
       }).catch(err => console.log('Failed to fetch proactive insights in garden'));
 
-      // Recent history: last 3 logs
-      const logs = logsRes.data || [];
-      setHistory(logs.slice(0, 3));
+      // Save baseline cache immediately
+      await AsyncStorage.setItem('garden_cache', JSON.stringify({
+        totalCount: newTotalCount,
+        moodLogs: newMoodLogs,
+        insights: newInsights,
+        history: newHistory,
+        aiInsight,
+        suggestedResources
+      }));
 
       // Privacy Check
       const consent = await AsyncStorage.getItem('@location_consent');

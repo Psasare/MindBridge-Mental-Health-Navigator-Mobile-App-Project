@@ -5,6 +5,7 @@ import { useTheme } from '../../src/context/ThemeContext';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { Award, Flame, Target, Trophy, ChevronLeft, Calendar } from 'lucide-react-native';
 import api from '../../src/services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { FadeInUp, FadeIn } from 'react-native-reanimated';
 
 export default function ProgressScreen() {
@@ -21,8 +22,19 @@ export default function ProgressScreen() {
 
   const fetchGamification = async () => {
     try {
+      // Load from cache instantly
+      const cached = await AsyncStorage.getItem('progress_cache');
+      if (cached) {
+        setGamification(JSON.parse(cached));
+        setLoading(false);
+      }
+
+      // Fetch fresh data in the background
       const res = await api.get('/goals/gamification');
       setGamification(res.data);
+      
+      // Update cache
+      await AsyncStorage.setItem('progress_cache', JSON.stringify(res.data));
     } catch (e) {
       console.warn('Failed to fetch gamification', e);
     } finally {
