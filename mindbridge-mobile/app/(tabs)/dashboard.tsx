@@ -532,6 +532,9 @@ export default function DashboardScreen() {
 
   const checkStatus = useCallback(async () => {
     try {
+      // Instantly load any optimistic cache updates (e.g. from goal-execution)
+      await loadCachedData();
+      
       const todayStr = new Date().toDateString();
       // Run all API requests concurrently for maximum speed
       const [coreRes, [aiRes, gamificationRes, goalsRes]] = await Promise.all([

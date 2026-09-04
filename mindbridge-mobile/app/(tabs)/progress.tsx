@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useTheme } from '../../src/context/ThemeContext';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { Award, Flame, Target, Trophy, ChevronLeft, Calendar } from 'lucide-react-native';
@@ -16,9 +16,11 @@ export default function ProgressScreen() {
   const [loading, setLoading] = useState(true);
   const [gamification, setGamification] = useState<any>(null);
 
-  useEffect(() => {
-    fetchGamification();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchGamification();
+    }, [])
+  );
 
   const fetchGamification = async () => {
     try {

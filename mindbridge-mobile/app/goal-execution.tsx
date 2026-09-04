@@ -8,6 +8,7 @@ import api from '../src/services/api';
 import Animated, { FadeInDown, FadeIn, SlideInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -61,16 +62,34 @@ export default function GoalExecutionScreen() {
     if (rating === 0) return;
     setIsSubmitting(true);
     try {
-      const timeSpent = (goal?.duration * 60) - timeLeft;
+      const rawTimeSpent = (goal?.duration * 60) - timeLeft;
+      const timeSpent = isNaN(rawTimeSpent) || rawTimeSpent < 0 ? 0 : rawTimeSpent;
+
       const res = await api.post('/goals/complete', {
         goalId: goal.id,
         rating,
         timeSpent
       });
+
+      // Optimistically update the dashboard cache
+      try {
+        const cached = await AsyncStorage.getItem('dashboard_cache');
+        if (cached) {
+          const data = JSON.parse(cached);
+          if (data.completedGoalIds) {
+            data.completedGoalIds = [...new Set([...data.completedGoalIds, goal.id])];
+            await AsyncStorage.setItem('dashboard_cache', JSON.stringify(data));
+          }
+        }
+      } catch (cacheErr) {
+        console.warn('Failed to optimistically update dashboard cache', cacheErr);
+      }
+
       setGamificationResult(res.data);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e) {
       console.error('Failed to submit goal completion', e);
+      setIsSubmitting(false);
       // Let them return anyway
       router.back();
     }

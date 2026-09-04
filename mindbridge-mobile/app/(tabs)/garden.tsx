@@ -253,18 +253,20 @@ export default function WellnessTrackerScreen() {
   const [aiInsight, setAiInsight] = useState<any>(null);
   const [suggestedResources, setSuggestedResources] = useState<any[]>([]);
 
-  const fetchData = async () => {
+  const fetchData = async (skipCache = false) => {
     try {
-      // 1. Instant Cache Load
-      const cached = await AsyncStorage.getItem('garden_cache');
-      if (cached) {
-        const data = JSON.parse(cached);
-        if (data.totalCount !== undefined) setTotalCount(data.totalCount);
-        if (data.moodLogs) setMoodLogs(data.moodLogs);
-        if (data.insights) setInsights(data.insights);
-        if (data.history) setHistory(data.history);
-        if (data.aiInsight) setAiInsight(data.aiInsight);
-        if (data.suggestedResources) setSuggestedResources(data.suggestedResources);
+      if (!skipCache) {
+        // 1. Instant Cache Load
+        const cached = await AsyncStorage.getItem('garden_cache');
+        if (cached) {
+          const data = JSON.parse(cached);
+          if (data.totalCount !== undefined) setTotalCount(data.totalCount);
+          if (data.moodLogs) setMoodLogs(data.moodLogs);
+          if (data.insights) setInsights(data.insights);
+          if (data.history) setHistory(data.history);
+          if (data.aiInsight) setAiInsight(data.aiInsight);
+          if (data.suggestedResources) setSuggestedResources(data.suggestedResources);
+        }
       }
 
       // 2. Fetch fresh data concurrently
@@ -514,7 +516,7 @@ export default function WellnessTrackerScreen() {
       
       setStep(5);
       setTotalCount(prev => prev + 1);
-      fetchData();
+      fetchData(true);
     } catch (error) {
       console.warn('Network timeout when saving mood, updating locally.');
       const newLog = { 

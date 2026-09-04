@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useCallback } from 'react';
 import api from '../../src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking } from 'react-native';
@@ -53,7 +53,7 @@ import {
 } from 'lucide-react-native';
 
 import { AuthContext } from '../../src/context/AuthContext';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { BADGE_DEFINITIONS } from '../../src/utils/StreakManager';
 import type { UserStats } from '../../src/utils/StreakManager';
 
@@ -346,9 +346,11 @@ export default function ProfileScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchProfileData();
+    }, [])
+  );
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
