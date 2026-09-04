@@ -246,6 +246,24 @@ export const GoalService = {
     let gamification = await prisma.userGamification.findUnique({ where: { userId } });
     if (!gamification) {
       gamification = await prisma.userGamification.create({ data: { userId } });
+    } else if (gamification.lastCompletedAt && gamification.currentStreak > 0) {
+      // Check if the streak was broken (last check in was older than yesterday)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      const lastCompletedDate = new Date(gamification.lastCompletedAt);
+      lastCompletedDate.setHours(0, 0, 0, 0);
+
+      if (lastCompletedDate.getTime() < yesterday.getTime()) {
+        // Streak broken, reset to 0
+        gamification = await prisma.userGamification.update({
+          where: { userId },
+          data: { currentStreak: 0 }
+        });
+      }
     }
     return gamification;
   },

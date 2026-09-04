@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { GoalService } from '../services/goal.service.js';
 
 const prisma = new PrismaClient();
 
@@ -31,8 +32,8 @@ export const getProfile = async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Fetch true gamification stats
-    const gamification = await prisma.userGamification.findUnique({ where: { userId } });
+    // Fetch true gamification stats using the service to ensure streaks are validated and reset if broken
+    const gamification = await GoalService.getGamificationStatus(userId);
     const streak = gamification?.currentStreak || 0;
     const points = gamification?.totalPoints || 0;
 
