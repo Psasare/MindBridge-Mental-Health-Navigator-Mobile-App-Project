@@ -1,4 +1,4 @@
-import { GoalService } from './src/services/goal.service.js';
+import { GoalService } from '../src/services/goal.service.js';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
