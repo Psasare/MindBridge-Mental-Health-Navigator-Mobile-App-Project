@@ -1,11 +1,11 @@
 // @ts-ignore: Bypassing IDE cache bug
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
   TextInput,
   StatusBar,
   KeyboardAvoidingView,
@@ -23,10 +23,10 @@ import { LightSensor } from 'expo-sensors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
 import { SkeletonLoader } from '../../src/components/SkeletonLoader';
-import { 
-  BookOpen, 
-  Plus, 
-  X, 
+import {
+  BookOpen,
+  Plus,
+  X,
   Calendar,
   Wind,
   Sun,
@@ -66,7 +66,7 @@ export default function JournalScreen() {
   const theme = useTheme();
   const { t } = theme;
   const styles = createStyles(theme);
-  
+
   const [entries, setEntries] = useState<any[]>([]);
   const [filteredEntries, setFilteredEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -76,12 +76,12 @@ export default function JournalScreen() {
   const [selectedMood, setSelectedMood] = useState('calm');
   const [filterMood, setFilterMood] = useState('all');
   const [showSleepWarning, setShowSleepWarning] = useState(false);
-  
+
   // Audio State
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(recorder);
   const isRecording = recorderState.isRecording;
-  
+
   const [audioUri, setAudioUri] = useState<string | null>(null);
   const [player, setPlayer] = useState<AudioPlayer | null>(null);
   const [isPlaying, setIsPlaying] = useState<string | null>(null);
@@ -91,7 +91,7 @@ export default function JournalScreen() {
   // Video Check-in
   const [showVideoModal, setShowVideoModal] = useState(false);
   const [facialMetrics, setFacialMetrics] = useState<any>(null);
-  
+
   // Voice Analysis
   const [isAnalyzingVoice, setIsAnalyzingVoice] = useState(false);
   const [vocalMetrics, setVocalMetrics] = useState<any>(null);
@@ -108,7 +108,7 @@ export default function JournalScreen() {
   ];
 
   const getMoodIcon = (mood: string) => {
-    switch(mood) {
+    switch (mood) {
       case 'calm': return <Wind color={theme.colors.accents.eucalyptus} size={16} />;
       case 'anxious': return <CloudRain color={theme.colors.accents.powderBlue} size={16} />;
       case 'joy': return <Sun color={theme.colors.accents.gentlePeach} size={16} />;
@@ -127,10 +127,10 @@ export default function JournalScreen() {
       setIsAnalyzingVoice(true);
       // Simulate STT and sentiment processing
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       setNewContent((prev: string) => prev ? prev + '\n\n' + 'I am feeling quite overwhelmed today, but trying to stay positive.' : 'I am feeling quite overwhelmed today, but trying to stay positive.');
       setVocalMetrics({ tone: 'Anxious but hopeful', speed: 'Moderate', clarity: 'High' });
-      
+
       // Ethical Discard
       Alert.alert("Transcription Complete", "Voice transcribed successfully. The raw audio has been discarded to protect your privacy.");
       setAudioUri(null);
@@ -153,7 +153,7 @@ export default function JournalScreen() {
           setLoading(false);
         }
       }
-      
+
       const response = await api.get('/journal');
       setEntries(response.data);
       setFilteredEntries(response.data);
@@ -189,12 +189,12 @@ export default function JournalScreen() {
   // Sleep Hygiene Tracking (Phase 2 Sensor Integration)
   useEffect(() => {
     let subscription: any;
-    
+
     const checkSleepHygiene = async () => {
       // Check if it's late night (10 PM to 5 AM)
       const hour = new Date().getHours();
       const isLateNight = hour >= 22 || hour < 5;
-      
+
       if (isLateNight) {
         await LightSensor.setUpdateInterval(2000);
         subscription = LightSensor.addListener(({ illuminance }) => {
@@ -210,9 +210,9 @@ export default function JournalScreen() {
         });
       }
     };
-    
+
     checkSleepHygiene();
-    
+
     return () => {
       if (subscription) subscription.remove();
     };
@@ -225,8 +225,8 @@ export default function JournalScreen() {
         "MindBridge uses your microphone strictly to transcribe your Voice Journal. The audio is processed and immediately discarded. We do not store raw audio.",
         [
           { text: "Cancel", style: "cancel" },
-          { 
-            text: "Allow", 
+          {
+            text: "Allow",
             onPress: async () => {
               const { granted } = await requestRecordingPermissionsAsync();
               if (granted) {
@@ -256,20 +256,21 @@ export default function JournalScreen() {
       setIsPlaying(null);
       return;
     }
-    
+
     if (player) player.remove();
     const newPlayer = createAudioPlayer(uri);
     setPlayer(newPlayer);
     setIsPlaying(id);
     newPlayer.play();
-    newPlayer.addListener('playbackStatusUpdate', (status) => {
+    // @ts-ignore - addListener exists on SharedObject but types are incomplete
+    newPlayer.addListener('playbackStatusUpdate', (status: any) => {
       if (status.didJustFinish) setIsPlaying(null);
     });
   };
 
   const handleSave = async () => {
     if (!newContent.trim()) return;
-    
+
     try {
       const response = await api.post('/journal', {
         title: newTitle.trim() || 'Untitled Entry',
@@ -279,7 +280,7 @@ export default function JournalScreen() {
         facialMetrics: facialMetrics,
         vocalMetrics: vocalMetrics,
       });
-      
+
 
       setEntries([response.data, ...entries]);
       setIsWriting(false);
@@ -300,8 +301,8 @@ export default function JournalScreen() {
       "Are you sure you want to remove this reflection? This cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
+        {
+          text: "Delete",
           style: "destructive",
           onPress: async () => {
             try {
@@ -321,7 +322,7 @@ export default function JournalScreen() {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) return 'Just now';
     if (diffInHours < 24) return `${diffInHours}h ago`;
     return `${Math.floor(diffInHours / 24)}d ago`;
@@ -330,68 +331,68 @@ export default function JournalScreen() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
-      
-      
+
+
       {!isWriting ? (
-        <FlatList 
+        <FlatList
           data={filteredEntries}
           keyExtractor={entry => entry.id}
-          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top }]} 
+          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top }]}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <>
-              <ScreenHeader 
-                title={t('journal.title')} 
+              <ScreenHeader
+                title={t('journal.title')}
                 subtitle={t('journal.subtitle')}
-                  rightAction={
-                    <TouchableOpacity 
-                      activeOpacity={0.8} 
-                      style={styles.newBtn}
-                      onPress={() => setIsWriting(true)}
-                    >
-                      <Plus color={theme.colors.text.onPrimary || '#FFF'} size={24} />
-                    </TouchableOpacity>
-                  }
-                />
+                rightAction={
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.newBtn}
+                    onPress={() => setIsWriting(true)}
+                  >
+                    <Plus color={theme.colors.text.onPrimary || '#FFF'} size={24} />
+                  </TouchableOpacity>
+                }
+              />
 
-                {showSleepWarning && (
-                  <Animated.View entering={FadeIn.duration(600)} style={styles.sleepWarning}>
-                    <View style={{ backgroundColor: theme.colors.plum + '20', padding: 8, borderRadius: 12 }}>
-                      <Moon color={theme.colors.plum} size={20} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Typography variant="bodyBold" color={theme.colors.text.primary} style={styles.sleepWarningTitle}>Journaling in the dark?</Typography>
-                      <Typography variant="caption" color={theme.colors.text.secondary} style={styles.sleepWarningText}>
-                        Late-night screen time can disrupt your sleep cycle. Try turning on night mode.
-                      </Typography>
-                    </View>
-                    <TouchableOpacity activeOpacity={0.7} onPress={() => setShowSleepWarning(false)} style={{ padding: 4 }}>
-                      <X color={theme.colors.text.tertiary} size={16} />
-                    </TouchableOpacity>
-                  </Animated.View>
-                )}
-
-                <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
-                  {/* Filter Pills */}
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar}>
-                    <TouchableOpacity activeOpacity={0.7} 
-                      onPress={() => setFilterMood('all')}
-                      style={[styles.filterPill, filterMood === 'all' && styles.filterPillActive]}
-                    >
-                      <Text style={[styles.filterText, filterMood === 'all' && styles.filterTextActive]}>All</Text>
-                    </TouchableOpacity>
-                    {MOOD_OPTIONS.map(mood => (
-                      <TouchableOpacity activeOpacity={0.7} 
-                        key={mood.id}
-                        onPress={() => setFilterMood(mood.id)}
-                        style={[styles.filterPill, filterMood === mood.id && styles.filterPillActive]}
-                      >
-                        <mood.icon size={14} color={filterMood === mood.id ? '#FFF' : mood.color} />
-                        <Text style={[styles.filterText, filterMood === mood.id && styles.filterTextActive]}>{mood.label}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
+              {showSleepWarning && (
+                <Animated.View entering={FadeIn.duration(600)} style={styles.sleepWarning}>
+                  <View style={{ backgroundColor: theme.colors.plum + '20', padding: 8, borderRadius: 12 }}>
+                    <Moon color={theme.colors.plum} size={20} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Typography variant="bodyBold" color={theme.colors.text.primary} style={styles.sleepWarningTitle}>Journaling in the dark?</Typography>
+                    <Typography variant="caption" color={theme.colors.text.secondary} style={styles.sleepWarningText}>
+                      Late-night screen time can disrupt your sleep cycle. Try turning on night mode.
+                    </Typography>
+                  </View>
+                  <TouchableOpacity activeOpacity={0.7} onPress={() => setShowSleepWarning(false)} style={{ padding: 4 }}>
+                    <X color={theme.colors.text.tertiary} size={16} />
+                  </TouchableOpacity>
                 </Animated.View>
+              )}
+
+              <Animated.View entering={FadeIn.duration(600)} style={styles.header}>
+                {/* Filter Pills */}
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterBar}>
+                  <TouchableOpacity activeOpacity={0.7}
+                    onPress={() => setFilterMood('all')}
+                    style={[styles.filterPill, filterMood === 'all' && styles.filterPillActive]}
+                  >
+                    <Text style={[styles.filterText, filterMood === 'all' && styles.filterTextActive]}>All</Text>
+                  </TouchableOpacity>
+                  {MOOD_OPTIONS.map(mood => (
+                    <TouchableOpacity activeOpacity={0.7}
+                      key={mood.id}
+                      onPress={() => setFilterMood(mood.id)}
+                      style={[styles.filterPill, filterMood === mood.id && styles.filterPillActive]}
+                    >
+                      <mood.icon size={14} color={filterMood === mood.id ? '#FFF' : mood.color} />
+                      <Text style={[styles.filterText, filterMood === mood.id && styles.filterTextActive]}>{mood.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </Animated.View>
             </>
           }
           ListEmptyComponent={
@@ -421,7 +422,7 @@ export default function JournalScreen() {
             )
           }
           renderItem={({ item: entry, index }) => (
-            <Animated.View 
+            <Animated.View
               entering={FadeInUp.delay(Math.min(index, 10) * 50).duration(500)}
               style={[styles.entryCard, { marginHorizontal: 24, marginBottom: 16 }]}
             >
@@ -431,8 +432,8 @@ export default function JournalScreen() {
                   <Typography variant="captionMedium" color={theme.colors.text.tertiary} style={styles.dateText}>{formatDate(entry.createdAt)}</Typography>
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <TouchableOpacity 
-                    activeOpacity={0.7} 
+                  <TouchableOpacity
+                    activeOpacity={0.7}
                     onPress={() => handleDelete(entry.id)}
                     style={styles.deleteBtn}
                   >
@@ -445,7 +446,7 @@ export default function JournalScreen() {
               </View>
               <Typography variant="h3" color={theme.colors.text.primary} style={styles.entryTitle}>{entry.title}</Typography>
               <Typography variant="body" color={theme.colors.text.secondary} style={styles.entryContent} numberOfLines={4}>{entry.content}</Typography>
-              
+
               {entry.aiFeedback && (
                 <View style={[styles.aiFeedbackCard, { backgroundColor: theme.colors.plum + '10' }]}>
                   <View style={styles.aiFeedbackHeader}>
@@ -457,7 +458,7 @@ export default function JournalScreen() {
               )}
 
               {entry.audioUrl && (
-                <TouchableOpacity activeOpacity={0.7} 
+                <TouchableOpacity activeOpacity={0.7}
                   style={[styles.audioPreview, { backgroundColor: theme.colors.plum + '10' }]}
                   onPress={() => playSound(entry.audioUrl, entry.id)}
                 >
@@ -465,12 +466,12 @@ export default function JournalScreen() {
                   <Text style={[styles.audioText, { color: theme.colors.plum }]}>Voice Reflection</Text>
                   <View style={styles.audioWaveform}>
                     {Array.from({ length: 12 }).map((_, i) => (
-                      <View 
+                      <View
                         key={i}
                         style={[
-                          styles.waveBar, 
+                          styles.waveBar,
                           { height: Math.random() * 12 + 4, backgroundColor: isPlaying === entry.id ? theme.colors.plum : theme.colors.text.disabled }
-                        ]} 
+                        ]}
                       />
                     ))}
                   </View>
@@ -480,8 +481,8 @@ export default function JournalScreen() {
           )}
         />
       ) : (
-        <Animated.View 
-          entering={SlideInDown.duration(500)} 
+        <Animated.View
+          entering={SlideInDown.duration(500)}
           exiting={SlideOutDown}
           style={[styles.composerContainer, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 10 }]}
         >
@@ -490,7 +491,7 @@ export default function JournalScreen() {
               <X color={theme.colors.plum} size={24} />
             </TouchableOpacity>
             <Typography variant="h4" color={theme.colors.text.primary} style={styles.composerTitle}>New Entry</Typography>
-            <Button 
+            <Button
               variant="primary"
               size="small"
               onPress={handleSave}
@@ -498,127 +499,127 @@ export default function JournalScreen() {
               {t('journal.save_entry')}
             </Button>
           </View>
-          
-          <KeyboardAvoidingView 
+
+          <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ flex: 1 }}
           >
-            <ScrollView 
+            <ScrollView
               style={{ flex: 1 }}
               contentContainerStyle={[styles.composerBody, { paddingBottom: 60 }]}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
               {/* Mood Selector in Composer */}
-            <View style={styles.moodSelector}>
-              <Text style={styles.moodSelectorLabel}>How are you feeling?</Text>
-              <View style={styles.moodOptionsRow}>
-                {MOOD_OPTIONS.map(mood => (
-                  <TouchableOpacity activeOpacity={0.7} 
-                    key={mood.id}
-                    onPress={() => setSelectedMood(mood.id)}
-                    style={[
-                      styles.moodOption, 
-                      selectedMood === mood.id && { backgroundColor: mood.color + '20', borderColor: mood.color }
-                    ]}
-                  >
-                    <mood.icon size={20} color={mood.color} />
-                    <Text style={[styles.moodOptionText, { color: mood.color }]}>{mood.label}</Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.moodSelector}>
+                <Text style={styles.moodSelectorLabel}>How are you feeling?</Text>
+                <View style={styles.moodOptionsRow}>
+                  {MOOD_OPTIONS.map(mood => (
+                    <TouchableOpacity activeOpacity={0.7}
+                      key={mood.id}
+                      onPress={() => setSelectedMood(mood.id)}
+                      style={[
+                        styles.moodOption,
+                        selectedMood === mood.id && { backgroundColor: mood.color + '20', borderColor: mood.color }
+                      ]}
+                    >
+                      <mood.icon size={20} color={mood.color} />
+                      <Text style={[styles.moodOptionText, { color: mood.color }]}>{mood.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </View>
-            </View>
 
-            <View style={{ height: 24 }} />
+              <View style={{ height: 24 }} />
 
-            <View style={styles.inputGroup}>
-              <Typography variant="captionMedium" color={theme.colors.text.tertiary} style={styles.inputLabel}>Entry Title</Typography>
-              <TextInput
-                style={styles.titleInput}
-                placeholder={t('journal.title_placeholder')}
-                placeholderTextColor={theme.colors.text.tertiary}
-                value={newTitle}
-                onChangeText={setNewTitle}
-              />
-            </View>
+              <View style={styles.inputGroup}>
+                <Typography variant="captionMedium" color={theme.colors.text.tertiary} style={styles.inputLabel}>Entry Title</Typography>
+                <TextInput
+                  style={styles.titleInput}
+                  placeholder={t('journal.title_placeholder')}
+                  placeholderTextColor={theme.colors.text.tertiary}
+                  value={newTitle}
+                  onChangeText={setNewTitle}
+                />
+              </View>
 
-            <View style={styles.inputGroup}>
-              <Typography variant="captionMedium" color={theme.colors.text.tertiary} style={styles.inputLabel}>Journal Content</Typography>
-              <TextInput
-                style={styles.contentInput}
-                placeholder={t('journal.content_placeholder')}
-                placeholderTextColor={theme.colors.text.tertiary}
-                multiline
-                value={newContent}
-                onChangeText={setNewContent}
-              />
-            </View>
+              <View style={styles.inputGroup}>
+                <Typography variant="captionMedium" color={theme.colors.text.tertiary} style={styles.inputLabel}>Journal Content</Typography>
+                <TextInput
+                  style={styles.contentInput}
+                  placeholder={t('journal.content_placeholder')}
+                  placeholderTextColor={theme.colors.text.tertiary}
+                  multiline
+                  value={newContent}
+                  onChangeText={setNewContent}
+                />
+              </View>
 
-            {/* Sensor & Media Integration UI */}
-            <View style={styles.mediaRow}>
-              <View style={[styles.audioComposer, { flex: 1 }]}>
-                {audioUri ? (
-                  <View style={{ gap: 8, flex: 1 }}>
-                    <View style={styles.audioPreviewActive}>
-                      <TouchableOpacity activeOpacity={0.7} onPress={() => playSound(audioUri, 'new')} style={styles.playIconBtn}>
-                        {isPlaying === 'new' ? <Pause color="#FFF" size={20} /> : <Play color="#FFF" size={20} />}
-                      </TouchableOpacity>
-                      <Text style={styles.audioPreviewText} numberOfLines={1}>Voice Note</Text>
-                      <TouchableOpacity activeOpacity={0.7} onPress={() => { setAudioUri(null); setVocalMetrics(null); }} style={styles.removeAudioBtn}>
-                        <X color={theme.colors.text.tertiary} size={16} />
-                      </TouchableOpacity>
-                    </View>
-                    
-                    {/* Voice Analysis Button / Result */}
-                    {!vocalMetrics ? (
-                      <TouchableOpacity activeOpacity={0.7} 
-                        style={[styles.mediaBtn, { backgroundColor: theme.colors.plum + '20', padding: 10 }]} 
-                        onPress={handleAnalyzeVoice}
-                        disabled={isAnalyzingVoice}
-                      >
-                        {isAnalyzingVoice ? (
-                          <ActivityIndicator size="small" color={theme.colors.plum} />
-                        ) : (
-                          <>
-                            <Activity color={theme.colors.plum} size={18} />
-                            <Text style={[styles.mediaBtnText, { color: theme.colors.plum, fontSize: 13 }]}>Analyze Tone</Text>
-                          </>
-                        )}
-                      </TouchableOpacity>
-                    ) : (
-                      <View style={[styles.mediaBtn, { backgroundColor: 'rgba(52, 211, 153, 0.15)', padding: 10 }]}>
-                        <Check color="#34D399" size={18} />
-                        <Text style={[styles.mediaBtnText, { color: '#34D399', fontSize: 13 }]}>
-                          Tone: {vocalMetrics.voiceQuality}
-                        </Text>
+              {/* Sensor & Media Integration UI */}
+              <View style={styles.mediaRow}>
+                <View style={[styles.audioComposer, { flex: 1 }]}>
+                  {audioUri ? (
+                    <View style={{ gap: 8, flex: 1 }}>
+                      <View style={styles.audioPreviewActive}>
+                        <TouchableOpacity activeOpacity={0.7} onPress={() => playSound(audioUri, 'new')} style={styles.playIconBtn}>
+                          {isPlaying === 'new' ? <Pause color="#FFF" size={20} /> : <Play color="#FFF" size={20} />}
+                        </TouchableOpacity>
+                        <Text style={styles.audioPreviewText} numberOfLines={1}>Voice Note</Text>
+                        <TouchableOpacity activeOpacity={0.7} onPress={() => { setAudioUri(null); setVocalMetrics(null); }} style={styles.removeAudioBtn}>
+                          <X color={theme.colors.text.tertiary} size={16} />
+                        </TouchableOpacity>
                       </View>
-                    )}
-                  </View>
-                ) : (
-                  <TouchableOpacity activeOpacity={0.7} 
-                    onPress={isRecording ? stopRecording : startRecording}
-                    style={[styles.mediaBtn, isRecording && styles.micBtnRecording]}
-                  >
-                    <Animated.View style={animatedMicStyle}>
-                      {isRecording ? <StopCircle color="#FFF" size={24} /> : <Mic color={theme.colors.text.secondary} size={24} />}
-                    </Animated.View>
-                    <Text style={[styles.mediaBtnText, { color: isRecording ? '#FFF' : theme.colors.text.secondary }]}>
-                      {isRecording ? "Recording..." : "Voice"}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
 
-              <TouchableOpacity activeOpacity={0.7} 
-                onPress={() => setShowVideoModal(true)}
-                style={[styles.mediaBtn, { flex: 1, backgroundColor: facialMetrics ? 'rgba(52, 211, 153, 0.15)' : (theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)') }]}
-              >
-                {facialMetrics ? <Check color="#34D399" size={24} /> : <Camera color={theme.colors.text.secondary} size={24} />}
-                <Text style={[styles.mediaBtnText, { color: facialMetrics ? "#34D399" : theme.colors.text.secondary }]}>
-                  {facialMetrics ? "Face Logged" : "Face Scan"}
-                </Text>
-              </TouchableOpacity>
-            </View>
+                      {/* Voice Analysis Button / Result */}
+                      {!vocalMetrics ? (
+                        <TouchableOpacity activeOpacity={0.7}
+                          style={[styles.mediaBtn, { backgroundColor: theme.colors.plum + '20', padding: 10 }]}
+                          onPress={handleAnalyzeVoice}
+                          disabled={isAnalyzingVoice}
+                        >
+                          {isAnalyzingVoice ? (
+                            <ActivityIndicator size="small" color={theme.colors.plum} />
+                          ) : (
+                            <>
+                              <Activity color={theme.colors.plum} size={18} />
+                              <Text style={[styles.mediaBtnText, { color: theme.colors.plum, fontSize: 13 }]}>Analyze Tone</Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                      ) : (
+                        <View style={[styles.mediaBtn, { backgroundColor: 'rgba(52, 211, 153, 0.15)', padding: 10 }]}>
+                          <Check color="#34D399" size={18} />
+                          <Text style={[styles.mediaBtnText, { color: '#34D399', fontSize: 13 }]}>
+                            Tone: {vocalMetrics.voiceQuality}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  ) : (
+                    <TouchableOpacity activeOpacity={0.7}
+                      onPress={isRecording ? stopRecording : startRecording}
+                      style={[styles.mediaBtn, isRecording && styles.micBtnRecording]}
+                    >
+                      <Animated.View style={animatedMicStyle}>
+                        {isRecording ? <StopCircle color="#FFF" size={24} /> : <Mic color={theme.colors.text.secondary} size={24} />}
+                      </Animated.View>
+                      <Text style={[styles.mediaBtnText, { color: isRecording ? '#FFF' : theme.colors.text.secondary }]}>
+                        {isRecording ? "Recording..." : "Voice"}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <TouchableOpacity activeOpacity={0.7}
+                  onPress={() => setShowVideoModal(true)}
+                  style={[styles.mediaBtn, { flex: 1, backgroundColor: facialMetrics ? 'rgba(52, 211, 153, 0.15)' : (theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)') }]}
+                >
+                  {facialMetrics ? <Check color="#34D399" size={24} /> : <Camera color={theme.colors.text.secondary} size={24} />}
+                  <Text style={[styles.mediaBtnText, { color: facialMetrics ? "#34D399" : theme.colors.text.secondary }]}>
+                    {facialMetrics ? "Face Logged" : "Face Scan"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </ScrollView>
           </KeyboardAvoidingView>
         </Animated.View>
@@ -638,15 +639,15 @@ export default function JournalScreen() {
 }
 
 const createStyles = (theme: any) => StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: theme.colors.backgroundSecondary, 
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.backgroundSecondary,
   },
-  scrollContent: { 
-    paddingHorizontal: 0, 
-    paddingBottom: 120 
+  scrollContent: {
+    paddingHorizontal: 0,
+    paddingBottom: 120
   },
-  header: { 
+  header: {
     marginBottom: 32,
     paddingHorizontal: 24,
   },
@@ -1035,22 +1036,22 @@ const createStyles = (theme: any) => StyleSheet.create({
   removeAudioBtn: {
     padding: 4,
   },
-  mediaRow: { 
-    flexDirection: 'row', 
-    width: '100%', 
-    gap: 12 
+  mediaRow: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: 12
   },
-  mediaBtn: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    gap: 8, 
-    padding: 14, 
-    borderRadius: 16, 
-    width: '100%' 
+  mediaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 14,
+    borderRadius: 16,
+    width: '100%'
   },
-  mediaBtnText: { 
-    fontSize: 14, 
-    fontFamily: theme.typography.fonts.header 
+  mediaBtnText: {
+    fontSize: 14,
+    fontFamily: theme.typography.fonts.header
   }
 });
