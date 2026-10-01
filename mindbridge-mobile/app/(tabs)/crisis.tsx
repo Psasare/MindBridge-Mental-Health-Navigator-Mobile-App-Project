@@ -7,14 +7,16 @@ import {
   TouchableOpacity, 
   Linking,
   StatusBar,
-  Alert
+  Alert,
+  Dimensions,
+  Pressable
 } from 'react-native';
 import { AuthContext } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeInDown, useSharedValue, useAnimatedStyle, withRepeat, withSequence, withTiming, Easing, withSpring } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScreenHeader } from '../../src/components/ScreenHeader';
+import { BlurView } from 'expo-blur';
 import api from '../../src/services/api';
 import { 
   Phone, 
@@ -26,8 +28,12 @@ import {
   Users,
   BriefcaseMedical,
   Mail,
-  Globe
+  Globe,
+  ShieldAlert,
+  Info
 } from 'lucide-react-native';
+
+const { width } = Dimensions.get('window');
 
 export const UNIVERSITY_COUNSELING_CENTERS: Record<string, any> = {
   'Kwame Nkrumah University of Science and Technology (KNUST)': {
@@ -48,10 +54,10 @@ export const UNIVERSITY_COUNSELING_CENTERS: Record<string, any> = {
     description: 'Confidential psychological support',
     address: 'Legon Campus',
     services: [
-      'Mental Health & Psycho-social Support: Treatment for depression, anxiety, stress, grief, and relationship counselling.',
-      'Academic Counselling: Guidance on study skills, learning disorders, and academic stress management.',
-      'Career Development: CV clinics, vocational counselling, and internship placement.',
-      'Assessment: Psychometric and psychiatric assessment'
+      'Mental Health & Psycho-social Support',
+      'Academic Counselling',
+      'Career Development',
+      'Psychiatric assessment'
     ]
   },
   'University of Cape Coast (UCC)': {
@@ -81,7 +87,7 @@ export const UNIVERSITY_COUNSELING_CENTERS: Record<string, any> = {
     services: ['Career Counselling', 'General Support']
   },
   'Ashesi University': {
-    name: 'Ashesi Counselling and Coaching Center',
+    name: 'Ashesi Counselling Center',
     number: '+233 30 261 0330',
     secondaryNumber: '+233 24 880 7992',
     email: 'ddavis@ashesi.edu.gh',
@@ -91,7 +97,7 @@ export const UNIVERSITY_COUNSELING_CENTERS: Record<string, any> = {
     services: ['Emotional Support', 'Academic Coaching', 'Career Guidance']
   },
   'Academic City University College': {
-    name: 'ACity Career Services & Support',
+    name: 'ACity Career Services',
     number: '+233 59 403 0308',
     email: 'careerservices@acity.edu.gh',
     description: 'Wellness and career counseling for ACity students',
@@ -112,7 +118,7 @@ export const UNIVERSITY_COUNSELING_CENTERS: Record<string, any> = {
     website: 'scheduler.gimpa.edu.gh/ea',
     description: 'Support for the GIMPA community',
     address: 'Greenhill, Accra',
-    services: ['Individual Counselling', 'Group Counselling', 'Mental Health Consultations']
+    services: ['Individual Counselling', 'Group Counselling', 'Mental Consultations']
   },
   'Other': {
     name: 'National Counseling Center',
@@ -123,12 +129,84 @@ export const UNIVERSITY_COUNSELING_CENTERS: Record<string, any> = {
   }
 };
 
+const PulsingCallButton = ({ title, subtitle, number, color, icon: Icon, delay, secondary }: any) => {
+  const scale = useSharedValue(1);
+  const pulseScale = useSharedValue(1);
+  
+  useEffect(() => {
+    if (!secondary) {
+      pulseScale.value = withRepeat(
+        withSequence(
+          withTiming(1.05, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+          withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) })
+        ),
+        -1,
+        true
+      );
+    }
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }]
+  }));
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }]
+  }));
+
+  const handlePressIn = () => { scale.value = withSpring(0.95); };
+  const handlePressOut = () => { scale.value = withSpring(1); };
+
+  const handleCall = async () => {
+    try {
+      const url = `tel:${number.replace(/\s+/g, '')}`;
+      const supported = await Linking.canOpenURL(url);
+      if (supported) await Linking.openURL(url);
+      else Alert.alert('Unavailable', 'Your device does not support calling.');
+    } catch (error) {
+      console.warn('Error opening dialer:', error);
+    }
+  };
+
+  return (
+    <Animated.View entering={FadeInUp.delay(delay).duration(600)}>
+      <Pressable onPress={handleCall} onPressIn={handlePressIn} onPressOut={handlePressOut}>
+        <Animated.View style={[
+          styles.callButton, 
+          secondary ? styles.callButtonSecondary : styles.callButtonPrimary,
+          !secondary && pulseStyle,
+          animatedStyle
+        ]}>
+          <LinearGradient
+            colors={secondary ? ['transparent', 'transparent'] : [color, color + 'E6']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: 28 }]}
+          />
+          {!secondary && (
+            <BlurView intensity={20} tint="light" style={[StyleSheet.absoluteFill, { borderRadius: 28, overflow: 'hidden' }]} />
+          )}
+          
+          <View style={styles.callButtonContent}>
+            <View style={[styles.callIconWrap, secondary ? { backgroundColor: color + '20' } : { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+              <Icon color={secondary ? color : '#FFF'} size={28} />
+            </View>
+            <View style={styles.callTextWrap}>
+              <Text style={[styles.callTitle, { color: secondary ? color : '#FFF' }]}>{title}</Text>
+              <Text style={[styles.callSubtitle, { color: secondary ? color + '99' : 'rgba(255,255,255,0.8)' }]}>{subtitle}</Text>
+            </View>
+            <ChevronRight color={secondary ? color + '50' : 'rgba(255,255,255,0.6)'} size={24} />
+          </View>
+        </Animated.View>
+      </Pressable>
+    </Animated.View>
+  );
+};
+
 export default function CrisisSupportScreen() {
   const insets = useSafeAreaInsets();
   const themeContext = useTheme();
   const { userData } = useContext(AuthContext);
   
-  // Use userData.academic.institution if available, otherwise default to 'Other'
   const initialUni = userData?.academic?.institution || 'Other';
   const [userUni, setUserUni] = useState<string>(initialUni);
 
@@ -140,28 +218,19 @@ export default function CrisisSupportScreen() {
           setUserUni(response.data.onboarding.university);
         }
       } catch (error) {
-        console.warn('Network timeout when fetching profile, falling back to cached institution.');
+        // Fallback handled
       }
     };
     fetchProfile();
   }, []);
-
-  const styles = createStyles(themeContext);
   
-  // Dynamically create an institution if it's not in the hardcoded list
   const getInstitutionDetails = (uniName: string) => {
-    if (UNIVERSITY_COUNSELING_CENTERS[uniName]) {
-      return UNIVERSITY_COUNSELING_CENTERS[uniName];
-    }
-    
-    if (uniName === 'Other') {
-      return UNIVERSITY_COUNSELING_CENTERS['Other'];
-    }
-
+    if (UNIVERSITY_COUNSELING_CENTERS[uniName]) return UNIVERSITY_COUNSELING_CENTERS[uniName];
+    if (uniName === 'Other') return UNIVERSITY_COUNSELING_CENTERS['Other'];
     return {
-      name: `${uniName} Counseling Services`,
-      number: '0800 678 678', // Generic crisis line fallback
-      description: 'Please contact your local student affairs office or use the national crisis line.',
+      name: `${uniName} Counseling`,
+      number: '0800 678 678', 
+      description: 'Contact your local student affairs office.',
       address: 'Campus Administration',
       services: ['Mental Health Support', 'General Counseling', 'Crisis Management']
     };
@@ -172,8 +241,8 @@ export default function CrisisSupportScreen() {
   const NEARBY_SERVICES = [
     {
       id: 'therapy',
-      title: 'Private Therapy Clinics',
-      description: 'Licensed psychologists and therapists for continued care',
+      title: 'Therapy Clinics',
+      description: 'Find licensed psychologists near you',
       icon: Stethoscope,
       query: 'therapy+clinics+near+me',
       color: themeContext.colors.ocean,
@@ -181,169 +250,160 @@ export default function CrisisSupportScreen() {
     {
       id: 'hospital',
       title: 'Mental Health Facilities',
-      description: 'Psychiatric hospitals and intensive care units',
+      description: 'Psychiatric and intensive care units',
       icon: BriefcaseMedical,
       query: 'psychiatric+hospital+near+me',
       color: themeContext.colors.plum,
     },
     {
       id: 'support',
-      title: 'Community Support Groups',
-      description: 'Peer support, group therapy, and rehabilitation',
+      title: 'Support Groups',
+      description: 'Community peer support and therapy',
       icon: Users,
       query: 'mental+health+support+groups+near+me',
       color: themeContext.colors.accents.mossVelvet,
     }
   ];
 
-  const handleCall = async (number: string) => {
-    try {
-      const url = `tel:${number.replace(/\s+/g, '')}`;
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert('Unavailable', 'Your device does not support calling at this time.');
-      }
-    } catch (error) {
-      console.warn('Error opening dialer:', error);
-    }
-  };
-
   const handleMap = async (query: string) => {
     try {
       const url = `https://www.google.com/maps/search/${query}`;
       await Linking.openURL(url);
     } catch (error) {
-      console.warn('Error opening maps:', error);
-      Alert.alert('Map Unavailable', 'Unable to open maps. Please search manually for local services.');
+      Alert.alert('Map Unavailable', 'Unable to open maps.');
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: themeContext.colors.background }]}>
       <StatusBar barStyle={themeContext.isDark ? "light-content" : "dark-content"} />
       
-
       <ScrollView 
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader 
-          title="Care Navigator" 
-          subtitle="Institutional support & local mental health services allocation"
-        />
+        <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
+          <View style={[styles.headerBadge, { backgroundColor: themeContext.colors.semantic.danger + '15' }]}>
+            <ShieldAlert color={themeContext.colors.semantic.danger} size={16} />
+            <Text style={[styles.headerBadgeText, { color: themeContext.colors.semantic.danger }]}>Emergency & Crisis</Text>
+          </View>
+          <Text style={[styles.headerTitle, { color: themeContext.colors.text.primary }]}>Get Help Now</Text>
+          <Text style={[styles.headerSubtitle, { color: themeContext.colors.text.secondary }]}>
+            You are not alone. Immediate support is available 24/7.
+          </Text>
+        </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(100).duration(800)} style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Institutional Care</Text>
+        {/* Primary Actions (Highly Prominent) */}
+        <View style={styles.actionsContainer}>
+          <PulsingCallButton 
+            title={institution.name} 
+            subtitle="Campus Support Line"
+            number={institution.number}
+            color={themeContext.colors.plum}
+            icon={Phone}
+            delay={100}
+          />
+
+          {institution.secondaryNumber && (
+            <PulsingCallButton 
+              title="Secondary Helpline" 
+              subtitle="Alternative Campus Contact"
+              number={institution.secondaryNumber}
+              color={themeContext.colors.plum}
+              icon={PhoneForwarded}
+              delay={200}
+              secondary
+            />
+          )}
+
+          <PulsingCallButton 
+            title="National Emergency" 
+            subtitle="Police, Fire, Ambulance (112)"
+            number="112"
+            color={themeContext.colors.semantic.danger}
+            icon={ShieldAlert}
+            delay={300}
+          />
+        </View>
+
+        {/* Institutional Information (Cleaner, Flat Design) */}
+        <Animated.View entering={FadeInUp.delay(400).duration(800)} style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: themeContext.colors.text.primary }]}>Institution Details</Text>
           
-          <View style={styles.institutionCard}>
-            <View style={styles.instHeader}>
-              <View style={[styles.iconWrap, { backgroundColor: themeContext.colors.plum + '20' }]}>
-                <Building2 color={themeContext.colors.plum} size={28} />
+          <View style={[styles.infoCard, { backgroundColor: themeContext.colors.surface, borderColor: themeContext.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+            <View style={styles.infoHeader}>
+              <View style={[styles.infoIconWrap, { backgroundColor: themeContext.colors.plum + '15' }]}>
+                <Building2 color={themeContext.colors.plum} size={22} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.instTitle}>{institution.name}</Text>
-                <Text style={styles.instDesc}>{institution.description}</Text>
-              </View>
+              <Text style={[styles.infoTitle, { color: themeContext.colors.text.primary }]}>{institution.description}</Text>
             </View>
 
-            <View style={styles.instDetails}>
+            <View style={styles.infoDivider} />
+
+            <View style={styles.infoRows}>
               {institution.address && (
-                <View style={styles.detailRow}>
-                  <MapPin size={16} color={themeContext.colors.text.tertiary} />
-                  <Text style={styles.detailText}>{institution.address}</Text>
+                <View style={styles.infoRow}>
+                  <MapPin size={18} color={themeContext.colors.text.tertiary} />
+                  <Text style={[styles.infoText, { color: themeContext.colors.text.secondary }]}>{institution.address}</Text>
                 </View>
               )}
               {institution.email && (
-                <View style={styles.detailRow}>
-                  <Mail size={16} color={themeContext.colors.text.tertiary} />
-                  <Text style={styles.detailText}>{institution.email}</Text>
+                <View style={styles.infoRow}>
+                  <Mail size={18} color={themeContext.colors.text.tertiary} />
+                  <Text style={[styles.infoText, { color: themeContext.colors.text.secondary }]}>{institution.email}</Text>
                 </View>
               )}
               {institution.website && (
-                <View style={styles.detailRow}>
-                  <Globe size={16} color={themeContext.colors.text.tertiary} />
-                  <Text style={styles.detailText}>{institution.website}</Text>
-                </View>
-              )}
-              {institution.services && (
-                <View style={{ marginTop: 12 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: themeContext.colors.text.primary, marginBottom: 8 }}>Key Services</Text>
-                  {institution.services.map((service: string, idx: number) => (
-                    <View key={idx} style={{ flexDirection: 'row', marginBottom: 4 }}>
-                      <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: themeContext.colors.plum, marginTop: 7, marginRight: 8 }} />
-                      <Text style={{ fontSize: 13, color: themeContext.colors.text.secondary, flex: 1, lineHeight: 18 }}>{service}</Text>
-                    </View>
-                  ))}
+                <View style={styles.infoRow}>
+                  <Globe size={18} color={themeContext.colors.text.tertiary} />
+                  <Text style={[styles.infoText, { color: themeContext.colors.text.secondary }]}>{institution.website}</Text>
                 </View>
               )}
             </View>
 
-            <TouchableOpacity  
-              style={styles.primaryCallBtn}
-              onPress={() => handleCall(institution.number)}
-              activeOpacity={0.8}
-            >
-              <Phone color={themeContext.colors.text.onPrimary} size={20} style={{ marginRight: 8 }} />
-              <Text style={styles.primaryCallText}>Call {institution.secondaryNumber ? 'Primary Line' : 'Counseling Services'}</Text>
-            </TouchableOpacity>
-
-            {institution.secondaryNumber && (
-              <TouchableOpacity  
-                style={[styles.primaryCallBtn, { backgroundColor: themeContext.colors.accents.powderBlue, marginTop: 8 }]}
-                onPress={() => handleCall(institution.secondaryNumber)}
-                activeOpacity={0.8}
-              >
-                <Phone color={themeContext.colors.text.onPrimary} size={20} style={{ marginRight: 8 }} />
-                <Text style={styles.primaryCallText}>Call Secondary Line</Text>
-              </TouchableOpacity>
+            {institution.services && (
+              <View style={styles.servicesContainer}>
+                <View style={styles.servicesHeader}>
+                  <Info size={16} color={themeContext.colors.text.tertiary} />
+                  <Text style={[styles.servicesTitle, { color: themeContext.colors.text.secondary }]}>Available Services</Text>
+                </View>
+                <View style={styles.servicesChips}>
+                  {institution.services.map((service: string, idx: number) => (
+                    <View key={idx} style={[styles.serviceChip, { backgroundColor: themeContext.isDark ? 'rgba(255,255,255,0.05)' : themeContext.colors.background }]}>
+                      <Text style={[styles.serviceChipText, { color: themeContext.colors.text.secondary }]}>{service}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
             )}
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(300).duration(800)} style={styles.section}>
-          <Text style={styles.sectionTitle}>Nearby Services & Therapy</Text>
-          <Text style={styles.sectionSubtitle}>Allocated community services for extended support outside campus.</Text>
+        {/* Nearby Services (Horizontal List to save space and look cleaner) */}
+        <Animated.View entering={FadeInUp.delay(500).duration(800)} style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: themeContext.colors.text.primary }]}>Nearby Services</Text>
           
-          {NEARBY_SERVICES.map((service, index) => (
-            <Animated.View key={service.id} entering={FadeInUp.delay(400 + (index * 100)).duration(500)}>
-              <TouchableOpacity  
-                style={styles.serviceCard}
-                onPress={() => handleMap(service.query)}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.serviceIconWrap, { backgroundColor: service.color + (themeContext.isDark ? '25' : '15') }]}>
-                  <service.icon color={service.color} size={24} />
-                </View>
-                <View style={styles.serviceInfo}>
-                  <Text style={styles.serviceTitle}>{service.title}</Text>
-                  <Text style={styles.serviceDesc}>{service.description}</Text>
-                </View>
-                <ChevronRight color={themeContext.colors.text.disabled} size={20} />
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.delay(700).duration(500)} style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: themeContext.colors.semantic.danger }]}>National Crisis Fallbacks</Text>
-          
-          <TouchableOpacity  
-            style={[styles.fallbackCard, { backgroundColor: themeContext.colors.semantic.danger, borderColor: themeContext.colors.semantic.danger }]}
-            onPress={() => handleCall('112')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.serviceIconWrap, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-              <Phone color="#FFF" size={22} />
-            </View>
-            <View style={styles.serviceInfo}>
-              <Text style={[styles.serviceTitle, { color: '#FFF' }]}>National Emergency (112)</Text>
-              <Text style={[styles.serviceDesc, { color: 'rgba(255,255,255,0.8)' }]}>Police, Fire, Ambulance (24/7)</Text>
-            </View>
-            <PhoneForwarded color="#FFF" size={20} />
-          </TouchableOpacity>
-
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 24 }} snapToInterval={width * 0.7 + 16} decelerationRate="fast">
+            {NEARBY_SERVICES.map((service, index) => (
+              <Pressable key={service.id} onPress={() => handleMap(service.query)}>
+                <Animated.View style={[
+                  styles.nearbyCard, 
+                  { backgroundColor: themeContext.colors.surface, borderColor: themeContext.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }
+                ]}>
+                  <View style={[styles.nearbyIconWrap, { backgroundColor: service.color + '15' }]}>
+                    <service.icon color={service.color} size={24} />
+                  </View>
+                  <Text style={[styles.nearbyTitle, { color: themeContext.colors.text.primary }]}>{service.title}</Text>
+                  <Text style={[styles.nearbyDesc, { color: themeContext.colors.text.secondary }]}>{service.description}</Text>
+                  
+                  <View style={styles.nearbyActionRow}>
+                    <Text style={[styles.nearbyActionText, { color: service.color }]}>Find on Map</Text>
+                    <ChevronRight color={service.color} size={16} />
+                  </View>
+                </Animated.View>
+              </Pressable>
+            ))}
+          </ScrollView>
         </Animated.View>
 
       </ScrollView>
@@ -351,156 +411,211 @@ export default function CrisisSupportScreen() {
   );
 }
 
-const createStyles = (theme: any) => StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.backgroundSecondary,
   },
   scrollContent: {
-    paddingHorizontal: 0,
-    paddingBottom: 100,
+    paddingBottom: 120,
   },
-  section: {
-    marginBottom: 32,
+  header: {
     paddingHorizontal: 24,
+    marginBottom: 32,
+    alignItems: 'center',
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontFamily: theme.typography.fonts.header,
-    fontWeight: '800',
-    color: theme.colors.text.primary,
-    marginBottom: 6,
-    letterSpacing: -0.5,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    fontFamily: theme.typography.fonts.body,
-    color: theme.colors.text.secondary,
-    marginBottom: 16,
-    lineHeight: 20,
-  },
-  institutionCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 28,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: theme.isDark ? 0.2 : 0.05,
-    shadowRadius: 16,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)',
-  },
-  instHeader: {
+  headerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginBottom: 16,
+    gap: 6,
   },
-  iconWrap: {
-    width: 60,
-    height: 60,
+  headerBadgeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  headerTitle: {
+    fontSize: 34,
+    fontWeight: '800',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    paddingHorizontal: 20,
+  },
+  actionsContainer: {
+    paddingHorizontal: 24,
+    gap: 16,
+    marginBottom: 40,
+  },
+  callButton: {
+    borderRadius: 28,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  callButtonPrimary: {
+    height: 100,
+  },
+  callButtonSecondary: {
+    height: 85,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  callButtonContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  callIconWrap: {
+    width: 56,
+    height: 56,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
   },
-  instTitle: {
-    fontSize: 18,
-    fontFamily: theme.typography.fonts.header,
+  callTextWrap: {
+    flex: 1,
+  },
+  callTitle: {
+    fontSize: 20,
     fontWeight: '800',
-    color: theme.colors.text.primary,
     marginBottom: 4,
   },
-  instDesc: {
+  callSubtitle: {
     fontSize: 14,
-    fontFamily: theme.typography.fonts.body,
-    color: theme.colors.text.secondary,
-    lineHeight: 20,
+    fontWeight: '500',
   },
-  instDetails: {
-    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-    padding: 16,
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 16,
+    paddingHorizontal: 24,
+  },
+  infoCard: {
+    marginHorizontal: 24,
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1,
+  },
+  infoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  infoIconWrap: {
+    width: 48,
+    height: 48,
     borderRadius: 16,
-    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  detailRow: {
+  infoTitle: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 22,
+  },
+  infoDivider: {
+    height: 1,
+    backgroundColor: 'rgba(150,150,150,0.2)',
+    marginVertical: 20,
+  },
+  infoRows: {
+    gap: 12,
+  },
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  detailText: {
-    fontSize: 14,
-    fontFamily: theme.typography.fonts.accent,
-    fontWeight: '600',
-    color: theme.colors.text.secondary,
+  infoText: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
   },
-  primaryCallBtn: {
+  servicesContainer: {
+    marginTop: 24,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(150,150,150,0.1)',
+  },
+  servicesHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.plum,
-    paddingVertical: 16,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    gap: 8,
+    marginBottom: 12,
   },
-  primaryCallText: {
-    color: theme.colors.text.onPrimary,
-    fontSize: 16,
-    fontFamily: theme.typography.fonts.header,
-    fontWeight: '900',
+  servicesTitle: {
+    fontSize: 14,
+    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  serviceCard: {
+  servicesChips: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface,
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  serviceChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  serviceChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  nearbyCard: {
+    width: width * 0.7,
+    marginLeft: 24,
     borderRadius: 24,
     padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: theme.isDark ? 0.2 : 0.04,
-    shadowRadius: 12,
-    elevation: 3,
     borderWidth: 1,
-    borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)',
   },
-  serviceIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 20,
+  nearbyIconWrap: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginBottom: 16,
   },
-  serviceInfo: {
-    flex: 1,
-  },
-  serviceTitle: {
-    fontSize: 16,
-    fontFamily: theme.typography.fonts.header,
+  nearbyTitle: {
+    fontSize: 18,
     fontWeight: '800',
-    color: theme.colors.text.primary,
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  serviceDesc: {
-    fontSize: 13,
-    fontFamily: theme.typography.fonts.body,
-    color: theme.colors.text.secondary,
-    lineHeight: 18,
+  nearbyDesc: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 20,
   },
-  fallbackCard: {
+  nearbyActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.semantic.danger + '30',
+    marginTop: 'auto',
+  },
+  nearbyActionText: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginRight: 4,
   }
 });

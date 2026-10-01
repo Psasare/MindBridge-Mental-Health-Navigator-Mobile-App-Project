@@ -4,6 +4,8 @@ import { AuthProvider, AuthContext } from '../src/context/AuthContext';
 import { LanguageProvider } from '../src/context/LanguageContext';
 import { View } from 'react-native';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { queryClient, asyncStoragePersister } from '../src/lib/queryClient';
 import { AnimatedLogoLoader } from '../src/components/AnimatedLogoLoader';
 import {
   useFonts,
@@ -167,7 +169,12 @@ export default function RootLayout() {
     <ThemeProvider>
       <LanguageProvider>
         <AuthProvider>
-          <InitialLayout />
+          <PersistQueryClientProvider
+            client={queryClient}
+            persistOptions={{ persister: asyncStoragePersister }}
+          >
+            <InitialLayout />
+          </PersistQueryClientProvider>
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>

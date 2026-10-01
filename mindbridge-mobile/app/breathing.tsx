@@ -224,7 +224,7 @@ export default function BreathingScreen() {
                     ? [theme.colors.plum, theme.colors.accents.blueMirage] 
                     : [theme.colors.plum + '80', theme.colors.plum + '20']
                   } 
-                  style={StyleSheet.absoluteFillObject} 
+                  style={StyleSheet.absoluteFill} 
                 />
               </Animated.View>
 

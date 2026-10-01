@@ -623,7 +623,7 @@ const AudioPlayerModal = ({ meditation, visible, onClose, theme }: any) => {
         const newPlayer = createAudioPlayer(meditation.audioUrl);
         setPlayer(newPlayer);
         
-        newPlayer.addListener('playbackStatusUpdate', (status) => {
+        (newPlayer as any).addListener('playbackStatusUpdate', (status: any) => {
           if (!isSeeking) {
              setPositionMs((status.currentTime || 0) * 1000);
              if (status.duration) {

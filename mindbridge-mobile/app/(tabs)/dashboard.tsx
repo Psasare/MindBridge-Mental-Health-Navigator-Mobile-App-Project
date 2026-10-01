@@ -65,6 +65,16 @@ import {
   Calendar,
 } from 'lucide-react-native';
 import { ScreenHeader } from '../../src/components/ScreenHeader';
+import { CalendarStrip } from '../../src/components/dashboard/CalendarStrip';
+import { ProgressRings } from '../../src/components/dashboard/ProgressRings';
+import { WeeklyPulse } from '../../src/components/dashboard/WeeklyPulse';
+import { QuoteSlideshow } from '../../src/components/dashboard/QuoteSlideshow';
+import { AppleWidget } from '../../src/components/dashboard/AppleWidget';
+import { RitualItem } from '../../src/components/dashboard/RitualItem';
+import { DetailedOverviewCard } from '../../src/components/dashboard/DetailedOverviewCard';
+import { QuestItem } from '../../src/components/dashboard/QuestItem';
+import { StreakJourney } from '../../src/components/dashboard/StreakJourney';
+import { useDashboardData } from '../../src/hooks/useDashboardData';
 import { AppTourModal } from '../../src/components/AppTourModal';
 import { ReadMoreText } from '../../src/components/ReadMoreText';
 import { InterventionModal } from '../../src/components/InterventionModal';
@@ -74,405 +84,36 @@ const { width } = Dimensions.get('window');
 const springConfig = { damping: 15, stiffness: 150, mass: 0.8 };
 
 // ─── Sub-Components ─────────────────────────────────────────────────────────
-
-// ─── Calendar Strip ──────────────────────────────────────────────────────────
-const CalendarStrip = ({ theme, styles }: any) => {
-  const today = new Date();
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const todayDayIndex = today.getDay();
-
-  // Build 7 days: 3 before today, today, 3 after
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() - 3 + i);
-    return {
-      date: d.getDate(),
-      dayName: dayNames[d.getDay()].slice(0, 1),
-      isToday: d.toDateString() === today.toDateString(),
-      isPast: d < new Date(today.setHours(0,0,0,0)),
-    };
-  });
-  // reset today reference after mutation above
-  const nowAgain = new Date();
-
-  return (
-    <Animated.View entering={FadeInUp.delay(50).duration(600)} style={styles.calendarCard}>
-      {/* Date Header */}
-      <View style={styles.calendarHeader}>
-        <View style={styles.calendarDateBlock}>
-          <Text style={styles.calendarDayName}>
-            {dayNames[nowAgain.getDay()].toUpperCase()}
-          </Text>
-          <Text style={styles.calendarDayNumber}>
-            {nowAgain.getDate()}
-          </Text>
-        </View>
-        <View style={styles.calendarMonthBlock}>
-          <Text style={styles.calendarMonthText}>
-            {monthNames[nowAgain.getMonth()]}
-          </Text>
-          <Text style={styles.calendarYearText}>
-            {nowAgain.getFullYear()}
-          </Text>
-        </View>
-        <View style={styles.calendarIconWrap}>
-          <Calendar color={theme.colors.plum} size={20} strokeWidth={2} />
-        </View>
-      </View>
-
-      {/* Week Strip */}
-      <View style={styles.calendarWeekStrip}>
-        {days.map((day, i) => (
-          <View key={i} style={styles.calendarDayCol}>
-            <Text style={[
-              styles.calendarWeekDayName,
-              { color: day.isToday ? theme.colors.plum : theme.colors.text.tertiary }
-            ]}>{day.dayName}</Text>
-            <View style={[
-              styles.calendarDayCircle,
-              day.isToday && { backgroundColor: theme.colors.plum },
-              !day.isToday && day.isPast && { opacity: 0.4 },
-            ]}>
-              <Text style={[
-                styles.calendarDayNum,
-                { color: day.isToday ? '#FFF' : theme.colors.text.primary }
-              ]}>{day.date}</Text>
-            </View>
-            {day.isToday && <View style={[styles.calendarTodayDot, { backgroundColor: theme.colors.plum }]} />}
-          </View>
-        ))}
-      </View>
-    </Animated.View>
-  );
-};
-
-const ProgressRings = ({ completed, total, theme, styles, t }: any) => {
-  const size = 52;
-  const strokeWidth = 5;
-  const progress = completed / total;
-
-  return (
-    <View style={[styles.ringsContainer, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.9)' }]}>
-      <View style={styles.ringWrap}>
-        <View style={[styles.ringBg, { width: size, height: size, borderRadius: size / 2, borderWidth: strokeWidth, borderColor: theme.colors.plum + '15' }]} />
-        <View style={[styles.ringFill, { 
-          width: size, 
-          height: size, 
-          borderRadius: size / 2, 
-          borderTopColor: theme.colors.plum, 
-          borderRightColor: progress >= 0.33 ? theme.colors.plum : 'transparent', 
-          borderBottomColor: progress >= 0.66 ? theme.colors.plum : 'transparent', 
-          borderLeftColor: progress >= 1.0 ? theme.colors.plum : 'transparent', 
-          borderTopWidth: strokeWidth, 
-          borderRightWidth: strokeWidth, 
-          borderBottomWidth: strokeWidth, 
-          borderLeftWidth: strokeWidth, 
-          transform: [{ rotate: '-45deg' }] 
-        }]} />
-      </View>
-      <View style={{ marginRight: 4 }}>
-        <Text style={[styles.ringsCount, { color: theme.colors.text.primary }]}>{completed}</Text>
-        <Text style={[styles.ringsLabel, { color: theme.colors.text.secondary }]}>{completed === 1 ? 'Goal' : 'Goals'}</Text>
-      </View>
-    </View>
-  );
-};
-
-// ─── Weekly Pulse Widget ─────────────────────────────────────────────────────
-
-const WeeklyPulse = ({ theme, styles, data, t }: any) => {
-  const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-  const pulseData = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    const dayLog = data.find((log: any) => new Date(log.createdAt).toDateString() === d.toDateString());
-    return dayLog ? dayLog.score * 10 : 0; // Score is 1-10, scale to 0-100
-  });
-
-  return (
-    <View style={styles.pulseCard}>
-      <BlurView intensity={theme.isDark ? 40 : 80} tint={theme.isDark ? 'dark' : 'light'} style={[styles.pulseGlass, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.7)', borderColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.8)' }]}>
-        <View style={styles.pulseHeader}>
-          <View>
-            <Text style={[styles.pulseTitle, { color: theme.colors.text.primary }]}>{t('dashboard.weeklyPulse')}</Text>
-            <Text style={[styles.pulseSubtitle, { color: theme.colors.text.tertiary }]}>{t('dashboard.emotionalRhythm')}</Text>
-          </View>
-          <Activity color={theme.colors.plum} size={20} />
-        </View>
-
-        <View style={styles.pulseGraph}>
-          {pulseData.map((val: number, i: number) => (
-            <View key={i} style={styles.pulseCol}>
-              <View style={[styles.pulseBarBg, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(123,97,255,0.08)' }]}>
-                <Animated.View 
-                  entering={FadeInUp.delay(i * 100).duration(800)}
-                  style={[styles.pulseBarFill, { 
-                    height: `${val}%`, 
-                    backgroundColor: val > 70 ? theme.colors.accents.eucalyptus : (val > 40 ? theme.colors.plum : theme.colors.accents.terracotta)
-                  }]} 
-                />
-              </View>
-              <Text style={[styles.pulseDayLabel, { color: theme.colors.text.tertiary }]}>{days[i]}</Text>
-            </View>
-          ))}
-        </View>
-      </BlurView>
-    </View>
-  );
-};
-
-// QUOTES are now fetched from theme translations
-
-const QuoteSlideshow = ({ theme, styles, t }: any) => {
-  const [index, setIndex] = useState(0);
-  const quotes = t('dashboard.motivations') as any[];
-  
-  useEffect(() => {
-    const timer = setInterval(() => { 
-      setIndex((prev) => (prev + 1) % (Array.isArray(quotes) ? quotes.length : 1)); 
-    }, 7000);
-    return () => clearInterval(timer);
-  }, [quotes]);
-
-  const quote = Array.isArray(quotes) ? quotes[index] : { text: "...", author: "..." };
-
-  return (
-    <Animated.View entering={FadeInUp.delay(50).duration(500)} style={styles.quoteCardContainer}>
-      <LinearGradient colors={[theme.colors.plum, theme.isDark ? '#2E3A4A' : '#4A3E4F']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quoteCard}>
-        <View style={styles.quoteMarkContainer}><Text style={styles.largeQuoteMark}>“</Text></View>
-        <Animated.View key={index} entering={FadeIn.duration(1000)}>
-          <Text style={styles.quoteText}>{quote.text}</Text>
-          <Text style={styles.quoteAuthor}>{quote.author}</Text>
-        </Animated.View>
-      </LinearGradient>
-    </Animated.View>
-  );
-};
-
-const AppleWidget = ({ title, subtitle, icon: Icon, color, onPress, theme, styles, size = 'square', delay = 0, value, label }: any) => {
-  const scale = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-  const handlePressIn = () => { scale.value = withSpring(0.96, springConfig); };
-  const handlePressOut = () => { scale.value = withSpring(1, springConfig); };
-
-  if (size === 'list') {
-    return (
-      <Animated.View entering={FadeInUp.delay(delay)}>
-        <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
-          <Animated.View style={[styles.listWidget, animatedStyle]}>
-            <View style={[styles.listIconWrap, { backgroundColor: color + (theme.isDark ? '30' : '15') }]}>
-              <Icon color={color} size={22} />
-            </View>
-            <View style={styles.listTextWrap}>
-              <Text style={[styles.listTitle, { color: theme.colors.text.primary }]}>{title}</Text>
-              {subtitle && <Text style={[styles.listSubtitle, { color: theme.colors.text.secondary }]}>{subtitle}</Text>}
-            </View>
-            <ChevronRight color={theme.colors.text.disabled} size={20} />
-          </Animated.View>
-        </Pressable>
-      </Animated.View>
-    );
-  }
-
-  const isWide = size === 'wide';
-  const isFixed = size === 'fixed';
-
-  return (
-    <Animated.View entering={FadeInUp.delay(delay)} style={isWide ? { width: '100%' } : (isFixed ? { width: 142, marginRight: 12 } : { width: '47.5%' })}>
-      <Pressable onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} hitSlop={10}>
-        <Animated.View style={[styles.widget, { backgroundColor: theme.colors.surface, borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }, isWide ? styles.widgetWide : (isFixed ? styles.widgetFixed : styles.widgetSquare), animatedStyle]}>
-          <View style={isWide ? styles.wideContent : styles.squareContent}>
-            <View style={[styles.widgetIconWrap, { backgroundColor: color }]}>
-              <Icon color={'#FFF'} size={isWide ? 22 : 24} />
-            </View>
-            <View style={isWide ? styles.wideTextWrap : { marginTop: 12 }}>
-              <Text style={[styles.widgetTitle, { color: theme.colors.text.primary }]} numberOfLines={1}>{title}</Text>
-              {value ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                  <Text style={{ fontSize: 20, fontWeight: '800', color: theme.colors.text.primary }}>{value}</Text>
-                  {label && <Text style={{ fontSize: 11, color: theme.colors.text.tertiary, marginLeft: 4, textTransform: 'uppercase' }}>{label}</Text>}
-                </View>
-              ) : (
-                subtitle && <Text style={[styles.widgetSubtitle, { color: theme.colors.text.secondary }]} numberOfLines={1}>{subtitle}</Text>
-              )}
-            </View>
-          </View>
-        </Animated.View>
-      </Pressable>
-    </Animated.View>
-  );
-};
-
-const RitualItem = ({ label, done, icon: Icon, color, theme, styles, onPress }: any) => (
-  <TouchableOpacity style={styles.ritualItem} onPress={onPress} activeOpacity={0.7}>
-    <View style={[styles.ritualIconCircle, { backgroundColor: done ? color : (theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)') }]}>
-      <Icon color={done ? '#FFF' : theme.colors.text.disabled} size={24} />
-      {done && <View style={styles.checkBadge}><CheckCircle2 color="#FFF" size={12} fill={color} /></View>}
-    </View>
-    <Text style={[styles.ritualLabel, { color: done ? theme.colors.text.primary : theme.colors.text.tertiary }]}>{label}</Text>
-  </TouchableOpacity>
-);
-
-// ─── Detailed Overview Cards ────────────────────────────────────────────────
-
-const DetailedOverviewCard = ({ title, value, label, icon: Icon, color, progress, theme, styles, onPress, subtitle }: any) => (
-  <TouchableOpacity activeOpacity={0.9} onPress={onPress} style={[styles.detailedCard, { backgroundColor: theme.colors.surface }]}>
-    <View style={styles.detailedHeader}>
-      <View style={[styles.detailedIconWrap, { backgroundColor: color + '15' }]}>
-        <Icon color={color} size={20} />
-      </View>
-      <ChevronRight color={theme.colors.text.disabled} size={18} />
-    </View>
-    <View style={styles.detailedContent}>
-      <Text style={[styles.detailedTitle, { color: theme.colors.text.tertiary }]}>{title}</Text>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4, marginVertical: 4 }}>
-        <Text style={[styles.detailedValue, { color: theme.colors.text.primary }]}>{value}</Text>
-        <Text style={[styles.detailedLabel, { color: theme.colors.text.secondary }]}>{label}</Text>
-      </View>
-      {subtitle && <Text style={[styles.detailedSubtitle, { color: theme.colors.text.tertiary }]}>{subtitle}</Text>}
-      {progress !== undefined && (
-        <View style={styles.detailedProgressBg}>
-          <View style={[styles.detailedProgressFill, { width: `${progress * 100}%`, backgroundColor: color }]} />
-        </View>
-      )}
-    </View>
-  </TouchableOpacity>
-);
-
-// ─── Main Screen ─────────────────────────────────────────────────────────────
-
-const QuestItem = ({ icon: Icon, goal, title, subtitle, done, theme, isLast, onPress, styles }: any) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  return (
-    <View style={[styles.questItemContainer, isLast && { borderBottomWidth: 0 }]}>
-      <TouchableOpacity 
-        style={styles.questItemRow} 
-        onPress={() => {
-          if (done) return;
-          if (goal?.description) {
-            setIsExpanded(!isExpanded);
-          } else if (onPress) {
-            onPress();
-          }
-        }}
-        activeOpacity={0.7}
-      >
-        <View style={[styles.questIconWrap, { backgroundColor: done ? theme.colors.accents.eucalyptus + '15' : theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)' }]}>
-          <Icon size={20} color={done ? theme.colors.accents.eucalyptus : theme.colors.text.tertiary} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.questTitle, done && { textDecorationLine: 'line-through', color: theme.colors.text.disabled }]}>{title}</Text>
-          <Text style={styles.questSubtitle}>{subtitle}</Text>
-        </View>
-        <View style={[styles.questCheck, done && { backgroundColor: theme.colors.accents.eucalyptus, borderColor: theme.colors.accents.eucalyptus }]}>
-          {done ? <CheckCircle2 size={16} color="#FFF" /> : (
-            goal?.description ? 
-              <ChevronDown size={16} color={theme.colors.text.disabled} style={{ transform: [{ rotate: isExpanded ? '180deg' : '0deg' }] }} /> 
-              : <ChevronRight size={16} color={theme.colors.text.disabled} />
-          )}
-        </View>
-      </TouchableOpacity>
-      
-      {isExpanded && !done && goal?.description && (
-        <Animated.View entering={FadeInUp.duration(300)} style={[styles.questExpandedContent, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }]}>
-          <Text style={[styles.questDescription, { color: theme.colors.text.secondary }]}>{goal.description}</Text>
-          <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={[styles.questStartBtn, { backgroundColor: theme.colors.plum }]}>
-            <Text style={styles.questStartBtnText}>Start Goal</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-    </View>
-  );
-};
-
-const StreakJourney = ({ streak, theme, styles, completedCount }: any) => {
-  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  const currentDayIndex = (new Date().getDay() + 6) % 7; 
-
-  return (
-    <View style={styles.premiumJourney}>
-      <View style={styles.journeyPathLine} />
-      <View style={styles.journeyDaysRow}>
-        {days.map((day, i) => {
-          const isPast = i < currentDayIndex;
-          const isToday = i === currentDayIndex;
-          
-          // isCompleted: Was the task done on this day?
-          // For today, we beam if even ONE quest is done.
-          const isCompleted = isPast ? (i >= currentDayIndex - streak) : (isToday && completedCount > 0);
-          
-          // isMissed: Only show frozen if the user HAD a streak but missed this specific past day
-          const isMissed = isPast && !isCompleted && streak > 0;
-          
-          return (
-            <View key={i} style={styles.journeyDayItem}>
-              <View style={[
-                styles.journeyDayCircle,
-                isCompleted && styles.beamedCircle,
-                isMissed && styles.frozenCircle,
-                isToday && styles.todayCircle,
-                !isCompleted && !isMissed && !isToday && { backgroundColor: theme.colors.surface, borderColor: theme.colors.text.disabled + '20' }
-              ]}>
-                {isCompleted && (
-                  <LinearGradient 
-                    colors={['#FF9800', '#F44336']} 
-                    style={StyleSheet.absoluteFill} 
-                  />
-                )}
-                {isCompleted && <CheckCircle2 size={12} color="#FFF" style={{ zIndex: 1 }} />}
-                {isMissed && <View style={styles.frozenCore} />}
-                {isToday && (
-                  <Flame size={18} color={isCompleted ? "#FF9800" : theme.colors.text.disabled} />
-                )}
-              </View>
-              <Text style={[
-                styles.journeyDayText, 
-                { color: isToday ? "#FF9800" : (isMissed ? '#93C5FD' : theme.colors.text.tertiary) }
-              ]}>{day}</Text>
-            </View>
-          );
-        })}
-      </View>
-    </View>
-  );
-};
-
 export default function DashboardScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { userData: authData } = useContext(AuthContext) as any;
   const { t } = useContext(LanguageContext);
   const styles = createStyles(theme);
-  
-  const [rituals, setRituals] = useState({
-    garden: false,
-    journal: false,
-    breathing: false
-  });
-  const [moodHistory, setMoodHistory] = useState<any[]>([]);
-  const [journalHistory, setJournalHistory] = useState<any[]>([]);
-  const [chatHistory, setChatHistory] = useState<any[]>([]);
-  const [assessments, setAssessments] = useState<any[]>([]);
-  const [latestPost, setLatestPost] = useState<any>(null);
-  const [suggestedResources, setSuggestedResources] = useState<any[]>([]);
-  const [gardenStats, setGardenStats] = useState({ count: 0, stage: 'Empty Garden', icon: CircleDashed, color: '#94A3B8' });
-  const [userData, setUserData] = useState({ name: authData?.name || 'Friend', language: 'English', streak: 0 });
-  const [stepCount, setStepCount] = useState<number | null>(null);
-  const [recentLocation, setRecentLocation] = useState<string | null>(null);
-  const [aiPrompt, setAiPrompt] = useState<string | null>(null);
-  const [microGoals, setMicroGoals] = useState<string[]>([]);
-  const [actionableCopingMechanisms, setActionableCopingMechanisms] = useState<string[]>([]);
-  const [insightSeverity, setInsightSeverity] = useState<string>('mild');
-  const [isLoading, setIsLoading] = useState(true);
-  const [showTour, setShowTour] = useState(false);
-  
-  // Gamification States
-  const [dailyGoals, setDailyGoals] = useState<any[]>([]);
-  const [completedGoalIds, setCompletedGoalIds] = useState<string[]>([]);
-  const [gamification, setGamification] = useState({ totalPoints: 0, currentStreak: 0 });
+
+  const {
+    rituals,
+    moodHistory,
+    journalHistory,
+    chatHistory,
+    assessments,
+    latestPost,
+    suggestedResources,
+    gardenStats,
+    userData,
+    stepCount,
+    recentLocation,
+    aiPrompt,
+    microGoals,
+    actionableCopingMechanisms,
+    insightSeverity,
+    isLoading,
+    dailyGoals,
+    completedGoalIds,
+    gamification,
+    checkStatus,
+    initPedometer,
+  } = useDashboardData();
 
   const formatText = (text: string | null | undefined) => {
     if (!text) return '';
@@ -485,224 +126,7 @@ export default function DashboardScreen() {
   const [showIntervention, setShowIntervention] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebData, setCelebData] = useState<{ milestone: number, type: 'STREAK' | 'JOURNAL' }>({ milestone: 0, type: 'STREAK' });
-
-  const getGrowthStage = (count: number) => {
-    if (count >= 20) return { label: 'Ancient Tree', icon: Flower2, color: '#8B5CF6' };
-    if (count >= 14) return { label: 'Full Bloom', icon: Flower2, color: '#7B61FF' };
-    if (count >= 8) return { label: 'Healthy Plant', icon: Leaf, color: '#34D399' };
-    if (count >= 4) return { label: 'Sprouting', icon: Sun, color: '#FBBF24' };
-    if (count >= 1) return { label: 'New Seed', icon: Leaf, color: '#60A5FA' };
-    return { label: 'Empty Garden', icon: CircleDashed, color: '#94A3B8' };
-  };
-
-  const loadCachedData = async () => {
-    try {
-      const cached = await AsyncStorage.getItem('dashboard_cache');
-      if (cached) {
-        const data = JSON.parse(cached);
-        if (data.journalHistory) setJournalHistory(data.journalHistory);
-        if (data.moodHistory) setMoodHistory(data.moodHistory);
-        if (data.chatHistory) setChatHistory(data.chatHistory);
-        if (data.gardenStats) setGardenStats(data.gardenStats);
-        if (data.assessments) setAssessments(data.assessments);
-        if (data.latestPost) setLatestPost(data.latestPost);
-        if (data.recentLocation) setRecentLocation(data.recentLocation);
-        if (data.aiPrompt) setAiPrompt(data.aiPrompt);
-        if (data.suggestedResources) setSuggestedResources(data.suggestedResources);
-        if (data.actionableCopingMechanisms) setActionableCopingMechanisms(data.actionableCopingMechanisms);
-        if (data.insightSeverity) setInsightSeverity(data.insightSeverity);
-        if (data.microGoals) setMicroGoals(data.microGoals);
-        if (data.gamification) setGamification(data.gamification);
-        if (data.dailyGoals) setDailyGoals(data.dailyGoals);
-        if (data.completedGoalIds) setCompletedGoalIds(data.completedGoalIds);
-        if (data.rituals) setRituals(data.rituals);
-        if (data.userData) setUserData(data.userData);
-        
-        // Immediately drop the skeleton loader since we have cached data to show!
-        setIsLoading(false);
-      }
-    } catch (e) {
-      console.warn('Failed to load dashboard cache:', e);
-    }
-  };
-
-  useEffect(() => {
-    loadCachedData();
-  }, []);
-
-  const checkStatus = useCallback(async () => {
-    try {
-      // Instantly load any optimistic cache updates (e.g. from goal-execution)
-      await loadCachedData();
-      
-      const todayStr = new Date().toDateString();
-      // Run all API requests concurrently for maximum speed
-      const [coreRes, [aiRes, gamificationRes, goalsRes]] = await Promise.all([
-        Promise.all([api.get('/ai/oracle-context'), api.get('/mood')]),
-        Promise.allSettled([
-          api.get('/ai/proactive-insights'),
-          api.get('/goals/gamification'),
-          api.get('/goals/daily')
-        ])
-      ]);
-      
-      const [res, moodsRes] = coreRes;
-      
-      const logs = res.data.recentJournal || [];
-      const newMoodHistory = moodsRes.data || [];
-      const newChatHistory = res.data.history || [];
-      const growth = getGrowthStage(logs.length);
-      const newGardenStats = { count: logs.length, stage: growth.label, icon: growth.icon, color: growth.color };
-      const newAssessments = res.data.assessments || [];
-      const newLatestPost = res.data.latestCommunityPost || null;
-      const newRecentLocation = res.data.latestMood?.location || recentLocation;
-      
-      let newUserData = { ...userData };
-      if (res.data.onboarding?.firstName) {
-        const onboardingName = res.data.onboarding.firstName;
-        newUserData.name = (onboardingName === 'TESTKW' && authData?.name) ? authData.name : onboardingName;
-      }
-
-      let newAiPrompt = aiPrompt;
-      let newSuggested = suggestedResources;
-      let newCoping = actionableCopingMechanisms;
-      let newSeverity = insightSeverity;
-      let newMicroGoals = microGoals;
-
-      if (aiRes.status === 'fulfilled' && aiRes.value.data) {
-        newAiPrompt = aiRes.value.data.dashboardPrompt || newAiPrompt;
-        newSuggested = aiRes.value.data.suggestedResources || newSuggested;
-        let uniqueCoping: string[] = [];
-        if (aiRes.value.data.actionableCopingMechanisms) {
-          uniqueCoping = Array.from(new Set(aiRes.value.data.actionableCopingMechanisms)) as string[];
-          newCoping = uniqueCoping;
-        }
-        newSeverity = aiRes.value.data.severity || newSeverity;
-        if (aiRes.value.data.microGoals) {
-          newMicroGoals = (Array.from(new Set(aiRes.value.data.microGoals)) as string[]).filter(g => !uniqueCoping.includes(g));
-        }
-      }
-
-      let newGamification = gamification;
-      if (gamificationRes.status === 'fulfilled' && gamificationRes.value.data) {
-        newGamification = {
-          totalPoints: gamificationRes.value.data.totalPoints || 0,
-          currentStreak: gamificationRes.value.data.currentStreak || 0
-        };
-      } else {
-        // Fallback to res.data.streak if gamification fails to load
-        newGamification = { ...gamification, currentStreak: res.data.streak || gamification.currentStreak };
-      }
-      
-      let newDailyGoals = dailyGoals;
-      let newCompletedIds = completedGoalIds;
-      if (goalsRes.status === 'fulfilled' && goalsRes.value.data) {
-        newDailyGoals = goalsRes.value.data.goals || [];
-        newCompletedIds = goalsRes.value.data.completedIds || [];
-      }
-
-      const breathingDone = await AsyncStorage.getItem(`breathing_${todayStr}`) === 'true';
-      const newRituals = {
-        garden: res.data.latestMood && new Date(res.data.latestMood.createdAt).toDateString() === todayStr,
-        journal: logs.some((log: any) => new Date(log.createdAt).toDateString() === todayStr),
-        breathing: breathingDone
-      };
-
-      // Set State
-      setJournalHistory(logs);
-      setMoodHistory(newMoodHistory);
-      setChatHistory(newChatHistory);
-      setGardenStats(newGardenStats);
-      setAssessments(newAssessments);
-      setLatestPost(newLatestPost);
-      setRecentLocation(newRecentLocation);
-      setUserData({ ...newUserData, streak: newGamification.currentStreak });
-      setAiPrompt(newAiPrompt);
-      setSuggestedResources(newSuggested);
-      setActionableCopingMechanisms(newCoping);
-      setInsightSeverity(newSeverity);
-      setMicroGoals(newMicroGoals);
-      setGamification(newGamification);
-      setDailyGoals(newDailyGoals);
-      setCompletedGoalIds(newCompletedIds);
-      setRituals(newRituals);
-
-      // Cache State for next launch
-      AsyncStorage.setItem('dashboard_cache', JSON.stringify({
-        journalHistory: logs,
-        moodHistory: newMoodHistory,
-        chatHistory: newChatHistory,
-        gardenStats: newGardenStats,
-        assessments: newAssessments,
-        latestPost: newLatestPost,
-        recentLocation: newRecentLocation,
-        userData: { ...newUserData, streak: newGamification.currentStreak },
-        aiPrompt: newAiPrompt,
-        suggestedResources: newSuggested,
-        actionableCopingMechanisms: newCoping,
-        insightSeverity: newSeverity,
-        microGoals: newMicroGoals,
-        gamification: newGamification,
-        dailyGoals: newDailyGoals,
-        completedGoalIds: newCompletedIds,
-        rituals: newRituals
-      }));
-
-      // Check for interventions locally if recent mood was logged and is critically low
-      if (newMoodHistory.length > 0) {
-        const latestMood = newMoodHistory[0];
-        const isRecent = new Date(latestMood.createdAt).toDateString() === todayStr;
-        if (isRecent && latestMood.score <= 3) {
-          const shownIntervention = await AsyncStorage.getItem(`intervention_${todayStr}`);
-          if (!shownIntervention) {
-            setShowIntervention(true);
-            await AsyncStorage.setItem(`intervention_${todayStr}`, 'true');
-          }
-        }
-      }
-
-      // Check for milestones
-      const activeStreak = newGamification.currentStreak;
-      if (activeStreak === 3 || activeStreak === 7 || activeStreak === 14 || activeStreak === 30) {
-        const shownMilestone = await AsyncStorage.getItem(`milestone_${activeStreak}`);
-        if (!shownMilestone) {
-          setCelebData({ milestone: activeStreak, type: 'STREAK' });
-          setShowCelebration(true);
-          await AsyncStorage.setItem(`milestone_${activeStreak}`, 'true');
-        }
-      }
-
-    } catch (e) {
-      console.warn('Network timeout when fetching dashboard context, using local offline fallbacks.', e);
-      if (authData) {
-        setUserData(prev => ({ ...prev, name: authData.name || 'Friend' }));
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [authData, userData, gamification, aiPrompt, suggestedResources, actionableCopingMechanisms, insightSeverity, microGoals, dailyGoals, completedGoalIds, recentLocation]);
-
-  // Pedometer setup
-  useEffect(() => {
-    const checkSteps = async () => {
-      try {
-        // Only CHECK permissions on mount to avoid blocking UI and unresponsiveness.
-        // We shouldn't request permissions until the user explicitly visits the Activity Tracker.
-        const { status } = await Pedometer.getPermissionsAsync();
-        const isAvailable = await Pedometer.isAvailableAsync();
-        if (isAvailable && status === 'granted') {
-          const end = new Date();
-          const start = new Date();
-          start.setHours(0, 0, 0, 0);
-          const pedoRes = await Pedometer.getStepCountAsync(start, end);
-          setStepCount(pedoRes.steps);
-        }
-      } catch (e) {
-        console.log('Pedometer access denied or failed:', e);
-      }
-    };
-    checkSteps();
-  }, []);
+  const [showTour, setShowTour] = useState(false);
 
   useEffect(() => {
     const checkTour = async () => {
@@ -715,13 +139,14 @@ export default function DashboardScreen() {
         console.error('Error checking tour state:', e);
       }
     };
-    setTimeout(checkTour, 500); // Slight delay for smoother entry
+    setTimeout(checkTour, 500); 
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       checkStatus();
-    }, [checkStatus])
+      initPedometer();
+    }, [checkStatus, initPedometer])
   );
 
   const getGreeting = () => {
