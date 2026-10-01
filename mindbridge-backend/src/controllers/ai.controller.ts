@@ -5,10 +5,10 @@ import { analyzeCurrentState } from '../services/ai/mental-state-analyzer.servic
 import { AiRepository } from '../repositories/ai.repository.js';
 import { recommendResources } from '../services/recommendation.service.js';
 import { GoalService } from '../services/goal.service.js';
+import { getOrSetCache } from '../utils/cache.js';
+import { dispatchAiTask } from '../workers/queue.js';
 
 const prisma = new PrismaClient();
-const CACHE_LIMIT = 1000;
-const proactiveInsightsCache = new Map<string, { time: number, data: any }>();
 
 // High-risk keywords for safety screening
 const CRISIS_KEYWORDS = [
@@ -347,60 +347,46 @@ export const saveAssessmentResult = async (req: Request, res: Response) => {
 export const getProactiveInsights = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const now = Date.now();
-    
-    // Check if we have valid cached insights (less than 1 hour old) to prevent Gemini API quota exhaustion
-    if (proactiveInsightsCache.has(userId)) {
-      const cached = proactiveInsightsCache.get(userId)!;
-      if (now - cached.time < 3600000) {
-        return res.json(cached.data);
-      } else {
-        // Fix: Explicitly evict stale cache entries to prevent memory leaks
-        proactiveInsightsCache.delete(userId);
-      }
-    }
+    const cacheKey = `insights:${userId}`;
+    const TTL_SECONDS = 3600; // 1 hour
 
-    const onboarding = await prisma.onboarding.findUnique({
-      where: { userId }
-    });
+    // Execute via Redis Cache Wrapper
+    const insights = await getOrSetCache(cacheKey, TTL_SECONDS, async () => {
+      const onboarding = await prisma.onboarding.findUnique({
+        where: { userId }
+      });
 
-    const recentMoods = await prisma.moodLog.findMany({
-      where: { userId },
-      orderBy: { createdAt: 'desc' },
-      take: 14 // Last 14 logs for better pattern detection
-    });
+      const recentMoods = await prisma.moodLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 14 // Last 14 logs for better pattern detection
+      });
 
-    const insights = await generateProactiveInsights(userId, { onboarding, recentMoods });
-    
-    // Fetch actual resources for the recommended categories
-    let suggestedResources: any[] = [];
-    if (insights.severity && insights.primaryState) {
-      const severityScore = insights.severity === 'severe' || insights.severity === 'critical' ? 8 : (insights.severity === 'moderate' ? 6 : 4);
-      suggestedResources = await recommendResources(userId, insights.primaryState, severityScore);
-    } else if (insights.recommendedResourceCategories && Array.isArray(insights.recommendedResourceCategories)) {
-      for (const cat of insights.recommendedResourceCategories) {
-        const resources = await AiRepository.searchResources(cat);
-        if (resources && resources.length > 0) {
-          suggestedResources.push(resources[0]);
+      const generatedInsights = await generateProactiveInsights(userId, { onboarding, recentMoods });
+      
+      // Fetch actual resources for the recommended categories
+      let suggestedResources: any[] = [];
+      if (generatedInsights.severity && generatedInsights.primaryState) {
+        const severityScore = generatedInsights.severity === 'severe' || generatedInsights.severity === 'critical' ? 8 : (generatedInsights.severity === 'moderate' ? 6 : 4);
+        suggestedResources = await recommendResources(userId, generatedInsights.primaryState, severityScore);
+      } else if (generatedInsights.recommendedResourceCategories && Array.isArray(generatedInsights.recommendedResourceCategories)) {
+        for (const cat of generatedInsights.recommendedResourceCategories) {
+          const resources = await AiRepository.searchResources(cat);
+          if (resources && resources.length > 0) {
+            suggestedResources.push(resources[0]);
+          }
         }
       }
-    }
-    
-    // Add fallback if empty
-    if (suggestedResources.length === 0) {
-      suggestedResources.push({ id: 'res-fallback', title: 'Daily Mindfulness Practice', type: 'audio', category: 'General' });
-    }
-    
-    insights.suggestedResources = suggestedResources;
-    
-    // Fix: OOM Prevention - Enforce an upper bound on cache size
-    if (proactiveInsightsCache.size >= CACHE_LIMIT) {
-      const oldestKey = proactiveInsightsCache.keys().next().value;
-      if (oldestKey) proactiveInsightsCache.delete(oldestKey);
-    }
-    
-    // Cache the result
-    proactiveInsightsCache.set(userId, { data: insights, time: now });
+      
+      // Add fallback if empty
+      if (suggestedResources.length === 0) {
+        suggestedResources.push({ id: 'res-fallback', title: 'Daily Mindfulness Practice', type: 'audio', category: 'General' });
+      }
+      
+      generatedInsights.suggestedResources = suggestedResources;
+      return generatedInsights;
+    });
+
     res.json(insights);
   } catch (error) {
     console.error('Error fetching proactive insights:', error);
@@ -418,17 +404,29 @@ export const getProactiveInsights = async (req: Request, res: Response) => {
 
 export const analyzeVoice = async (req: Request, res: Response) => {
   try {
+    const userId = (req as any).userId;
     const { audioBase64, mimeType } = req.body;
     
     if (!audioBase64) {
       return res.status(400).json({ error: 'audioBase64 is required' });
     }
 
-    const metrics = await analyzeVoiceAudio(audioBase64, mimeType || 'audio/m4a');
-    res.json(metrics);
+    // Offload heavy AI processing to BullMQ Async Worker
+    const job = await dispatchAiTask('analyze-voice', { 
+      userId, 
+      audioBase64, 
+      mimeType: mimeType || 'audio/m4a' 
+    });
+
+    // Immediately return a 202 Accepted response
+    res.status(202).json({ 
+      status: 'processing', 
+      jobId: job.id,
+      message: 'Voice analysis is processing in the background.' 
+    });
   } catch (error) {
-    console.error('Error analyzing voice:', error);
-    res.status(500).json({ error: 'Failed to analyze voice tone' });
+    console.error('Error queuing voice analysis:', error);
+    res.status(500).json({ error: 'Failed to queue voice analysis' });
   }
 };
 

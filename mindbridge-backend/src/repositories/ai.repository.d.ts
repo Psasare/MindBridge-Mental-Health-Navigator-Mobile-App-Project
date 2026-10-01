@@ -25,27 +25,51 @@ export declare class AiRepository {
         journalEntry: boolean;
     }>;
     /**
-     * Fetches the last N chat messages for context.
+     * Fetches the last N chat messages for context (from the most recent session if no session ID provided).
+     * Or if a sessionId is provided, fetches messages for that specific session.
      */
-    static getChatHistory(userId: string, limit?: number): Promise<{
+    static getChatHistory(userId: string, limit?: number, sessionId?: string): Promise<{
         id: string;
         createdAt: Date;
         content: string;
         role: string;
     }[]>;
-    static deleteChatMessage(userId: string, messageId: string): Promise<{
+    /**
+     * Fetches all chat sessions for a user.
+     */
+    static getChatSessions(userId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        title: string | null;
+        updatedAt: Date;
+    }[]>;
+    /**
+     * Creates a new chat session.
+     */
+    static createChatSession(userId: string, title?: string): Promise<{
         id: string;
         userId: string;
         createdAt: Date;
-        content: string;
-        role: string;
+        title: string | null;
+        updatedAt: Date;
     }>;
+    /**
+     * Deletes a specific chat session and all its messages (cascade).
+     */
+    static deleteChatSession(userId: string, sessionId: string): Promise<{
+        id: string;
+        userId: string;
+        createdAt: Date;
+        title: string | null;
+        updatedAt: Date;
+    }>;
+    static deleteChatMessage(userId: string, messageId: string): Promise<import("@prisma/client").Prisma.BatchPayload>;
     /**
      * Deletes multiple chat messages in bulk.
      */
     static deleteChatMessages(userId: string, messageIds: string[]): Promise<import("@prisma/client").Prisma.BatchPayload>;
     /**
-     * Clears all chat messages for a user.
+     * Clears all chat messages and sessions for a user.
      */
     static clearChatHistory(userId: string): Promise<import("@prisma/client").Prisma.BatchPayload>;
     /**

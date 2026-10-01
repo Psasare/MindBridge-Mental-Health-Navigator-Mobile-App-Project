@@ -1,14 +1,35 @@
 import { PrismaClient } from '@prisma/client';
 import { analyzeJournalEntry } from '../services/gemini.service.js';
+import { z } from 'zod';
 const prisma = new PrismaClient();
+const createEntrySchema = z.object({
+    title: z.string().optional().nullable(),
+    content: z.string().min(1, 'Journal content is required'),
+    mood: z.string().optional().nullable(),
+});
+const getEntriesQuerySchema = z.object({
+    cursor: z.string().optional(),
+    limit: z.coerce.number().min(1).max(50).default(20)
+});
 export const getEntries = async (req, res) => {
     try {
         const userId = req.userId;
+        const parsed = getEntriesQuerySchema.parse(req.query);
         const entries = await prisma.journal.findMany({
             where: { userId },
             orderBy: { createdAt: 'desc' },
+            take: parsed.limit + 1, // Fetch 1 extra to determine next page
+            cursor: parsed.cursor ? { id: parsed.cursor } : undefined,
         });
-        res.json(entries);
+        let nextCursor = null;
+        if (entries.length > parsed.limit) {
+            const nextItem = entries.pop(); // Remove the extra item
+            nextCursor = nextItem.id;
+        }
+        res.json({
+            data: entries,
+            nextCursor
+        });
     }
     catch (error) {
         console.error('[BACKEND] Error fetching journal entries:', error);
@@ -18,10 +39,11 @@ export const getEntries = async (req, res) => {
 export const createEntry = async (req, res) => {
     try {
         const userId = req.userId;
-        const { title, content, mood } = req.body;
-        if (!content) {
-            return res.status(400).json({ error: 'Journal content is required' });
+        const parsed = createEntrySchema.safeParse(req.body);
+        if (!parsed.success) {
+            return res.status(400).json({ error: 'Validation failed', details: parsed.error.format() });
         }
+        const { title, content, mood } = parsed.data;
         // Process the journal entry through the MindBridge Oracle
         const analysis = await analyzeJournalEntry(content);
         const newEntry = await prisma.journal.create({

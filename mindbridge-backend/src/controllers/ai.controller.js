@@ -4,8 +4,9 @@ import { analyzeCurrentState } from '../services/ai/mental-state-analyzer.servic
 import { AiRepository } from '../repositories/ai.repository.js';
 import { recommendResources } from '../services/recommendation.service.js';
 import { GoalService } from '../services/goal.service.js';
+import { getOrSetCache } from '../utils/cache.js';
+import { dispatchAiTask } from '../workers/queue.js';
 const prisma = new PrismaClient();
-const proactiveInsightsCache = new Map();
 // High-risk keywords for safety screening
 const CRISIS_KEYWORDS = [
     'suicide', 'self-harm', 'kill myself', 'end my life', 'better off dead',
@@ -15,37 +16,35 @@ export const getOracleContext = async (req, res) => {
     try {
         const userId = req.userId;
         // Run independent database queries in parallel to significantly reduce latency
-        const [latestMood, moodCount, user, recentJournal, journalCount, onboarding, history, assessments, latestCommunityPost] = await Promise.all([
-            prisma.moodLog.findFirst({
-                where: { userId },
-                orderBy: { createdAt: 'desc' },
-            }),
-            prisma.moodLog.count({ where: { userId } }),
-            prisma.user.findUnique({
-                where: { id: userId },
-                select: { name: true }
-            }),
-            prisma.journal.findMany({
-                where: { userId },
-                take: 3,
-                orderBy: { createdAt: 'desc' },
-                select: {
-                    title: true,
-                    content: true,
-                    mood: true,
-                    createdAt: true,
-                }
-            }),
-            prisma.journal.count({ where: { userId } }),
-            prisma.onboarding.findUnique({
-                where: { userId }
-            }),
-            AiRepository.getChatHistory(userId, 15),
-            AiRepository.getLatestAssessments(userId),
-            prisma.communityPost.findFirst({
-                orderBy: { createdAt: 'desc' }
-            })
-        ]);
+        const latestMood = await prisma.moodLog.findFirst({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+        });
+        const moodCount = await prisma.moodLog.count({ where: { userId } });
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true }
+        });
+        const recentJournal = await prisma.journal.findMany({
+            where: { userId },
+            take: 3,
+            orderBy: { createdAt: 'desc' },
+            select: {
+                title: true,
+                content: true,
+                mood: true,
+                createdAt: true,
+            }
+        });
+        const journalCount = await prisma.journal.count({ where: { userId } });
+        const onboarding = await prisma.onboarding.findUnique({
+            where: { userId }
+        });
+        const history = await AiRepository.getChatHistory(userId, 15);
+        const assessments = await AiRepository.getLatestAssessments(userId);
+        const latestCommunityPost = await prisma.communityPost.findFirst({
+            orderBy: { createdAt: 'desc' }
+        });
         // Note: suggestedResources logic has been moved to getProactiveInsights for AI-driven personalization
         let suggestedResources = [];
         res.json({
@@ -80,7 +79,7 @@ export const getOracleContext = async (req, res) => {
 export const chatWithOracle = async (req, res) => {
     try {
         const userId = req.userId;
-        const { message, audioBase64 } = req.body;
+        const { message, audioBase64, sessionId } = req.body;
         if (!message && !audioBase64) {
             return res.status(400).json({ error: 'Message or audio is required' });
         }
@@ -93,40 +92,45 @@ export const chatWithOracle = async (req, res) => {
                 suggestCrisis: true
             });
         }
-        const [latestMood, recentMoods, recentJournal, user, onboarding, history, assessments, gamification, dailyGoals] = await Promise.all([
-            prisma.moodLog.findFirst({
-                where: { userId },
-                orderBy: { createdAt: 'desc' },
-            }).catch(() => null),
-            prisma.moodLog.findMany({
-                where: { userId },
-                orderBy: { createdAt: 'desc' },
-                take: 5,
-                select: { location: true, createdAt: true, score: true }
-            }).catch(() => []),
-            prisma.journal.findMany({
-                where: { userId },
-                take: 3,
-                orderBy: { createdAt: 'desc' },
-            }).catch(() => []),
-            prisma.user.findUnique({
-                where: { id: userId },
-                select: { name: true }
-            }),
-            prisma.onboarding.findUnique({
-                where: { userId }
-            }).catch(() => null),
-            AiRepository.getChatHistory(userId, 10).catch(() => []),
-            AiRepository.getLatestAssessments(userId).catch(() => []),
-            GoalService.getGamificationStatus(userId).catch(() => null),
-            GoalService.getDailyStatus(userId).catch(() => null)
-        ]);
+        const latestMood = await prisma.moodLog.findFirst({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+        }).catch(() => null);
+        const recentMoods = await prisma.moodLog.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: 5,
+            select: { location: true, createdAt: true, score: true, emotions: true, note: true }
+        }).catch(() => []);
+        const recentJournal = await prisma.journal.findMany({
+            where: { userId },
+            take: 3,
+            orderBy: { createdAt: 'desc' },
+        }).catch(() => []);
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { name: true }
+        });
+        const onboarding = await prisma.onboarding.findUnique({
+            where: { userId }
+        }).catch(() => null);
+        const history = await AiRepository.getChatHistory(userId, 10).catch(() => []);
+        const assessments = await AiRepository.getLatestAssessments(userId).catch(() => []);
+        const gamification = await GoalService.getGamificationStatus(userId).catch(() => null);
+        const dailyGoals = await GoalService.getDailyStatus(userId).catch(() => null);
         if (!user) {
             return res.status(401).json({ message: "Account not found. Please log out and back in." });
         }
-        // 3. Save User Message
+        // 3. Handle Session & Save User Message
+        let activeSessionId = sessionId;
+        if (!activeSessionId) {
+            // Create a new session, using the first 30 chars of the message as title
+            const title = message ? (message.substring(0, 30) + (message.length > 30 ? '...' : '')) : 'Audio Note';
+            const newSession = await AiRepository.createChatSession(userId, title);
+            activeSessionId = newSession.id;
+        }
         await prisma.chatMessage.create({
-            data: { userId, role: 'user', content: message }
+            data: { sessionId: activeSessionId, role: 'user', content: message || 'Audio message' }
         });
         const contextForOracle = {
             latestMood,
@@ -147,9 +151,15 @@ export const chatWithOracle = async (req, res) => {
             location: latestMood?.location,
             audioBase64,
         };
-        // 4. Analyze Current State
-        const currentState = await analyzeCurrentState(message || "User sent a voice note", contextForOracle);
-        // Save the Mental State Log to DB
+        // 4. Run State Analyzer and Oracle Response Generator in PARALLEL to cut latency in half
+        const [currentState, aiResponse] = await Promise.all([
+            analyzeCurrentState(message || "User sent a voice note", contextForOracle),
+            generateOracleResponse(message, contextForOracle, userId)
+        ]);
+        // 5. Save Results to DB
+        await prisma.chatMessage.create({
+            data: { sessionId: activeSessionId, role: 'model', content: aiResponse }
+        });
         try {
             if (currentState.primaryState && currentState.primaryState !== 'Unknown') {
                 const isCrisis = currentState.actionRequired === 'immediate_support';
@@ -185,18 +195,11 @@ export const chatWithOracle = async (req, res) => {
             return res.json({
                 response: "I'm hearing a lot of pain in your words, and I'm very concerned about you. You don't have to carry this alone. Please reach out to one of the professionals on our Crisis Support page immediately — they are ready to help right now.",
                 suggestCrisis: true,
-                state: currentState
+                state: currentState,
+                sessionId: activeSessionId
             });
         }
-        // Pass the state into the context
-        contextForOracle.currentState = currentState;
-        // 5. Generate AI Response
-        const aiResponse = await generateOracleResponse(message, contextForOracle, userId);
-        // 6. Save AI Response
-        await prisma.chatMessage.create({
-            data: { userId, role: 'model', content: aiResponse }
-        });
-        res.json({ response: aiResponse, state: currentState });
+        res.json({ response: aiResponse, state: currentState, sessionId: activeSessionId });
     }
     catch (error) {
         if (error?.status === 503 || error?.status === 429) {
@@ -218,6 +221,48 @@ export const clearChatHistory = async (req, res) => {
     catch (error) {
         console.error('Error clearing chat history:', error);
         res.status(500).json({ error: 'Failed to clear chat history' });
+    }
+};
+export const getChatSessions = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const sessions = await AiRepository.getChatSessions(userId);
+        res.json(sessions);
+    }
+    catch (error) {
+        console.error('Error fetching chat sessions:', error);
+        res.status(500).json({ error: 'Failed to fetch chat sessions' });
+    }
+};
+export const getSessionMessages = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { id } = req.params;
+        if (!id || typeof id !== 'string') {
+            return res.status(400).json({ error: 'Session ID is required' });
+        }
+        // getChatHistory with limit 100 to fetch full session history
+        const messages = await AiRepository.getChatHistory(userId, 100, id);
+        res.json(messages);
+    }
+    catch (error) {
+        console.error('Error fetching session messages:', error);
+        res.status(500).json({ error: 'Failed to fetch session messages' });
+    }
+};
+export const deleteChatSession = async (req, res) => {
+    try {
+        const userId = req.userId;
+        const { id } = req.params;
+        if (!id || typeof id !== 'string') {
+            return res.status(400).json({ error: 'Session ID is required' });
+        }
+        await AiRepository.deleteChatSession(userId, id);
+        res.json({ success: true, message: 'Session deleted successfully' });
+    }
+    catch (error) {
+        console.error('Error deleting chat session:', error);
+        res.status(500).json({ error: 'Failed to delete session' });
     }
 };
 export const deleteChatMessage = async (req, res) => {
@@ -277,44 +322,40 @@ export const saveAssessmentResult = async (req, res) => {
 export const getProactiveInsights = async (req, res) => {
     try {
         const userId = req.userId;
-        const now = Date.now();
-        // Check if we have valid cached insights (less than 1 hour old) to prevent Gemini API quota exhaustion
-        if (proactiveInsightsCache.has(userId)) {
-            const cached = proactiveInsightsCache.get(userId);
-            if (now - cached.time < 3600000) {
-                return res.json(cached.data);
+        const cacheKey = `insights:${userId}`;
+        const TTL_SECONDS = 3600; // 1 hour
+        // Execute via Redis Cache Wrapper
+        const insights = await getOrSetCache(cacheKey, TTL_SECONDS, async () => {
+            const onboarding = await prisma.onboarding.findUnique({
+                where: { userId }
+            });
+            const recentMoods = await prisma.moodLog.findMany({
+                where: { userId },
+                orderBy: { createdAt: 'desc' },
+                take: 14 // Last 14 logs for better pattern detection
+            });
+            const generatedInsights = await generateProactiveInsights(userId, { onboarding, recentMoods });
+            // Fetch actual resources for the recommended categories
+            let suggestedResources = [];
+            if (generatedInsights.severity && generatedInsights.primaryState) {
+                const severityScore = generatedInsights.severity === 'severe' || generatedInsights.severity === 'critical' ? 8 : (generatedInsights.severity === 'moderate' ? 6 : 4);
+                suggestedResources = await recommendResources(userId, generatedInsights.primaryState, severityScore);
             }
-        }
-        const onboarding = await prisma.onboarding.findUnique({
-            where: { userId }
-        });
-        const recentMoods = await prisma.moodLog.findMany({
-            where: { userId },
-            orderBy: { createdAt: 'desc' },
-            take: 14 // Last 14 logs for better pattern detection
-        });
-        const insights = await generateProactiveInsights(userId, { onboarding, recentMoods });
-        // Fetch actual resources for the recommended categories
-        let suggestedResources = [];
-        if (insights.severity && insights.primaryState) {
-            const severityScore = insights.severity === 'severe' || insights.severity === 'critical' ? 8 : (insights.severity === 'moderate' ? 6 : 4);
-            suggestedResources = await recommendResources(userId, insights.primaryState, severityScore);
-        }
-        else if (insights.recommendedResourceCategories && Array.isArray(insights.recommendedResourceCategories)) {
-            for (const cat of insights.recommendedResourceCategories) {
-                const resources = await AiRepository.searchResources(cat);
-                if (resources && resources.length > 0) {
-                    suggestedResources.push(resources[0]);
+            else if (generatedInsights.recommendedResourceCategories && Array.isArray(generatedInsights.recommendedResourceCategories)) {
+                for (const cat of generatedInsights.recommendedResourceCategories) {
+                    const resources = await AiRepository.searchResources(cat);
+                    if (resources && resources.length > 0) {
+                        suggestedResources.push(resources[0]);
+                    }
                 }
             }
-        }
-        // Add fallback if empty
-        if (suggestedResources.length === 0) {
-            suggestedResources.push({ id: 'res-fallback', title: 'Daily Mindfulness Practice', type: 'audio', category: 'General' });
-        }
-        insights.suggestedResources = suggestedResources;
-        // Cache the result
-        proactiveInsightsCache.set(userId, { data: insights, time: now });
+            // Add fallback if empty
+            if (suggestedResources.length === 0) {
+                suggestedResources.push({ id: 'res-fallback', title: 'Daily Mindfulness Practice', type: 'audio', category: 'General' });
+            }
+            generatedInsights.suggestedResources = suggestedResources;
+            return generatedInsights;
+        });
         res.json(insights);
     }
     catch (error) {
@@ -332,16 +373,27 @@ export const getProactiveInsights = async (req, res) => {
 };
 export const analyzeVoice = async (req, res) => {
     try {
+        const userId = req.userId;
         const { audioBase64, mimeType } = req.body;
         if (!audioBase64) {
             return res.status(400).json({ error: 'audioBase64 is required' });
         }
-        const metrics = await analyzeVoiceAudio(audioBase64, mimeType || 'audio/m4a');
-        res.json(metrics);
+        // Offload heavy AI processing to BullMQ Async Worker
+        const job = await dispatchAiTask('analyze-voice', {
+            userId,
+            audioBase64,
+            mimeType: mimeType || 'audio/m4a'
+        });
+        // Immediately return a 202 Accepted response
+        res.status(202).json({
+            status: 'processing',
+            jobId: job.id,
+            message: 'Voice analysis is processing in the background.'
+        });
     }
     catch (error) {
-        console.error('Error analyzing voice:', error);
-        res.status(500).json({ error: 'Failed to analyze voice tone' });
+        console.error('Error queuing voice analysis:', error);
+        res.status(500).json({ error: 'Failed to queue voice analysis' });
     }
 };
 export const getPersonalizedAssessment = async (req, res) => {
@@ -359,8 +411,8 @@ export const getPersonalizedAssessment = async (req, res) => {
             orderBy: { createdAt: 'desc' },
             take: 3
         });
-        const questions = await generatePersonalizedAssessment(userId, { onboarding, recentMoods, recentJournal }, testType);
-        res.json({ questions });
+        const assessmentData = await generatePersonalizedAssessment(userId, { onboarding, recentMoods, recentJournal }, testType);
+        res.json(assessmentData);
     }
     catch (error) {
         console.error('Error getting personalized assessment:', error);
@@ -377,6 +429,24 @@ export const submitPersonalizedAssessment = async (req, res) => {
         const testType = type || 'general';
         const onboarding = await prisma.onboarding.findUnique({ where: { userId } });
         const evaluation = await evaluatePersonalizedAssessment(userId, { onboarding }, answers, testType);
+        // Fetch suggested resources based on evaluation
+        let severityScore = 4;
+        if (evaluation.severity === 'High Risk')
+            severityScore = 8;
+        else if (evaluation.severity === 'Moderate Risk')
+            severityScore = 6;
+        // Use testType or a default condition to find resources
+        let conditionStr = 'stress';
+        if (testType === 'phq9')
+            conditionStr = 'depression';
+        if (testType === 'gad7')
+            conditionStr = 'anxiety';
+        if (testType === 'burnout')
+            conditionStr = 'burnout';
+        if (testType === 'cssrs')
+            conditionStr = 'crisis';
+        const resources = await recommendResources(userId, conditionStr, severityScore);
+        evaluation.suggestedResources = resources;
         res.json(evaluation);
     }
     catch (error) {

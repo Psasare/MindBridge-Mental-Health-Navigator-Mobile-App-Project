@@ -21,12 +21,17 @@ export const getEntries = async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     const parsed = getEntriesQuerySchema.parse(req.query);
 
-    const entries = await prisma.journal.findMany({
+    const queryArgs: any = {
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: parsed.limit + 1, // Fetch 1 extra to determine next page
-      cursor: parsed.cursor ? { id: parsed.cursor } : undefined,
-    });
+    };
+    if (parsed.cursor) {
+      queryArgs.cursor = { id: parsed.cursor };
+      queryArgs.skip = 1;
+    }
+
+    const entries = await prisma.journal.findMany(queryArgs);
 
     let nextCursor: string | null = null;
     if (entries.length > parsed.limit) {

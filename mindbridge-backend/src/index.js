@@ -13,6 +13,8 @@ import groupsRoutes from './routes/groups.routes.js';
 import peersRoutes from './routes/peers.routes.js';
 import selfHelpRoutes from './routes/self-help.routes.js';
 import goalRoutes from './routes/goal.routes.js';
+import { connectCache } from './utils/cache.js';
+import './workers/ai.worker.js';
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 5000;
@@ -42,7 +44,11 @@ app.use('/api/goals', goalRoutes);
 app.get('/', (req, res) => {
     res.send('MindBridge API is running');
 });
-app.listen(port, '0.0.0.0', () => {
-    console.log(`Server is running on port ${port} (bound to 0.0.0.0)`);
-});
+const startServer = async () => {
+    await connectCache();
+    app.listen(port, '0.0.0.0', () => {
+        console.log(`Server is running on port ${port} (bound to 0.0.0.0)`);
+    });
+};
+startServer();
 //# sourceMappingURL=index.js.map

@@ -2,7 +2,11 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { AiRepository } from "../repositories/ai.repository.js";
 import dotenv from 'dotenv';
 dotenv.config();
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY || "");
+const apiKey = process.env.GOOGLE_AI_KEY;
+if (!apiKey) {
+    console.error('[CRITICAL] GOOGLE_AI_KEY environment variable is missing.');
+}
+const genAI = new GoogleGenerativeAI(apiKey || "");
 async function withRetry(fn, retries = 3, delayMs = 2000) {
     let attempt = 0;
     while (attempt < retries) {
@@ -83,15 +87,15 @@ Use the user's profile data to make the conversation feel hyper-personal:
 - Acknowledge their PROGRESS: If they have a high streak or completed their daily goals, praise them! If they missed goals, normalize it and encourage them gently without pressure.
 
 ═══════════════════════════════════════════
-RESPONSE FORMAT & RHYTHM
+RESPONSE FORMAT & RHYTHM (STRICT RULES)
 ═══════════════════════════════════════════
-- Keep responses extremely concise and to the point. Aim for 1-2 sentences for most replies.
-- Do not provide exhaustive explanations. If the person needs more information, they can query for it.
-- For heavy emotional moments, lead with validation, then gentle exploration, but still keep it brief.
-- Use white space and clear structure when giving advice or exercises (numbered steps, bullets).
-- Avoid excessive filler words ("certainly!", "of course!", "absolutely!") — sound natural.
-- End many responses with a single, powerful open-ended question to keep the dialogue flowing.
-- Use "we" language when appropriate: "Let's try to understand this together..."
+- CRITICAL: Your responses MUST be EXTREMELY short, concise, and conversational. 
+- STRICT LIMIT: MAXIMUM of 1 to 2 short sentences per reply. NO EXCEPTIONS.
+- NEVER use bullet points, numbered lists, or long paragraphs unless the user explicitly asks for a list.
+- Do NOT provide exhaustive advice. Pick ONE insight or ONE small suggestion and stop.
+- If the person needs more information, they will ask. Give them space to query you.
+- Never use filler phrases like "I understand", "That sounds hard", "Of course", "I'm here for you". Just get straight to the point with empathy.
+- Often end with a single, short question to keep dialogue flowing.
 
 ═══════════════════════════════════════════
 SAFETY PROTOCOL
@@ -149,12 +153,16 @@ const tools = [
 ];
 export const generateOracleResponse = async (userMessage, context, userId) => {
     try {
-        const modelName = "gemini-1.5-flash";
+        const modelName = "gemini-2.5-flash";
         console.log(`[BACKEND] [Oracle] Attempting generateOracleResponse using model: ${modelName}`);
         const model = genAI.getGenerativeModel({
             model: modelName,
             systemInstruction: SYSTEM_PROMPT,
-            tools: tools
+            tools: tools,
+            generationConfig: {
+                maxOutputTokens: 500, // Increased limit so it doesn't get cut off mid-sentence
+                temperature: 0.7,
+            }
         });
         // Build a rich, structured user profile context block
         const onboarding = context.onboarding;
@@ -167,6 +175,9 @@ export const generateOracleResponse = async (userMessage, context, userId) => {
             ? `Latest mood: ${latestMood.emotions?.join(', ') || 'unspecified'} (score: ${latestMood.score}/10) on ${new Date(latestMood.createdAt).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}` +
                 (latestMood.facialMetrics ? ` [Video Check-in detected: ${Math.round(latestMood.facialMetrics.smileProbability * 100)}% smile frequency, ${Math.round(latestMood.facialMetrics.eyeOpenProbability * 100)}% eye contact]` : '')
             : 'No mood logs yet.';
+        const recentMoodsSummary = context.recentMoods && context.recentMoods.length > 0
+            ? context.recentMoods.map((m, i) => `${i + 1}. ${new Date(m.createdAt).toLocaleDateString('en-GB', { weekday: 'short', hour: 'numeric' })} - Score: ${m.score}/10, Emotions: ${m.emotions?.join(', ') || 'none'}, Note: ${m.note || 'none'}`).join('\n')
+            : 'No recent checkins.';
         const journalSummary = recentJournal.length > 0
             ? recentJournal.map((j, i) => `${i + 1}. "${j.title || 'Untitled'}" (${j.mood || 'no mood tag'}) — ${new Date(j.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`).join('\n')
             : 'No journal entries yet.';
@@ -197,45 +208,19 @@ export const generateOracleResponse = async (userMessage, context, userId) => {
         let conditionInstruction = '';
         const primaryState = (context.currentState?.primaryState || '').toLowerCase();
         if (primaryState.includes('depression')) {
-            conditionInstruction = `For Depression:
-- Validate hopelessness (don't dismiss)
-- Celebrate small wins
-- Normalize low energy
-- Gently encourage small actions
-- Encourage professional help
-- Focus on hope without toxic positivity`;
+            conditionInstruction = `For Depression: Focus ONLY on validating hopelessness or celebrating a small win. Do NOT list multiple things. Keep it under 2 sentences.`;
         }
         else if (primaryState.includes('anxiety')) {
-            conditionInstruction = `For Anxiety:
-- Provide certainty when possible
-- Offer grounding techniques
-- Break problems into smaller parts
-- Validate physical symptoms
-- Breathing/calming techniques first
-- Then problem-solving
-- Reassurance (not false, but genuine)`;
+            conditionInstruction = `For Anxiety: Focus ONLY on offering a single grounding technique or providing certainty. Do NOT list multiple things. Keep it under 2 sentences.`;
         }
         else if (primaryState.includes('stress')) {
-            conditionInstruction = `For Stress:
-- Acknowledge overwhelm
-- Prioritize (not everything urgent)
-- Quick wins (immediate relief)
-- Time management support
-- Boundary-setting coaching
-- Perspective ("This semester will end")`;
+            conditionInstruction = `For Stress: Focus ONLY on acknowledging overwhelm and suggesting one quick win. Do NOT list multiple things. Keep it under 2 sentences.`;
         }
         else if (primaryState.includes('loneliness')) {
-            conditionInstruction = `For Loneliness:
-- Validate pain of isolation
-- Normalize loneliness in university
-- Reframe alone time positively
-- Focus on gradual social re-engagement`;
+            conditionInstruction = `For Loneliness: Focus ONLY on validating the pain of isolation gently. Do NOT list multiple things. Keep it under 2 sentences.`;
         }
         else if (primaryState.includes('academic_pressure')) {
-            conditionInstruction = `For Academic Pressure:
-- Focus on helping them take control (planning, breaking into chunks)
-- Normalize feeling overwhelmed by thesis/exams
-- Quick wins to regain control`;
+            conditionInstruction = `For Academic Pressure: Focus ONLY on helping them take control of one small chunk. Do NOT list multiple things. Keep it under 2 sentences.`;
         }
         const chat = model.startChat({
             history: [
@@ -254,10 +239,11 @@ CURRENT REAL-TIME STATE (Analyzed from this exact moment):
   Identified Triggers: ${context.currentState?.triggers?.join(', ') || 'Unknown'}
   
   ADAPTATION INSTRUCTION: The system has detected this user is currently in a state of ${context.currentState?.severity || 'unknown'} ${context.currentState?.primaryState || 'distress'}.
-  - If severity is > 7, provide gentle, highly structured, step-by-step guidance. Do not overwhelm them. Strongly encourage them to seek campus counseling without being alarmist.
-  - If severity is < 5, provide validating support and a brief in-app tool suggestion.
+  - If severity is > 7, provide gentle, structured guidance.
+  - If severity is < 5, provide validating support.
+  CRITICAL: You MUST keep your response under 2 sentences total, no matter what.
 
-  CONDITION-SPECIFIC CONVERSATION STYLE (MUST FOLLOW):
+  CONDITION-SPECIFIC CONVERSATION STYLE:
   ${conditionInstruction}
 
 PROFILE:
@@ -274,6 +260,9 @@ PROFILE:
 
 EMOTIONAL DATA:
   ${moodSummary}
+
+RECENT CHECKINS (Last 5):
+  ${recentMoodsSummary}
 
 RECENT JOURNAL THEMES:
   ${journalSummary}
@@ -391,7 +380,7 @@ INSTRUCTIONS:
 };
 export const generateProactiveInsights = async (userId, context) => {
     try {
-        const modelName = "gemini-1.5-flash";
+        const modelName = "gemini-2.5-flash-lite";
         console.log(`[BACKEND] Attempting to generate insights using model: ${modelName}`);
         const model = genAI.getGenerativeModel({ model: modelName });
         const prompt = `
@@ -465,7 +454,7 @@ Do not output any markdown formatting, just the raw JSON object.`;
 };
 export const analyzeVoiceAudio = async (base64Audio, mimeType) => {
     const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash-lite",
     });
     const prompt = `You are a vocal acoustic analyzer. Do not transcribe or analyze the speech content. Listen strictly to the vocal tone, pitch variability, speech rate, and pause duration. 
 
@@ -509,7 +498,7 @@ Return a JSON object exactly matching this structure (no markdown, just valid JS
 };
 export const generatePersonalizedAssessment = async (userId, context, testType) => {
     try {
-        const modelName = "gemini-1.5-flash";
+        const modelName = "gemini-2.5-flash";
         const model = genAI.getGenerativeModel({ model: modelName });
         // Map testType to clinical focus and question count
         let clinicalFocus = "general well-being";
@@ -550,10 +539,11 @@ ${context.recentJournal?.map((j) => `- Title: ${j.title || 'Untitled'}, Content:
 
 INSTRUCTIONS:
 1. Generate exactly ${questionCount} multiple-choice questions to check in on their current state regarding ${clinicalFocus}.
-2. Tailor the questions to their recent struggles (e.g., if they had poor sleep, ask about their rest; if they were stressed, ask about their tension).
+2. ANALYZE CHANGES: Look closely at the trajectory of their recent mood logs and journals. Identify any changes or trends (e.g., if their mood recently dropped, if their sleep suddenly worsened, or if they've been consistently stressed). Tailor the questions explicitly to these changes to understand WHY their mental state shifted.
 3. Provide 4 options for each question, ranging from positive/healthy to negative/struggling.
 4. Output MUST be valid JSON and exactly match this schema:
 {
+  "insightContext": "string",
   "questions": [
     {
       "question": "string",
@@ -561,6 +551,7 @@ INSTRUCTIONS:
     }
   ]
 }
+In the "insightContext" field, provide a very short, empathetic introductory sentence explaining WHY you are asking these specific questions based on their recent logs (e.g., "I noticed your mood was low today, let's check in...").
 Do not output any markdown formatting, just the raw JSON object.`;
         const result = await withRetry(() => model.generateContent(prompt), 3, 2000);
         let jsonStr = result.response.text().trim();
@@ -570,21 +561,24 @@ Do not output any markdown formatting, just the raw JSON object.`;
         else if (jsonStr.startsWith('\`\`\`')) {
             jsonStr = jsonStr.replace(/\`\`\`/g, '').trim();
         }
-        return JSON.parse(jsonStr).questions;
+        return JSON.parse(jsonStr);
     }
     catch (error) {
         console.error(`[BACKEND] Error generating personalized assessment:`, error);
         // Fallback assessment
-        return [
-            { question: "How have you been feeling overall over the past few days?", options: ["Great", "Okay", "Struggling a bit", "Very overwhelmed"] },
-            { question: "How well have you been sleeping lately?", options: ["Very well", "Alright", "Tossing and turning", "Barely sleeping"] },
-            { question: "Are you finding time to disconnect and relax?", options: ["Yes, plenty", "Sometimes", "Rarely", "Not at all"] }
-        ];
+        return {
+            insightContext: "Checking in on how you've been doing lately.",
+            questions: [
+                { question: "How have you been feeling overall over the past few days?", options: ["Great", "Okay", "Struggling a bit", "Very overwhelmed"] },
+                { question: "How well have you been sleeping lately?", options: ["Very well", "Alright", "Tossing and turning", "Barely sleeping"] },
+                { question: "Are you finding time to disconnect and relax?", options: ["Yes, plenty", "Sometimes", "Rarely", "Not at all"] }
+            ]
+        };
     }
 };
 export const evaluatePersonalizedAssessment = async (userId, context, answers, testType) => {
     try {
-        const modelName = "gemini-1.5-flash";
+        const modelName = "gemini-2.5-flash";
         const model = genAI.getGenerativeModel({ model: modelName });
         const prompt = `
 You are a compassionate clinical AI. Evaluate the user's answers to a personalized check-in and provide structured, design-friendly feedback.
@@ -636,7 +630,7 @@ Do not output any markdown formatting, just the raw JSON object.`;
 };
 export const analyzeJournalEntry = async (content) => {
     try {
-        const modelName = "gemini-1.5-flash";
+        const modelName = "gemini-2.5-flash";
         const model = genAI.getGenerativeModel({ model: modelName });
         const prompt = `
 You are the MindBridge Oracle, a compassionate clinical AI. The user has just submitted a private journal entry.

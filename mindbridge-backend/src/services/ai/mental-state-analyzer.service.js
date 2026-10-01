@@ -31,7 +31,7 @@ async function withRetry(fn, retries = 3, delayMs = 2000) {
 }
 export const analyzeCurrentState = async (userMessage, context) => {
     try {
-        const modelName = "gemini-1.5-flash";
+        const modelName = "gemini-2.5-flash-lite";
         const model = genAI.getGenerativeModel({ model: modelName });
         // Convert history for context
         const recentHistory = context.history?.slice(0, 10).map((m) => `${m.role}: ${m.content}`).join('\n') || 'None';

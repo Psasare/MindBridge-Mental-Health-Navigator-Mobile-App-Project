@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { GoalService } from '../services/goal.service.js';
 const prisma = new PrismaClient();
 export const getProfile = async (req, res) => {
     try {
@@ -23,27 +24,10 @@ export const getProfile = async (req, res) => {
             where: { userId },
             orderBy: { createdAt: 'desc' },
         });
-        // Simple Streak Logic
-        let streak = 0;
-        const today = new Date().toDateString();
-        const uniqueDays = new Set([...moodLogs, ...journals].map(l => new Date(l.createdAt).toDateString()));
-        const sortedDays = Array.from(uniqueDays).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-        if (sortedDays.includes(today)) {
-            streak = 1;
-            for (let i = 0; i < sortedDays.length - 1; i++) {
-                const d1Str = sortedDays[i];
-                const d2Str = sortedDays[i + 1];
-                const d1 = new Date(d1Str);
-                const d2 = new Date(d2Str);
-                const diff = (d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24);
-                if (diff === 1)
-                    streak++;
-                else
-                    break;
-            }
-        }
-        // Simple Points Logic: 100 per mood, 200 per journal
-        const points = (moodLogs.length * 100) + (journals.length * 200);
+        // Fetch true gamification stats using the service to ensure streaks are validated and reset if broken
+        const gamification = await GoalService.getGamificationStatus(userId);
+        const streak = gamification?.currentStreak || 0;
+        const points = gamification?.totalPoints || 0;
         // 7 Day Mood Trend
         const last7Days = Array.from({ length: 7 }).map((_, i) => {
             const d = new Date();

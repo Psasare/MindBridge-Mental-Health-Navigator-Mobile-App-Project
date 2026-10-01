@@ -47,5 +47,13 @@ export declare const GoalService: {
         badges: string[];
         lastCompletedAt: Date | null;
     }>;
+    /**
+     * Record a daily check-in (e.g. logging a mood) and update streaks immediately
+     */
+    recordDailyCheckIn: (userId: string) => Promise<{
+        pointsAwarded: number;
+        currentStreak: number;
+        alreadyCheckedInToday: boolean;
+    }>;
 };
 //# sourceMappingURL=goal.service.d.ts.map

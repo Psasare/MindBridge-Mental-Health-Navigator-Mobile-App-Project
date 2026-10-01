@@ -35,10 +35,27 @@ export const GoalService = {
         const conditionGoals = await prisma.goal.findMany({
             where: { condition: primaryState }
         });
-        // If no goals found for the specific condition, fallback to 'anxiety' or any
-        let availableGoals = conditionGoals.length > 0 ? conditionGoals : await prisma.goal.findMany({ take: 25 });
-        // 4. Group by category and pick 1 per category
-        const categories = ['grounding', 'planning', 'connection', 'movement', 'nutrition', 'getting_up', 'self_care', 'accomplishment'];
+        // We need a large pool to pick diverse daily goals. If the condition alone 
+        // doesn't provide enough variety (e.g. 'stress' only has 1 goal in the DB), 
+        // we mix in a general pool of goals so it's not static every day.
+        let availableGoals = conditionGoals;
+        if (availableGoals.length < 15) {
+            const extraGoals = await prisma.goal.findMany({ take: 50 });
+            // Merge and deduplicate
+            const allIds = new Set(availableGoals.map((g) => g.id));
+            for (const eg of extraGoals) {
+                if (!allIds.has(eg.id)) {
+                    availableGoals.push(eg);
+                    allIds.add(eg.id);
+                }
+            }
+        }
+        // 4. Fetch distinct categories from the database to avoid hardcoding
+        const distinctCategories = await prisma.goal.findMany({
+            select: { category: true },
+            distinct: ['category']
+        });
+        const categories = distinctCategories.map(c => c.category);
         const selectedGoals = [];
         // Shuffle helper
         const shuffleArray = (array) => {
@@ -48,8 +65,11 @@ export const GoalService = {
             }
             return array;
         };
-        for (const category of categories) {
-            if (selectedGoals.length >= 5)
+        // Make sure we shuffle the categories too, so we don't always bias the first few categories
+        const shuffledCategories = [...categories];
+        shuffleArray(shuffledCategories);
+        for (const category of shuffledCategories) {
+            if (selectedGoals.length >= 3)
                 break;
             const goalsInCategory = availableGoals.filter(g => g.category === category);
             if (goalsInCategory.length === 0)
@@ -60,11 +80,11 @@ export const GoalService = {
             shuffleArray(poolToPickFrom);
             selectedGoals.push(poolToPickFrom[0]);
         }
-        // If we still don't have 5, fill with random ones
-        if (selectedGoals.length < 5) {
+        // If we still don't have 3, fill with random ones
+        if (selectedGoals.length < 3) {
             const remainingGoals = availableGoals.filter(g => !selectedGoals.find((sg) => sg.id === g.id));
             shuffleArray(remainingGoals);
-            selectedGoals.push(...remainingGoals.slice(0, 5 - selectedGoals.length));
+            selectedGoals.push(...remainingGoals.slice(0, 3 - selectedGoals.length));
         }
         // 5. Save the daily set
         const goalIds = selectedGoals.map((g) => g.id);
@@ -154,10 +174,10 @@ export const GoalService = {
         if (badgeUnlock && !badges.includes(badgeUnlock)) {
             badges.push(badgeUnlock);
         }
-        // Update streak if this is the 3rd goal today
+        // Update streak if this is the 1st goal today
         let newStreak = gamification.currentStreak;
         let longestStreak = gamification.longestStreak;
-        if (newlyCompletedCount === 3) {
+        if (newlyCompletedCount === 1) {
             // Check if they completed 3 yesterday
             const yesterday = new Date(today);
             yesterday.setDate(yesterday.getDate() - 1);
@@ -179,11 +199,11 @@ export const GoalService = {
         await prisma.userGamification.update({
             where: { userId },
             data: {
-                totalPoints: gamification.totalPoints + pointsAwarded + extraPoints,
+                totalPoints: { increment: pointsAwarded + extraPoints },
                 currentStreak: newStreak,
                 longestStreak: longestStreak,
                 badges,
-                lastCompletedAt: newlyCompletedCount >= 3 ? new Date() : gamification.lastCompletedAt
+                lastCompletedAt: newlyCompletedCount === 1 ? new Date() : gamification.lastCompletedAt
             }
         });
         return {
@@ -200,7 +220,78 @@ export const GoalService = {
         if (!gamification) {
             gamification = await prisma.userGamification.create({ data: { userId } });
         }
+        else if (gamification.lastCompletedAt && gamification.currentStreak > 0) {
+            // Check if the streak was broken (last check in was older than yesterday)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const lastCompletedDate = new Date(gamification.lastCompletedAt);
+            lastCompletedDate.setHours(0, 0, 0, 0);
+            if (lastCompletedDate.getTime() < yesterday.getTime()) {
+                // Streak broken, reset to 0
+                gamification = await prisma.userGamification.update({
+                    where: { userId },
+                    data: { currentStreak: 0 }
+                });
+            }
+        }
         return gamification;
+    },
+    /**
+     * Record a daily check-in (e.g. logging a mood) and update streaks immediately
+     */
+    recordDailyCheckIn: async (userId) => {
+        let gamification = await prisma.userGamification.findUnique({ where: { userId } });
+        if (!gamification) {
+            gamification = await prisma.userGamification.create({ data: { userId } });
+        }
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        let newStreak = gamification.currentStreak;
+        let longestStreak = gamification.longestStreak;
+        let pointsAwarded = 10; // 10 points for daily check-in
+        let alreadyCheckedInToday = false;
+        if (gamification.lastCompletedAt) {
+            const lastCompletedDate = new Date(gamification.lastCompletedAt);
+            lastCompletedDate.setHours(0, 0, 0, 0);
+            if (lastCompletedDate.getTime() === today.getTime()) {
+                // Already logged something today that updated the streak
+                alreadyCheckedInToday = true;
+            }
+            else if (lastCompletedDate.getTime() === yesterday.getTime()) {
+                newStreak += 1;
+            }
+            else if (lastCompletedDate.getTime() < yesterday.getTime()) {
+                newStreak = 1; // reset streak
+            }
+        }
+        else {
+            newStreak = 1;
+        }
+        if (alreadyCheckedInToday && newStreak === 0) {
+            newStreak = 1;
+            alreadyCheckedInToday = false; // Force an update to save the streak of 1
+        }
+        longestStreak = Math.max(longestStreak, newStreak);
+        if (!alreadyCheckedInToday) {
+            gamification = await prisma.userGamification.update({
+                where: { userId },
+                data: {
+                    totalPoints: { increment: pointsAwarded },
+                    currentStreak: newStreak,
+                    longestStreak: longestStreak,
+                    lastCompletedAt: new Date() // Sets last completed to now
+                }
+            });
+        }
+        return {
+            pointsAwarded: alreadyCheckedInToday ? 0 : pointsAwarded,
+            currentStreak: newStreak,
+            alreadyCheckedInToday
+        };
     }
 };
 //# sourceMappingURL=goal.service.js.map
