@@ -7,6 +7,7 @@ import { recommendResources } from '../services/recommendation.service.js';
 import { GoalService } from '../services/goal.service.js';
 
 const prisma = new PrismaClient();
+const CACHE_LIMIT = 1000;
 const proactiveInsightsCache = new Map<string, { time: number, data: any }>();
 
 // High-risk keywords for safety screening
@@ -353,6 +354,9 @@ export const getProactiveInsights = async (req: Request, res: Response) => {
       const cached = proactiveInsightsCache.get(userId)!;
       if (now - cached.time < 3600000) {
         return res.json(cached.data);
+      } else {
+        // Fix: Explicitly evict stale cache entries to prevent memory leaks
+        proactiveInsightsCache.delete(userId);
       }
     }
 
@@ -388,6 +392,12 @@ export const getProactiveInsights = async (req: Request, res: Response) => {
     }
     
     insights.suggestedResources = suggestedResources;
+    
+    // Fix: OOM Prevention - Enforce an upper bound on cache size
+    if (proactiveInsightsCache.size >= CACHE_LIMIT) {
+      const oldestKey = proactiveInsightsCache.keys().next().value;
+      if (oldestKey) proactiveInsightsCache.delete(oldestKey);
+    }
     
     // Cache the result
     proactiveInsightsCache.set(userId, { data: insights, time: now });

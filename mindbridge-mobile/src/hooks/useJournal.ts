@@ -5,6 +5,9 @@ import api from '../services/api';
 export const useJournal = () => {
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
   const fetchEntries = useCallback(async () => {
     setLoading(true);
@@ -19,13 +22,31 @@ export const useJournal = () => {
       }
 
       const response = await api.get('/journal');
-      setEntries(response.data);
+      setEntries(response.data.data);
+      setNextCursor(response.data.nextCursor);
+      setHasMore(!!response.data.nextCursor);
     } catch (error: any) {
       console.warn('Network timeout when fetching journal entries.');
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const fetchNextPage = useCallback(async () => {
+    if (!hasMore || loadingMore || !nextCursor) return;
+    
+    setLoadingMore(true);
+    try {
+      const response = await api.get(`/journal?cursor=${nextCursor}`);
+      setEntries(prev => [...prev, ...response.data.data]);
+      setNextCursor(response.data.nextCursor);
+      setHasMore(!!response.data.nextCursor);
+    } catch (error) {
+      console.warn('Error fetching more journal entries:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [hasMore, loadingMore, nextCursor]);
 
   useEffect(() => {
     fetchEntries();
@@ -52,5 +73,5 @@ export const useJournal = () => {
     }
   };
 
-  return { entries, loading, saveEntry, deleteEntry };
+  return { entries, loading, loadingMore, hasMore, saveEntry, deleteEntry, fetchNextPage };
 };

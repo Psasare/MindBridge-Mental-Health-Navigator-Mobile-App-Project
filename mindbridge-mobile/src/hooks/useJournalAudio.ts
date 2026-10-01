@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   useAudioRecorder,
   useAudioRecorderState,
@@ -60,7 +60,7 @@ export const useJournalAudio = () => {
     setAudioUri(recorder.uri);
   };
 
-  const playSound = async (uri: string, id: string) => {
+  const playSound = useCallback(async (uri: string, id: string) => {
     if (isPlaying === id) {
       player?.pause();
       setIsPlaying(null);
@@ -77,7 +77,7 @@ export const useJournalAudio = () => {
     newPlayer.addListener('playbackStatusUpdate', (status: any) => {
       if (status.didJustFinish) setIsPlaying(null);
     });
-  };
+  }, [isPlaying, player]);
 
   const resetAudio = () => {
     setAudioUri(null);

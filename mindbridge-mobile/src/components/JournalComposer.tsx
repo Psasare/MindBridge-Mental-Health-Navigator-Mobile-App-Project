@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, TextInput, KeyboardAvoidingView, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import Animated, { SlideInDown, SlideOutDown } from 'react-native-reanimated';
 import { X, Play, Pause, Activity, Check, Camera, Mic, StopCircle, Wind, Sun, CloudRain, Frown, Meh, Flame, Smile, Heart } from 'lucide-react-native';
@@ -16,7 +16,27 @@ const MOOD_OPTIONS = [
   { id: 'exhausted', icon: Meh, label: 'Tired' },
 ];
 
-export const JournalComposer = ({ 
+const MoodSelector = memo(({ selectedMood, onSelectMood, theme, styles }: any) => {
+  return (
+    <View style={styles.moodSelector}>
+      <Text style={styles.moodSelectorLabel}>How are you feeling?</Text>
+      <View style={styles.moodOptionsRow}>
+        {MOOD_OPTIONS.map(mood => (
+          <TouchableOpacity activeOpacity={0.7} key={mood.id} onPress={() => onSelectMood(mood.id)}
+            style={[
+              styles.moodOption,
+              selectedMood === mood.id && { backgroundColor: theme.colors.plum + '20', borderColor: theme.colors.plum }
+            ]}>
+            <mood.icon size={20} color={selectedMood === mood.id ? theme.colors.plum : theme.colors.text.secondary} />
+            <Text style={[styles.moodOptionText, { color: selectedMood === mood.id ? theme.colors.plum : theme.colors.text.secondary }]}>{mood.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+});
+
+export const JournalComposer = memo(({ 
   theme, 
   insets, 
   onSave, 
@@ -35,16 +55,20 @@ export const JournalComposer = ({
   onAnalyzeVoice,
   isAnalyzingVoice
 }: any) => {
-  const styles = createStyles(theme);
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const { t } = theme;
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedMood, setSelectedMood] = useState('calm');
 
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     onSave({ title, content, mood: selectedMood });
-  };
+  }, [onSave, title, content, selectedMood]);
+
+  const handleSelectMood = useCallback((id: string) => {
+    setSelectedMood(id);
+  }, []);
 
   return (
     <Animated.View
@@ -63,21 +87,12 @@ export const JournalComposer = ({
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView style={{ flex: 1 }} contentContainerStyle={[styles.composerBody, { paddingBottom: 60 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           
-          <View style={styles.moodSelector}>
-            <Text style={styles.moodSelectorLabel}>How are you feeling?</Text>
-            <View style={styles.moodOptionsRow}>
-              {MOOD_OPTIONS.map(mood => (
-                <TouchableOpacity activeOpacity={0.7} key={mood.id} onPress={() => setSelectedMood(mood.id)}
-                  style={[
-                    styles.moodOption,
-                    selectedMood === mood.id && { backgroundColor: theme.colors.plum + '20', borderColor: theme.colors.plum }
-                  ]}>
-                  <mood.icon size={20} color={selectedMood === mood.id ? theme.colors.plum : theme.colors.text.secondary} />
-                  <Text style={[styles.moodOptionText, { color: selectedMood === mood.id ? theme.colors.plum : theme.colors.text.secondary }]}>{mood.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+          <MoodSelector 
+            selectedMood={selectedMood} 
+            onSelectMood={handleSelectMood} 
+            theme={theme} 
+            styles={styles} 
+          />
 
           <View style={{ height: 24 }} />
 
@@ -151,7 +166,7 @@ export const JournalComposer = ({
       </KeyboardAvoidingView>
     </Animated.View>
   );
-};
+});
 
 const createStyles = (theme: any) => StyleSheet.create({
   composerContainer: { flex: 1, backgroundColor: theme.colors.surface },

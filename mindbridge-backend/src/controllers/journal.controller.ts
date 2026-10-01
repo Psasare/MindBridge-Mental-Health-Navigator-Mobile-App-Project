@@ -11,16 +11,33 @@ const createEntrySchema = z.object({
   mood: z.string().optional().nullable(),
 });
 
+const getEntriesQuerySchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().min(1).max(50).default(20)
+});
+
 export const getEntries = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
+    const parsed = getEntriesQuerySchema.parse(req.query);
 
     const entries = await prisma.journal.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+      take: parsed.limit + 1, // Fetch 1 extra to determine next page
+      cursor: parsed.cursor ? { id: parsed.cursor } : undefined,
     });
 
-    res.json(entries);
+    let nextCursor: string | null = null;
+    if (entries.length > parsed.limit) {
+      const nextItem = entries.pop(); // Remove the extra item
+      nextCursor = nextItem!.id;
+    }
+
+    res.json({
+      data: entries,
+      nextCursor
+    });
   } catch (error) {
     console.error('[BACKEND] Error fetching journal entries:', error);
     res.status(500).json({ error: 'Failed to fetch journal entries' });

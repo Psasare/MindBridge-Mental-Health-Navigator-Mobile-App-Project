@@ -1,5 +1,5 @@
 // @ts-ignore: Bypassing IDE cache bug
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -47,7 +47,7 @@ export default function JournalScreen() {
   const styles = createStyles(theme);
 
   // Business Logic Hooks
-  const { entries, loading, saveEntry, deleteEntry } = useJournal();
+  const { entries, loading, loadingMore, hasMore, fetchNextPage, saveEntry, deleteEntry } = useJournal();
   
   // Audio Hook
   const { 
@@ -112,7 +112,7 @@ export default function JournalScreen() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     Alert.alert(
       "Delete Entry",
       "Are you sure you want to remove this reflection? This cannot be undone.",
@@ -121,7 +121,7 @@ export default function JournalScreen() {
         { text: "Delete", style: "destructive", onPress: () => deleteEntry(id) }
       ]
     );
-  };
+  }, [deleteEntry]);
 
   return (
     <View style={styles.container}>
@@ -217,6 +217,15 @@ export default function JournalScreen() {
               onPlaySound={playSound}
             />
           )}
+          onEndReached={fetchNextPage}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={{ padding: 20, alignItems: 'center' }}>
+                <ActivityIndicator color={theme.colors.plum} />
+              </View>
+            ) : null
+          }
         />
       ) : (
         <JournalComposer 

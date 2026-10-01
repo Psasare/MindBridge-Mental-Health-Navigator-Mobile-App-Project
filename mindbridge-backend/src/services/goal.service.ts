@@ -224,7 +224,7 @@ export const GoalService = {
     await prisma.userGamification.update({
       where: { userId },
       data: {
-        totalPoints: gamification.totalPoints + pointsAwarded + extraPoints,
+        totalPoints: { increment: pointsAwarded + extraPoints },
         currentStreak: newStreak,
         longestStreak: longestStreak,
         badges,
@@ -316,7 +316,7 @@ export const GoalService = {
       gamification = await prisma.userGamification.update({
         where: { userId },
         data: {
-          totalPoints: gamification.totalPoints + pointsAwarded,
+          totalPoints: { increment: pointsAwarded },
           currentStreak: newStreak,
           longestStreak: longestStreak,
           lastCompletedAt: new Date() // Sets last completed to now

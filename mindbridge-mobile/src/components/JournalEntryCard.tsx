@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { Calendar, Trash2, Wind, Sun, CloudRain, Frown, Meh, Flame, Smile, Heart, Sparkles, Play, Pause } from 'lucide-react-native';
@@ -36,7 +36,7 @@ interface JournalEntryCardProps {
   onPlaySound: (url: string, id: string) => void;
 }
 
-export const JournalEntryCard = ({ entry, index, theme, onDelete, isPlaying, onPlaySound }: JournalEntryCardProps) => {
+export const JournalEntryCard = memo(({ entry, index, theme, onDelete, isPlaying, onPlaySound }: JournalEntryCardProps) => {
   const styles = createStyles(theme);
 
   return (
@@ -93,7 +93,11 @@ export const JournalEntryCard = ({ entry, index, theme, onDelete, isPlaying, onP
       )}
     </Animated.View>
   );
-};
+}, (prevProps, nextProps) => {
+  return prevProps.entry.id === nextProps.entry.id && 
+         prevProps.isPlaying === nextProps.isPlaying && 
+         prevProps.theme.isDark === nextProps.theme.isDark;
+});
 
 const createStyles = (theme: any) => StyleSheet.create({
   entryCard: {
