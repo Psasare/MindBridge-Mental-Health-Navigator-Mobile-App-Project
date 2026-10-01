@@ -5,9 +5,18 @@ export const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://localhost:6379'
 });
 
-redisClient.on('error', (err) => console.error('[Redis Client Error]', err));
+redisClient.on('error', (err) => {
+  // Only log if we are explicitly trying to use Redis to avoid spam
+  if (process.env.USE_REDIS === 'true' || process.env.NODE_ENV === 'production') {
+    console.error('[Redis Client Error]', err);
+  }
+});
 
 export const connectCache = async () => {
+  if (process.env.NODE_ENV !== 'production' && process.env.USE_REDIS !== 'true') {
+    return;
+  }
+
   if (!redisClient.isOpen) {
     try {
       await redisClient.connect();

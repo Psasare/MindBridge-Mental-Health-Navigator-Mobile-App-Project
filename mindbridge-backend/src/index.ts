@@ -19,7 +19,6 @@ import selfHelpRoutes from './routes/self-help.routes.js';
 import goalRoutes from './routes/goal.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
 import { connectCache } from './utils/cache.js';
-import './workers/ai.worker.js';
 
 dotenv.config();
 
@@ -71,6 +70,11 @@ app.get('/', (req, res) => {
 
 const startServer = async () => {
   await connectCache();
+  
+  if (process.env.NODE_ENV === 'production' || process.env.USE_REDIS === 'true') {
+    await import('./workers/ai.worker.js');
+    console.log('🤖 AI Background Worker started');
+  }
   
   app.listen(port as number, '0.0.0.0', () => {
     console.log(`Server is running on port ${port} (bound to 0.0.0.0)`);
