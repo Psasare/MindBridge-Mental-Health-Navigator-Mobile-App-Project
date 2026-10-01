@@ -51,7 +51,7 @@ const ShimmerBlock = ({ width, height, borderRadius = RFValue(16), style, delay 
         colors={['transparent', theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.4)', 'transparent']}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
       />
     </Animated.View>
   );

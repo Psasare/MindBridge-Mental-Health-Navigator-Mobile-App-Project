@@ -1,10 +1,9 @@
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, ThemeProvider as NavigationProvider, DefaultTheme, DarkTheme } from 'expo-router';
 import { useEffect, useContext, useState } from 'react';
 import { AuthProvider, AuthContext } from '../src/context/AuthContext';
 import { LanguageProvider } from '../src/context/LanguageContext';
 import { View } from 'react-native';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
-import { ThemeProvider as NavigationProvider, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { AnimatedLogoLoader } from '../src/components/AnimatedLogoLoader';
 import {
   useFonts,

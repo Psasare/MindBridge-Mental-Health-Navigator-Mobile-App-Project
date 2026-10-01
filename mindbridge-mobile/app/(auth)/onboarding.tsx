@@ -760,7 +760,7 @@ export default function OnboardingScreen() {
 
 const createStyles = (theme: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
-  background: { ...StyleSheet.absoluteFillObject },
+  background: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   header: { paddingHorizontal: 20, marginBottom: 20 },
   headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 15 },
   backBtn: { padding: 4 },

@@ -147,7 +147,7 @@ const CustomTabBar = ({ state, descriptors, navigation, insets, theme, typograph
       
       {/* Semi-transparent border overlay for iOS premium feel */}
       <View style={{
-        ...StyleSheet.absoluteFillObject,
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
         borderRadius: 32,
         borderWidth: 1,
         borderColor: theme.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.08)',
@@ -171,7 +171,7 @@ const CustomTabBar = ({ state, descriptors, navigation, insets, theme, typograph
       <View style={{
         flexDirection: 'row',
         alignItems: 'center',
-        ...StyleSheet.absoluteFillObject,
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
       }}>
         {visibleRoutes.map((route: any, index: number) => renderTab(route, index))}
       </View>
@@ -192,35 +192,35 @@ export default function TabLayout() {
         name="dashboard" 
         options={{ 
           title: t('tabs.today') || 'Today',
-          tabBarIcon: ({ color, focused }) => <AnimatedTabBarIcon focused={focused} color={color} IconComponent={Home} />
+          tabBarIcon: ({ color, focused }) => <AnimatedTabBarIcon focused={focused} color={color as string} IconComponent={Home} />
         }} 
       />
       <Tabs.Screen 
         name="explore" 
         options={{ 
           title: t('tools.title') || 'Explore',
-          tabBarIcon: ({ color, focused }) => <AnimatedTabBarIcon focused={focused} color={color} IconComponent={LayoutGrid} />
+          tabBarIcon: ({ color, focused }) => <AnimatedTabBarIcon focused={focused} color={color as string} IconComponent={LayoutGrid} />
         }} 
       />
       <Tabs.Screen 
         name="ai-guide" 
         options={{ 
           title: t('tabs.oracle') || 'Oracle',
-          tabBarIcon: ({ color, focused }) => <AnimatedTabBarIcon focused={focused} color={color} IconComponent={MessageCircle} />
+          tabBarIcon: ({ color, focused }) => <AnimatedTabBarIcon focused={focused} color={color as string} IconComponent={MessageCircle} />
         }} 
       />
       <Tabs.Screen 
         name="garden" 
         options={{ 
           title: t('tabs.tracker') || 'Tracker',
-          tabBarIcon: ({ color, focused }) => <AnimatedTabBarIcon focused={focused} color={color} IconComponent={Activity} />
+          tabBarIcon: ({ color, focused }) => <AnimatedTabBarIcon focused={focused} color={color as string} IconComponent={Activity} />
         }} 
       />
       <Tabs.Screen 
         name="profile" 
         options={{ 
           title: t('tabs.profile') || 'Profile',
-          tabBarIcon: ({ color, focused }) => <AnimatedTabBarIcon focused={focused} color={color} IconComponent={User} />
+          tabBarIcon: ({ color, focused }) => <AnimatedTabBarIcon focused={focused} color={color as string} IconComponent={User} />
         }} 
       />
       

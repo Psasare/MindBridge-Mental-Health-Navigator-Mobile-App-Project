@@ -409,7 +409,7 @@ export default function WellnessTrackerScreen() {
     setPlayer(newPlayer);
     setIsPlaying(true);
     newPlayer.play();
-    newPlayer.addListener('playbackStatusUpdate', (status) => {
+    (newPlayer as any).addListener('playbackStatusUpdate', (status: any) => {
       if (status.didJustFinish) setIsPlaying(false);
     });
   };
