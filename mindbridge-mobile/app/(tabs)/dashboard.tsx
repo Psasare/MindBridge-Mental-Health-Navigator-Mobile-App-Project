@@ -219,7 +219,7 @@ export default function DashboardScreen() {
                 <Text style={[styles.streakText, { color: "#FF9800" }]}>{gamification.currentStreak}</Text>
               </View>
             </View>
-            <StreakJourney streak={gamification.currentStreak} theme={theme} styles={styles} completedCount={completedCount} />
+            <StreakJourney streak={gamification.currentStreak} theme={theme} completedCount={completedCount} />
           </View>
         </Animated.View>
 

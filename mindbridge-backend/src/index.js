@@ -13,6 +13,7 @@ import groupsRoutes from './routes/groups.routes.js';
 import peersRoutes from './routes/peers.routes.js';
 import selfHelpRoutes from './routes/self-help.routes.js';
 import goalRoutes from './routes/goal.routes.js';
+import dashboardRoutes from './routes/dashboard.routes.js';
 import { connectCache } from './utils/cache.js';
 import './workers/ai.worker.js';
 dotenv.config();
@@ -41,6 +42,7 @@ app.use('/api/groups', groupsRoutes);
 app.use('/api/peers', peersRoutes);
 app.use('/api/self-help', selfHelpRoutes);
 app.use('/api/goals', goalRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.get('/', (req, res) => {
     res.send('MindBridge API is running');
 });
