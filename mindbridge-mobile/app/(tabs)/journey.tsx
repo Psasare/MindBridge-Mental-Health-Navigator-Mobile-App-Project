@@ -176,7 +176,7 @@ const createStyles = (theme: any) => StyleSheet.create({
     marginBottom: 32,
     borderWidth: 1,
     borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)',
-    shadowColor: '#000',
+    shadowColor: theme.isDark ? 'transparent' : '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: theme.isDark ? 0.2 : 0.04,
     shadowRadius: 12,

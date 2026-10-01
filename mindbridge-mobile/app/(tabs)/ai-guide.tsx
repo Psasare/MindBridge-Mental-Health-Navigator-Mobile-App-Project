@@ -237,7 +237,7 @@ const createMsgStyles = (theme: any) => StyleSheet.create({
   rowAi: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 20, paddingBottom: 16 },
   rowUser: { alignSelf: 'flex-end', paddingHorizontal: 20, paddingBottom: 16 },
   avatarSmall: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 10, flexShrink: 0 },
-  bubbleAi: { maxWidth: width * 0.74, paddingHorizontal: 16, paddingVertical: 13, borderRadius: 20, borderBottomLeftRadius: 4, borderWidth: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
+  bubbleAi: { maxWidth: width * 0.74, paddingHorizontal: 16, paddingVertical: 13, borderRadius: 20, borderBottomLeftRadius: 4, borderWidth: 1, shadowColor: theme.isDark ? 'transparent' : '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   bubbleUser: { maxWidth: width * 0.74, paddingHorizontal: 16, paddingVertical: 13, borderRadius: 20, borderBottomRightRadius: 4 },
   textAi: { fontSize: 15.5, lineHeight: 24, fontFamily: theme.typography.fonts.ui },
   textUser: { fontSize: 16, fontFamily: theme.typography.fonts.body, lineHeight: 22 },

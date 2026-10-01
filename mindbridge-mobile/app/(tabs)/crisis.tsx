@@ -129,7 +129,7 @@ export const UNIVERSITY_COUNSELING_CENTERS: Record<string, any> = {
   }
 };
 
-const PulsingCallButton = ({ title, subtitle, number, color, icon: Icon, delay, secondary }: any) => {
+const PulsingCallButton = ({ title, subtitle, number, color, icon: Icon, delay, secondary, styles, theme }: any) => {
   const scale = useSharedValue(1);
   const pulseScale = useSharedValue(1);
   
@@ -172,7 +172,7 @@ const PulsingCallButton = ({ title, subtitle, number, color, icon: Icon, delay, 
       <Pressable onPress={handleCall} onPressIn={handlePressIn} onPressOut={handlePressOut}>
         <Animated.View style={[
           styles.callButton, 
-          secondary ? styles.callButtonSecondary : styles.callButtonPrimary,
+          secondary ? [styles.callButtonSecondary, { borderColor: color + '50' }] : styles.callButtonPrimary,
           !secondary && pulseStyle,
           animatedStyle
         ]}>
@@ -187,12 +187,12 @@ const PulsingCallButton = ({ title, subtitle, number, color, icon: Icon, delay, 
           )}
           
           <View style={styles.callButtonContent}>
-            <View style={[styles.callIconWrap, secondary ? { backgroundColor: color + '20' } : { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+            <View style={[styles.callIconWrap, secondary ? { backgroundColor: color + '15' } : { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
               <Icon color={secondary ? color : '#FFF'} size={28} />
             </View>
             <View style={styles.callTextWrap}>
               <Text style={[styles.callTitle, { color: secondary ? color : '#FFF' }]}>{title}</Text>
-              <Text style={[styles.callSubtitle, { color: secondary ? color + '99' : 'rgba(255,255,255,0.8)' }]}>{subtitle}</Text>
+              <Text style={[styles.callSubtitle, { color: secondary ? color + '90' : 'rgba(255,255,255,0.85)' }]}>{subtitle}</Text>
             </View>
             <ChevronRight color={secondary ? color + '50' : 'rgba(255,255,255,0.6)'} size={24} />
           </View>
@@ -204,8 +204,9 @@ const PulsingCallButton = ({ title, subtitle, number, color, icon: Icon, delay, 
 
 export default function CrisisSupportScreen() {
   const insets = useSafeAreaInsets();
-  const themeContext = useTheme();
+  const theme = useTheme();
   const { userData } = useContext(AuthContext);
+  const styles = createStyles(theme);
   
   const initialUni = userData?.academic?.institution || 'Other';
   const [userUni, setUserUni] = useState<string>(initialUni);
@@ -245,7 +246,7 @@ export default function CrisisSupportScreen() {
       description: 'Find licensed psychologists near you',
       icon: Stethoscope,
       query: 'therapy+clinics+near+me',
-      color: themeContext.colors.ocean,
+      color: theme.colors.ocean,
     },
     {
       id: 'hospital',
@@ -253,7 +254,7 @@ export default function CrisisSupportScreen() {
       description: 'Psychiatric and intensive care units',
       icon: BriefcaseMedical,
       query: 'psychiatric+hospital+near+me',
-      color: themeContext.colors.plum,
+      color: theme.colors.plum,
     },
     {
       id: 'support',
@@ -261,7 +262,7 @@ export default function CrisisSupportScreen() {
       description: 'Community peer support and therapy',
       icon: Users,
       query: 'mental+health+support+groups+near+me',
-      color: themeContext.colors.accents.mossVelvet,
+      color: theme.colors.accents.mossVelvet,
     }
   ];
 
@@ -275,20 +276,20 @@ export default function CrisisSupportScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: themeContext.colors.background }]}>
-      <StatusBar barStyle={themeContext.isDark ? "light-content" : "dark-content"} />
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <StatusBar barStyle={theme.isDark ? "light-content" : "dark-content"} />
       
       <ScrollView 
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.duration(800)} style={styles.header}>
-          <View style={[styles.headerBadge, { backgroundColor: themeContext.colors.semantic.danger + '15' }]}>
-            <ShieldAlert color={themeContext.colors.semantic.danger} size={16} />
-            <Text style={[styles.headerBadgeText, { color: themeContext.colors.semantic.danger }]}>Emergency & Crisis</Text>
+          <View style={[styles.headerBadge, { backgroundColor: theme.colors.semantic.danger + '15' }]}>
+            <ShieldAlert color={theme.colors.semantic.danger} size={16} />
+            <Text style={[styles.headerBadgeText, { color: theme.colors.semantic.danger }]}>Emergency & Crisis</Text>
           </View>
-          <Text style={[styles.headerTitle, { color: themeContext.colors.text.primary }]}>Get Help Now</Text>
-          <Text style={[styles.headerSubtitle, { color: themeContext.colors.text.secondary }]}>
+          <Text style={[styles.headerTitle, { color: theme.colors.text.primary }]}>Get Help Now</Text>
+          <Text style={[styles.headerSubtitle, { color: theme.colors.text.secondary }]}>
             You are not alone. Immediate support is available 24/7.
           </Text>
         </Animated.View>
@@ -299,9 +300,11 @@ export default function CrisisSupportScreen() {
             title={institution.name} 
             subtitle="Campus Support Line"
             number={institution.number}
-            color={themeContext.colors.plum}
+            color={theme.colors.plum}
             icon={Phone}
             delay={100}
+            styles={styles}
+            theme={theme}
           />
 
           {institution.secondaryNumber && (
@@ -309,10 +312,12 @@ export default function CrisisSupportScreen() {
               title="Secondary Helpline" 
               subtitle="Alternative Campus Contact"
               number={institution.secondaryNumber}
-              color={themeContext.colors.plum}
+              color={theme.colors.text.primary}
               icon={PhoneForwarded}
               delay={200}
               secondary
+              styles={styles}
+              theme={theme}
             />
           )}
 
@@ -320,22 +325,24 @@ export default function CrisisSupportScreen() {
             title="National Emergency" 
             subtitle="Police, Fire, Ambulance (112)"
             number="112"
-            color={themeContext.colors.semantic.danger}
+            color={theme.colors.semantic.danger}
             icon={ShieldAlert}
             delay={300}
+            styles={styles}
+            theme={theme}
           />
         </View>
 
         {/* Institutional Information (Cleaner, Flat Design) */}
         <Animated.View entering={FadeInUp.delay(400).duration(800)} style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: themeContext.colors.text.primary }]}>Institution Details</Text>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text.primary }]}>Institution Details</Text>
           
-          <View style={[styles.infoCard, { backgroundColor: themeContext.colors.surface, borderColor: themeContext.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]}>
+          <View style={[styles.infoCard, { backgroundColor: theme.colors.surface, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
             <View style={styles.infoHeader}>
-              <View style={[styles.infoIconWrap, { backgroundColor: themeContext.colors.plum + '15' }]}>
-                <Building2 color={themeContext.colors.plum} size={22} />
+              <View style={[styles.infoIconWrap, { backgroundColor: theme.colors.plum + '15' }]}>
+                <Building2 color={theme.colors.plum} size={22} />
               </View>
-              <Text style={[styles.infoTitle, { color: themeContext.colors.text.primary }]}>{institution.description}</Text>
+              <Text style={[styles.infoTitle, { color: theme.colors.text.primary }]}>{institution.description}</Text>
             </View>
 
             <View style={styles.infoDivider} />
@@ -343,20 +350,20 @@ export default function CrisisSupportScreen() {
             <View style={styles.infoRows}>
               {institution.address && (
                 <View style={styles.infoRow}>
-                  <MapPin size={18} color={themeContext.colors.text.tertiary} />
-                  <Text style={[styles.infoText, { color: themeContext.colors.text.secondary }]}>{institution.address}</Text>
+                  <MapPin size={18} color={theme.colors.text.tertiary} />
+                  <Text style={[styles.infoText, { color: theme.colors.text.secondary }]}>{institution.address}</Text>
                 </View>
               )}
               {institution.email && (
                 <View style={styles.infoRow}>
-                  <Mail size={18} color={themeContext.colors.text.tertiary} />
-                  <Text style={[styles.infoText, { color: themeContext.colors.text.secondary }]}>{institution.email}</Text>
+                  <Mail size={18} color={theme.colors.text.tertiary} />
+                  <Text style={[styles.infoText, { color: theme.colors.text.secondary }]}>{institution.email}</Text>
                 </View>
               )}
               {institution.website && (
                 <View style={styles.infoRow}>
-                  <Globe size={18} color={themeContext.colors.text.tertiary} />
-                  <Text style={[styles.infoText, { color: themeContext.colors.text.secondary }]}>{institution.website}</Text>
+                  <Globe size={18} color={theme.colors.text.tertiary} />
+                  <Text style={[styles.infoText, { color: theme.colors.text.secondary }]}>{institution.website}</Text>
                 </View>
               )}
             </View>
@@ -364,13 +371,13 @@ export default function CrisisSupportScreen() {
             {institution.services && (
               <View style={styles.servicesContainer}>
                 <View style={styles.servicesHeader}>
-                  <Info size={16} color={themeContext.colors.text.tertiary} />
-                  <Text style={[styles.servicesTitle, { color: themeContext.colors.text.secondary }]}>Available Services</Text>
+                  <Info size={16} color={theme.colors.text.tertiary} />
+                  <Text style={[styles.servicesTitle, { color: theme.colors.text.tertiary }]}>Available Services</Text>
                 </View>
                 <View style={styles.servicesChips}>
                   {institution.services.map((service: string, idx: number) => (
-                    <View key={idx} style={[styles.serviceChip, { backgroundColor: themeContext.isDark ? 'rgba(255,255,255,0.05)' : themeContext.colors.background }]}>
-                      <Text style={[styles.serviceChipText, { color: themeContext.colors.text.secondary }]}>{service}</Text>
+                    <View key={idx} style={[styles.serviceChip, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.04)' : theme.colors.background, borderColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)', borderWidth: 1 }]}>
+                      <Text style={[styles.serviceChipText, { color: theme.colors.text.secondary }]}>{service}</Text>
                     </View>
                   ))}
                 </View>
@@ -381,20 +388,20 @@ export default function CrisisSupportScreen() {
 
         {/* Nearby Services (Horizontal List to save space and look cleaner) */}
         <Animated.View entering={FadeInUp.delay(500).duration(800)} style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: themeContext.colors.text.primary }]}>Nearby Services</Text>
+          <Text style={[styles.sectionTitle, { color: theme.colors.text.primary }]}>Nearby Services</Text>
           
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 24 }} snapToInterval={width * 0.7 + 16} decelerationRate="fast">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 24 }} snapToInterval={width * 0.75 + 16} decelerationRate="fast">
             {NEARBY_SERVICES.map((service, index) => (
               <Pressable key={service.id} onPress={() => handleMap(service.query)}>
                 <Animated.View style={[
                   styles.nearbyCard, 
-                  { backgroundColor: themeContext.colors.surface, borderColor: themeContext.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }
+                  { backgroundColor: theme.colors.surface, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }
                 ]}>
                   <View style={[styles.nearbyIconWrap, { backgroundColor: service.color + '15' }]}>
                     <service.icon color={service.color} size={24} />
                   </View>
-                  <Text style={[styles.nearbyTitle, { color: themeContext.colors.text.primary }]}>{service.title}</Text>
-                  <Text style={[styles.nearbyDesc, { color: themeContext.colors.text.secondary }]}>{service.description}</Text>
+                  <Text style={[styles.nearbyTitle, { color: theme.colors.text.primary }]}>{service.title}</Text>
+                  <Text style={[styles.nearbyDesc, { color: theme.colors.text.secondary }]}>{service.description}</Text>
                   
                   <View style={styles.nearbyActionRow}>
                     <Text style={[styles.nearbyActionText, { color: service.color }]}>Find on Map</Text>
@@ -411,7 +418,7 @@ export default function CrisisSupportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -426,26 +433,29 @@ const styles = StyleSheet.create({
   headerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
     marginBottom: 16,
-    gap: 6,
+    gap: 8,
   },
   headerBadgeText: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 12,
+    fontFamily: theme.typography.fonts.accent,
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   headerTitle: {
     fontSize: 34,
+    fontFamily: theme.typography.fonts.header,
     fontWeight: '800',
-    marginBottom: 8,
+    marginBottom: 12,
     textAlign: 'center',
   },
   headerSubtitle: {
     fontSize: 16,
+    fontFamily: theme.typography.fonts.body,
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 20,
@@ -458,19 +468,19 @@ const styles = StyleSheet.create({
   callButton: {
     borderRadius: 28,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
+    shadowColor: theme.isDark ? 'transparent' : '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: theme.isDark ? 0 : 0.1,
     shadowRadius: 20,
-    elevation: 8,
+    elevation: theme.isDark ? 0 : 10,
   },
   callButtonPrimary: {
-    height: 100,
+    height: 110,
   },
   callButtonSecondary: {
-    height: 85,
-    backgroundColor: 'transparent',
-    borderWidth: 2,
+    height: 90,
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1.5,
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -478,42 +488,50 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   callIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: 20,
   },
   callTextWrap: {
     flex: 1,
   },
   callTitle: {
     fontSize: 20,
+    fontFamily: theme.typography.fonts.header,
     fontWeight: '800',
     marginBottom: 4,
   },
   callSubtitle: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 13,
+    fontFamily: theme.typography.fonts.body,
+    fontWeight: '600',
   },
   section: {
-    marginBottom: 32,
+    marginBottom: 40,
   },
   sectionTitle: {
     fontSize: 22,
+    fontFamily: theme.typography.fonts.header,
     fontWeight: '800',
-    marginBottom: 16,
+    marginBottom: 20,
     paddingHorizontal: 24,
   },
   infoCard: {
     marginHorizontal: 24,
-    borderRadius: 28,
-    padding: 24,
+    borderRadius: 32,
+    padding: 28,
     borderWidth: 1,
+    shadowColor: theme.isDark ? 'transparent' : '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: theme.isDark ? 0 : 0.05,
+    shadowRadius: 20,
+    elevation: theme.isDark ? 0 : 5,
   },
   infoHeader: {
     flexDirection: 'row',
@@ -521,101 +539,118 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   infoIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   infoTitle: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16,
+    fontFamily: theme.typography.fonts.body,
     fontWeight: '600',
-    lineHeight: 22,
+    lineHeight: 24,
   },
   infoDivider: {
     height: 1,
-    backgroundColor: 'rgba(150,150,150,0.2)',
-    marginVertical: 20,
+    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+    marginVertical: 24,
   },
   infoRows: {
-    gap: 12,
+    gap: 16,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
   },
   infoText: {
     flex: 1,
     fontSize: 15,
+    fontFamily: theme.typography.fonts.body,
     fontWeight: '500',
   },
   servicesContainer: {
-    marginTop: 24,
-    paddingTop: 20,
+    marginTop: 28,
+    paddingTop: 24,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(150,150,150,0.1)',
+    borderTopColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
   },
   servicesHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 12,
+    marginBottom: 16,
   },
   servicesTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 12,
+    fontFamily: theme.typography.fonts.accent,
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   servicesChips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 10,
   },
   serviceChip: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   serviceChipText: {
     fontSize: 13,
+    fontFamily: theme.typography.fonts.body,
     fontWeight: '600',
   },
   nearbyCard: {
-    width: width * 0.7,
+    width: width * 0.75,
     marginLeft: 24,
-    borderRadius: 24,
-    padding: 20,
+    borderRadius: 32,
+    padding: 24,
     borderWidth: 1,
+    shadowColor: theme.isDark ? 'transparent' : '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: theme.isDark ? 0 : 0.05,
+    shadowRadius: 20,
+    elevation: theme.isDark ? 0 : 5,
   },
   nearbyIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+    width: 60,
+    height: 60,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   nearbyTitle: {
-    fontSize: 18,
+    fontSize: 20,
+    fontFamily: theme.typography.fonts.header,
     fontWeight: '800',
     marginBottom: 8,
   },
   nearbyDesc: {
     fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 20,
+    fontFamily: theme.typography.fonts.body,
+    lineHeight: 22,
+    marginBottom: 24,
   },
   nearbyActionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 'auto',
+    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
   },
   nearbyActionText: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginRight: 4,
+    fontSize: 13,
+    fontFamily: theme.typography.fonts.header,
+    fontWeight: '800',
+    marginRight: 8,
   }
 });

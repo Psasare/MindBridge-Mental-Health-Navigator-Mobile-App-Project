@@ -269,7 +269,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   sleepWarning: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(123,97,255,0.05)', padding: 16, marginHorizontal: 24, borderRadius: 16, marginBottom: 16, gap: 12, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(123,97,255,0.1)' },
   sleepWarningTitle: { fontSize: 14, fontFamily: theme.typography.fonts.header, fontWeight: '700', marginBottom: 2 },
   sleepWarningText: { fontSize: 12, fontFamily: theme.typography.fonts.body, lineHeight: 16 },
-  newBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: theme.colors.plum, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0.3 : 0.2, shadowRadius: 8, elevation: 6 },
+  newBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: theme.colors.plum, alignItems: 'center', justifyContent: 'center', shadowColor: theme.isDark ? 'transparent' : '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0.3 : 0.2, shadowRadius: 8, elevation: 6 },
   filterBar: { marginTop: 16, flexDirection: 'row' },
   filterPill: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: theme.colors.surface, marginRight: 8, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', gap: 6 },
   filterPillActive: { backgroundColor: theme.colors.plum, borderColor: theme.colors.plum },

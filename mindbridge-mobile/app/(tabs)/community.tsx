@@ -529,7 +529,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   filterToggleText: { fontSize: 13, fontFamily: theme.typography.fonts.accent, fontWeight: '700', color: theme.colors.text.secondary },
 
   // Posts
-  postCard: { backgroundColor: theme.colors.surface, borderRadius: 24, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0.2 : 0.03, shadowRadius: 12, elevation: 2, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)' },
+  postCard: { backgroundColor: theme.colors.surface, borderRadius: 24, padding: 24, shadowColor: theme.isDark ? 'transparent' : '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: theme.isDark ? 0.2 : 0.03, shadowRadius: 12, elevation: 2, borderWidth: 1, borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.8)' },
   postHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
   postAuthorInfo: { flexDirection: 'row', alignItems: 'center' },
   postAvatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
@@ -572,7 +572,7 @@ const createStyles = (theme: any) => StyleSheet.create({
 
   // FAB
   fabContainer: { position: 'absolute', right: 24 },
-  fab: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.plum, paddingHorizontal: 20, height: 56, borderRadius: 28, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: theme.isDark ? 0.3 : 0.2, shadowRadius: 16, elevation: 8, gap: 8 },
+  fab: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.plum, paddingHorizontal: 20, height: 56, borderRadius: 28, shadowColor: theme.isDark ? 'transparent' : '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: theme.isDark ? 0.3 : 0.2, shadowRadius: 16, elevation: 8, gap: 8 },
   fabText: { fontSize: 16, fontFamily: theme.typography.fonts.header, fontWeight: '700', color: theme.colors.text.onPrimary || '#FFF' },
 
   // Modals
