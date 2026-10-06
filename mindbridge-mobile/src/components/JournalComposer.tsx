@@ -81,7 +81,7 @@ export const JournalComposer = memo(({
           <X color={theme.colors.plum} size={24} />
         </TouchableOpacity>
         <Typography variant="h4" color={theme.colors.text.primary} style={styles.composerTitle}>New Entry</Typography>
-        <Button variant="primary" size="small" onPress={handleSave}>{t('journal.save_entry')}</Button>
+        <Button variant="primary" size="small" fullWidth={false} onPress={handleSave}>{t('journal.save_entry')}</Button>
       </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>

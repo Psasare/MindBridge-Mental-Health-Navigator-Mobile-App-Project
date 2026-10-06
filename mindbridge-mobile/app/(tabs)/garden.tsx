@@ -1286,7 +1286,7 @@ const createStyles = (theme: any) => StyleSheet.create({
   envTag: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(128,128,128,0.08)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14 },
   envText: { fontSize: 12, fontFamily: theme.typography.fonts.header },
   journalBox: { width: '100%', marginBottom: 32 },
-  noteInput: { minHeight: 80, borderBottomWidth: 1.5, paddingVertical: 12, fontSize: 16, fontFamily: theme.typography.fonts.body },
+  noteInput: { minHeight: 80, borderWidth: 1, paddingVertical: 12, fontSize: 16, fontFamily: theme.typography.fonts.body },
   plantBtn: { width: '100%', height: 64, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
   successContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20 },
   successIconWrap: { width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(52, 211, 153, 0.12)', alignItems: 'center', justifyContent: 'center', marginBottom: 32 },

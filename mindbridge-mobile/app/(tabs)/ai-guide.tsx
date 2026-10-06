@@ -311,7 +311,7 @@ export default function AIGuideScreen() {
     setActiveSessionId(sessionId);
     try {
       const response = await api.get(`/ai/sessions/${sessionId}`);
-      const sessionMessages = (response.data || []).reverse().map((msg: any, idx: number) => ({
+      const sessionMessages = (response.data || []).map((msg: any, idx: number) => ({
         id: msg.id || `msg-${idx}`,
         isAi: msg.role === 'model',
         text: msg.content,
@@ -410,7 +410,7 @@ export default function AIGuideScreen() {
         status: 'sending',
         audioBase64
       };
-      setMessages(prev => [...prev, userMsg]);
+      setMessages(prev => [userMsg, ...prev]);
       if (!textOverride) setMessage('');
     } else {
       setMessages(prev => prev.map(m => m.id === msgId ? { ...m, status: 'sending', error: null } : m));
@@ -445,7 +445,7 @@ export default function AIGuideScreen() {
       
       setMessages(prev => {
         const marked = prev.map(m => m.id === msgId ? { ...m, status: 'delivered' } : m);
-        return [...marked, aiMsg];
+        return [aiMsg, ...marked];
       });
     } catch (e: any) {
       const errorMsg = e.response?.data?.message || 'Connection lost. Tap to retry.';
@@ -522,7 +522,7 @@ export default function AIGuideScreen() {
     return groups;
   };
 
-  const listData = loading ? [...messages, { id: '__typing__', type: 'typing' }] : messages;
+  const listData = loading ? [{ id: '__typing__', type: 'typing' }, ...messages] : messages;
   const showPrompts = messages.length <= 1 && !loading;
 
   return (
@@ -579,10 +579,10 @@ export default function AIGuideScreen() {
           data={listData}
           keyExtractor={item => item.id}
           renderItem={({ item }) => <MessageItem item={item} theme={theme} router={router} t={t} handleSend={handleSend} />}
-          contentContainerStyle={[S.listContent, { paddingBottom: (isKeyboardVisible ? 12 : bottomPad) + INPUT_AREA_HEIGHT + 12 }]}
+          contentContainerStyle={[S.listContent, { paddingTop: 20, paddingBottom: 10 }]}
           showsVerticalScrollIndicator={false}
-          onLayout={scrollToEnd}
-          onContentSizeChange={scrollToEnd}
+          inverted={true}
+          keyboardShouldPersistTaps="handled"
         />
 
         <View style={[S.inputPanel, { paddingBottom: isKeyboardVisible ? 8 : (bottomPad + 8), backgroundColor: theme.isDark ? 'rgba(18,18,18,0.97)' : 'rgba(255,255,255,0.97)' }]}>

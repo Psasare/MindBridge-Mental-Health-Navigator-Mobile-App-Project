@@ -297,10 +297,10 @@ export default function DashboardScreen() {
                   <BrainCircuit size={22} color={theme.colors.plum} strokeWidth={1.5} />
                 </View>
                 <View style={{ flex: 1, marginLeft: 4 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    <View style={styles.reflectionTag}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
+                    <View style={[styles.reflectionTag, { backgroundColor: theme.colors.plum + '15' }]}>
                       <BookOpen size={10} color={theme.colors.plum} />
-                      <Text style={styles.reflectionTagText}>{t('dashboard.clarityTitle').toUpperCase()}</Text>
+                      <Text style={styles.reflectionTagText} numberOfLines={1}>{t('dashboard.clarityTitle').toUpperCase()}</Text>
                     </View>
                     <Text style={{ fontSize: 10, color: theme.colors.text.tertiary, fontWeight: '700' }}>• {new Date(journalHistory[0].createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</Text>
                   </View>
@@ -570,8 +570,8 @@ const createStyles = (theme: any) => StyleSheet.create({
   },
   reflectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 20, gap: 16 },
   reflectionMood: { width: 56, height: 56, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  reflectionTag: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
-  reflectionTagText: { fontSize: 9, fontFamily: theme.typography.fonts.accent, fontWeight: '800', color: theme.colors.plum, letterSpacing: 1 },
+  reflectionTag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  reflectionTagText: { fontSize: 9, fontFamily: theme.typography.fonts.accent, fontWeight: '800', color: theme.colors.plum, letterSpacing: 0.5, flexShrink: 1 },
   reflectionTitle: { fontSize: 18, fontFamily: theme.typography.fonts.header, fontWeight: '800', letterSpacing: -0.5 },
   reflectionDate: { fontSize: 11, fontFamily: theme.typography.fonts.accent, fontWeight: '800', marginTop: 2, opacity: 0.6 },
   reflectionArrow: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },

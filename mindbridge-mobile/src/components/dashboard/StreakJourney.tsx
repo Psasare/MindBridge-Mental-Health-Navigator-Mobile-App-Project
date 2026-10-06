@@ -26,15 +26,15 @@ export interface StreakJourneyProps {
  * A highly reusable, accessible, and responsive component displaying the user's weekly 
  * streak journey. Built with production-grade UI standards.
  */
-export const StreakJourney: React.FC<StreakJourneyProps> = React.memo(({ 
-  streak = 0, 
-  completedCount = 0, 
+export const StreakJourney: React.FC<StreakJourneyProps> = React.memo(({
+  streak = 0,
+  completedCount = 0,
   theme,
   isLoading = false
 }) => {
   const days = useMemo(() => ['M', 'T', 'W', 'T', 'F', 'S', 'S'], []);
-  const currentDayIndex = (new Date().getDay() + 6) % 7; 
-  
+  const currentDayIndex = (new Date().getDay() + 6) % 7;
+
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   // Loading Skeleton State
@@ -65,13 +65,13 @@ export const StreakJourney: React.FC<StreakJourneyProps> = React.memo(({
             return (
               <View key={i} style={styles.journeyDayItem}>
                 <View style={[
-                  styles.journeyDayCircle, 
+                  styles.journeyDayCircle,
                   isToday ? styles.todayCircle : styles.emptyCircle
                 ]}>
                   {isToday && <Flame size={18} color={theme.colors.text.disabled} />}
                 </View>
                 <Text style={[
-                  styles.journeyDayText, 
+                  styles.journeyDayText,
                   { color: isToday ? theme.colors.text.secondary : theme.colors.text.tertiary }
                 ]}>
                   {day}
@@ -85,7 +85,7 @@ export const StreakJourney: React.FC<StreakJourneyProps> = React.memo(({
   }
 
   return (
-    <View 
+    <View
       style={styles.premiumJourney}
       accessible={true}
       accessibilityRole={"summary" as AccessibilityRole}
@@ -96,10 +96,10 @@ export const StreakJourney: React.FC<StreakJourneyProps> = React.memo(({
         {days.map((day, i) => {
           const isPast = i < currentDayIndex;
           const isToday = i === currentDayIndex;
-          
+
           const isCompleted = isPast ? (i >= currentDayIndex - streak) : (isToday && completedCount > 0);
           const isMissed = isPast && !isCompleted && streak > 0;
-          
+
           return (
             <View key={i} style={styles.journeyDayItem}>
               <View style={[
@@ -110,9 +110,9 @@ export const StreakJourney: React.FC<StreakJourneyProps> = React.memo(({
                 !isCompleted && !isMissed && !isToday && styles.emptyCircle
               ]}>
                 {isCompleted && (
-                  <LinearGradient 
-                    colors={['#FF9800', '#F44336']} 
-                    style={StyleSheet.absoluteFill} 
+                  <LinearGradient
+                    colors={['#FF9800', '#F44336']}
+                    style={StyleSheet.absoluteFill}
                   />
                 )}
                 {isCompleted && <CheckCircle2 size={12} color="#FFF" style={{ zIndex: 1 }} />}
@@ -122,7 +122,7 @@ export const StreakJourney: React.FC<StreakJourneyProps> = React.memo(({
                 )}
               </View>
               <Text style={[
-                styles.journeyDayText, 
+                styles.journeyDayText,
                 { color: isToday ? "#FF9800" : (isMissed ? '#93C5FD' : theme.colors.text.tertiary) }
               ]}>{day}</Text>
             </View>
