@@ -20,7 +20,8 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000, t
       ]);
     } catch (error: any) {
       const isTimeout = error.message === 'Timeout';
-      if ((error?.status === 503 || error?.status === 429 || isTimeout) && attempt < retries - 1) {
+      const isFetchFailure = error.message?.includes('fetch failed') || error.name === 'TypeError';
+      if ((error?.status === 503 || error?.status === 429 || isTimeout || isFetchFailure) && attempt < retries - 1) {
         attempt++;
         let waitTime = delayMs * Math.pow(2, attempt - 1);
         
@@ -35,7 +36,7 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000, t
         // Cap wait time to max 5 seconds to prevent extremely long hangs
         if (waitTime > 5000) waitTime = 5000;
 
-        console.warn(`[BACKEND] Gemini ${error.status || 'Timeout'} error, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
+        console.warn(`[BACKEND] Gemini ${error.status || (isTimeout ? 'Timeout' : 'Fetch Error')} error, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
       } else {
         throw error;
