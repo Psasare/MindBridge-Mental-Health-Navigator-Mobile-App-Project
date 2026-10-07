@@ -27,16 +27,21 @@ export const connectCache = async () => {
   }
 };
 
-/**
- * Scalable Cache Wrapper
- * @param key Unique cache identifier
- * @param ttl Time to live in seconds
- * @param fetcher Async function to fetch fresh data on cache miss
- */
+// Simple in-memory cache for local dev fallback
+const memoryCache = new Map<string, { value: any, expiry: number }>();
+
 export async function getOrSetCache<T>(key: string, ttl: number, fetcher: () => Promise<T>): Promise<T> {
   if (!redisClient.isOpen) {
     // Fallback if Redis is down (graceful degradation)
-    return fetcher(); 
+    const now = Date.now();
+    const memCached = memoryCache.get(key);
+    if (memCached && memCached.expiry > now) {
+      return memCached.value as T;
+    }
+    
+    const freshData = await fetcher();
+    memoryCache.set(key, { value: freshData, expiry: now + (ttl * 1000) });
+    return freshData;
   }
 
   try {

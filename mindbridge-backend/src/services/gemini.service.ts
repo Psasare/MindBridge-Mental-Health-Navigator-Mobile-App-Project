@@ -164,7 +164,6 @@ export const generateOracleResponse = async (userMessage: string, context: any, 
     const model = genAI.getGenerativeModel({ 
       model: modelName,
       systemInstruction: SYSTEM_PROMPT,
-      tools: tools as any,
       generationConfig: {
         maxOutputTokens: 500, // Increased limit so it doesn't get cut off mid-sentence
         temperature: 0.7,
@@ -338,47 +337,6 @@ INSTRUCTIONS:
 
       let result = await withRetry(() => chat.sendMessage(messageContent));
       let response = result.response;
-
-      // Handle Function Calls (Tools) in a loop in parallel
-      let calls = response.functionCalls();
-      let iteration = 0;
-      while (calls && calls.length > 0 && iteration < 5) {
-        const functionResponses = await Promise.all(
-          calls.map(async (call) => {
-            console.log(`[Oracle Tool] Calling: ${call.name} with model: ${modelName}`, call.args);
-            let toolResponse: any;
-
-            switch (call.name) {
-              case "get_mood_history":
-                toolResponse = await AiRepository.getMoodHistory(userId, (call.args as any).limit || 7);
-                break;
-              case "get_journal_history":
-                toolResponse = await AiRepository.getJournalHistory(userId, (call.args as any).limit || 3);
-                break;
-              case "get_ritual_status":
-                toolResponse = await AiRepository.getTodayRitualStatus(userId);
-                break;
-              case "get_recommended_resources":
-                toolResponse = await AiRepository.searchResources((call.args as any).category);
-                break;
-              default:
-                toolResponse = { error: "Unknown tool" };
-            }
-
-            return {
-              functionResponse: {
-                name: call.name,
-                response: { result: toolResponse }
-              }
-            };
-          })
-        );
-
-        result = await withRetry(() => chat.sendMessage(functionResponses));
-        response = result.response;
-        calls = response.functionCalls();
-        iteration++;
-      }
 
       let finalText = "";
       try {

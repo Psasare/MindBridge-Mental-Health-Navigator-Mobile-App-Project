@@ -19,7 +19,7 @@ export const useDashboardData = () => {
   const [stepCount, setStepCount] = useState<number | null>(null);
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['dashboard', 'aggregate'],
+    queryKey: ['dashboard', 'aggregate', authData?.id],
     queryFn: async () => {
       const response = await api.get('/dashboard/aggregate');
       return response.data;

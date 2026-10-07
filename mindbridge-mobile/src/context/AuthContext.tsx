@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceEventEmitter } from 'react-native';
 import { router } from 'expo-router';
+import { queryClient } from '../lib/queryClient';
 
 interface AuthContextType {
   userToken: string | null;
@@ -70,7 +71,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    await AsyncStorage.multiRemove(['userToken', 'userData']);
+    queryClient.clear();
+    await AsyncStorage.clear(); // This safely wipes both React Query offline caches and user auth state.
     setUserToken(null);
     setUserData(null);
     router.replace('/(auth)/login');
