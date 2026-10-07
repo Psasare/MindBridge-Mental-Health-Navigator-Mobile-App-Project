@@ -12,6 +12,13 @@ export const getDashboardAggregate = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
 
+    // Wake up Neon serverless DB with a single connection before spawning 12 parallel queries
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+    } catch (e) {
+      console.warn('DB warmup failed or timed out, continuing anyway...', e);
+    }
+
     // Run completely parallel execution of all previously separated endpoints
     const [
       latestMood,

@@ -10,13 +10,17 @@ if (!apiKey) {
 }
 const genAI = new GoogleGenerativeAI(apiKey || "");
 
-async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000): Promise<T> {
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000, timeoutMs = 15000): Promise<T> {
   let attempt = 0;
   while (attempt < retries) {
     try {
-      return await fn();
+      return await Promise.race([
+        fn(),
+        new Promise<T>((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeoutMs))
+      ]);
     } catch (error: any) {
-      if ((error?.status === 503 || error?.status === 429) && attempt < retries - 1) {
+      const isTimeout = error.message === 'Timeout';
+      if ((error?.status === 503 || error?.status === 429 || isTimeout) && attempt < retries - 1) {
         attempt++;
         let waitTime = delayMs * Math.pow(2, attempt - 1);
         
@@ -28,7 +32,10 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000): 
           }
         }
 
-        console.warn(`[BACKEND] Gemini ${error.status} error, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
+        // Cap wait time to max 5 seconds to prevent extremely long hangs
+        if (waitTime > 5000) waitTime = 5000;
+
+        console.warn(`[BACKEND] Gemini ${error.status || 'Timeout'} error, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
       } else {
         throw error;
