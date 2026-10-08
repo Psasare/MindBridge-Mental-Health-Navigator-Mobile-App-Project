@@ -46,6 +46,33 @@ async function withRetry<T>(fn: () => Promise<T>, retries = 3, delayMs = 2000, t
   throw new Error("Unreachable");
 }
 
+const MAX_CHAT_HISTORY_MESSAGES = 4;
+
+const truncateForPrompt = (value: string | undefined, maxLength = 180) => {
+  const normalized = (value ?? '').replace(/\s+/g, ' ').trim();
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+};
+
+const normalizeGeneratedText = (text: string) => {
+  if (!text) {
+    return "I'm here with you. Tell me what feels most heavy right now.";
+  }
+
+  const cleaned = text.replace(/```(?:json)?/gi, '').trim();
+  const finalText = cleaned.replace(/\s+/g, ' ').trim();
+
+  if (!finalText) {
+    return "I'm here with you. Tell me what feels most heavy right now.";
+  }
+
+  if (!/[.!?]$/.test(finalText)) {
+    return `${finalText}.`;
+  }
+
+  return finalText;
+};
+
 const SYSTEM_PROMPT = `
 You are the MindBridge Oracle — an advanced, emotionally intelligent AI companion built exclusively for university students in Ghana and across Africa. You are not a generic chatbot. You are a trusted, compassionate presence who understands the unique intersection of academic pressure, cultural identity, spiritual life, and personal growth that defines the African student experience.
 
@@ -173,8 +200,10 @@ export const generateOracleResponse = async (userMessage: string, context: any, 
       model: modelName,
       systemInstruction: SYSTEM_PROMPT,
       generationConfig: {
-        maxOutputTokens: 500, // Increased limit so it doesn't get cut off mid-sentence
-        temperature: 0.7,
+        maxOutputTokens: 800,
+        temperature: 0.6,
+        topP: 0.9,
+        candidateCount: 1,
       }
     });
 
@@ -192,11 +221,11 @@ export const generateOracleResponse = async (userMessage: string, context: any, 
         : 'No mood logs yet.';
 
       const recentMoodsSummary = context.recentMoods && context.recentMoods.length > 0
-        ? context.recentMoods.map((m: any, i: number) => `${i + 1}. ${new Date(m.createdAt).toLocaleDateString('en-GB', { weekday: 'short', hour: 'numeric' })} - Score: ${m.score}/10, Emotions: ${m.emotions?.join(', ') || 'none'}, Note: ${m.note || 'none'}`).join('\n')
+        ? context.recentMoods.slice(0, 5).map((m: any, i: number) => `${i + 1}. ${new Date(m.createdAt).toLocaleDateString('en-GB', { weekday: 'short', hour: 'numeric' })} - Score: ${m.score}/10, Emotions: ${m.emotions?.join(', ') || 'none'}, Note: ${truncateForPrompt(m.note)}`).join('\n')
         : 'No recent checkins.';
 
       const journalSummary = recentJournal.length > 0
-        ? recentJournal.map((j: any, i: number) => `${i + 1}. "${j.title || 'Untitled'}" (${j.mood || 'no mood tag'}) — ${new Date(j.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`).join('\n')
+        ? recentJournal.slice(0, 3).map((j: any, i: number) => `${i + 1}. "${truncateForPrompt(j.title || 'Untitled', 40)}" (${j.mood || 'no mood tag'}) — ${new Date(j.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`).join('\n')
         : 'No journal entries yet.';
 
       const assessments = context.assessments || [];
@@ -204,11 +233,11 @@ export const generateOracleResponse = async (userMessage: string, context: any, 
         ? assessments.map((a: any) => `- ${a.type}: ${a.severity} (Score: ${a.score}) on ${new Date(a.createdAt).toLocaleDateString()}`).join('\n')
         : 'No clinical assessments completed yet.';
 
-      // Prepare history: reverse since DB gives descending
-      const rawHistory = context.history || [];
-      let chatHistory = rawHistory.reverse().map((msg: any) => ({
+      // Prepare history: reverse since DB gives descending, then keep only the most recent, compact turns.
+      const rawHistory = Array.isArray(context.history) ? [...context.history].reverse() : [];
+      let chatHistory = rawHistory.slice(0, MAX_CHAT_HISTORY_MESSAGES).map((msg: any) => ({
         role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
+        parts: [{ text: truncateForPrompt(msg.content, 250) }]
       }));
 
       // Ensure perfectly alternating history ending with model
@@ -353,9 +382,7 @@ INSTRUCTIONS:
         finalText = "";
       }
 
-      if (!finalText || finalText.trim() === '') {
-        finalText = "I've checked some details for you, but I'm having trouble putting it into words. Can you tell me more about what's on your mind?";
-      }
+      finalText = normalizeGeneratedText(finalText);
 
       return finalText;
   } catch (error: any) {

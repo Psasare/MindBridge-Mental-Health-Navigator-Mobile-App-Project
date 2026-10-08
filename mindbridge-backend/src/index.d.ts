@@ -1,2 +1,2 @@
-import './workers/ai.worker.js';
+export {};
 //# sourceMappingURL=index.d.ts.map

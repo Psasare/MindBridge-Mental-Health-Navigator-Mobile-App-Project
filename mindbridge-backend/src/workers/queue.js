@@ -5,11 +5,17 @@ const connection = {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379'),
 };
-export const aiQueue = new Queue('AI_PROCESSING_QUEUE', { connection });
+export let aiQueue = null;
+if (process.env.NODE_ENV === 'production' || process.env.USE_REDIS === 'true') {
+    aiQueue = new Queue('AI_PROCESSING_QUEUE', { connection });
+}
 /**
  * Enqueue a heavy AI task to be processed asynchronously by the workers.
  */
 export const dispatchAiTask = async (jobName, data) => {
+    if (!aiQueue) {
+        return { id: 'mock-job-' + Date.now() };
+    }
     try {
         const job = await aiQueue.add(jobName, data, {
             attempts: 3, // Retry up to 3 times on API failure

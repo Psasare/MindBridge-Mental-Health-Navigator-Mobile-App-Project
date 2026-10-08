@@ -80,11 +80,12 @@ export const chatWithOracle = async (req, res) => {
     try {
         const userId = req.userId;
         const { message, audioBase64, sessionId } = req.body;
-        if (!message && !audioBase64) {
+        const inputMessage = typeof message === 'string' ? message : '';
+        if (!inputMessage && !audioBase64) {
             return res.status(400).json({ error: 'Message or audio is required' });
         }
         // 1. Safety Screening (Pre-LLM)
-        const lowerInput = message.toLowerCase();
+        const lowerInput = inputMessage.toLowerCase();
         const isCrisis = CRISIS_KEYWORDS.some(kw => lowerInput.includes(kw));
         if (isCrisis) {
             return res.json({
@@ -125,12 +126,12 @@ export const chatWithOracle = async (req, res) => {
         let activeSessionId = sessionId;
         if (!activeSessionId) {
             // Create a new session, using the first 30 chars of the message as title
-            const title = message ? (message.substring(0, 30) + (message.length > 30 ? '...' : '')) : 'Audio Note';
+            const title = inputMessage ? (inputMessage.substring(0, 30) + (inputMessage.length > 30 ? '...' : '')) : 'Audio Note';
             const newSession = await AiRepository.createChatSession(userId, title);
             activeSessionId = newSession.id;
         }
         await prisma.chatMessage.create({
-            data: { sessionId: activeSessionId, role: 'user', content: message || 'Audio message' }
+            data: { sessionId: activeSessionId, role: 'user', content: inputMessage || 'Audio message' }
         });
         const contextForOracle = {
             latestMood,
@@ -153,8 +154,8 @@ export const chatWithOracle = async (req, res) => {
         };
         // 4. Run State Analyzer and Oracle Response Generator in PARALLEL to cut latency in half
         const [currentState, aiResponse] = await Promise.all([
-            analyzeCurrentState(message || "User sent a voice note", contextForOracle),
-            generateOracleResponse(message, contextForOracle, userId)
+            analyzeCurrentState(inputMessage || "User sent a voice note", contextForOracle),
+            generateOracleResponse(inputMessage, contextForOracle, userId)
         ]);
         // 5. Save Results to DB
         await prisma.chatMessage.create({
@@ -202,8 +203,9 @@ export const chatWithOracle = async (req, res) => {
         res.json({ response: aiResponse, state: currentState, sessionId: activeSessionId });
     }
     catch (error) {
-        if (error?.status === 503 || error?.status === 429) {
-            console.warn(`Warning: Gemini API rate limited or unavailable (${error.status}) in Oracle chat.`);
+        const isFetchFailure = error?.message?.includes('fetch failed') || error?.name === 'TypeError' || error?.message === 'Timeout';
+        if (error?.status === 503 || error?.status === 429 || isFetchFailure) {
+            console.warn(`Warning: Gemini API rate limited or unavailable (${error.status || 'Fetch Error'}) in Oracle chat.`);
             res.status(503).json({ message: 'The AI is currently experiencing high demand. Please try again in a moment.' });
         }
         else {

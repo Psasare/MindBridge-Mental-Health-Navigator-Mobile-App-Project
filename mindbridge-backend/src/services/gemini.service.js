@@ -7,14 +7,19 @@ if (!apiKey) {
     console.error('[CRITICAL] GOOGLE_AI_KEY environment variable is missing.');
 }
 const genAI = new GoogleGenerativeAI(apiKey || "");
-async function withRetry(fn, retries = 3, delayMs = 2000) {
+async function withRetry(fn, retries = 3, delayMs = 2000, timeoutMs = 15000) {
     let attempt = 0;
     while (attempt < retries) {
         try {
-            return await fn();
+            return await Promise.race([
+                fn(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeoutMs))
+            ]);
         }
         catch (error) {
-            if ((error?.status === 503 || error?.status === 429) && attempt < retries - 1) {
+            const isTimeout = error.message === 'Timeout';
+            const isFetchFailure = error.message?.includes('fetch failed') || error.name === 'TypeError';
+            if ((error?.status === 503 || error?.status === 429 || isTimeout || isFetchFailure) && attempt < retries - 1) {
                 attempt++;
                 let waitTime = delayMs * Math.pow(2, attempt - 1);
                 // Extract retryDelay from errorDetails if present
@@ -24,7 +29,10 @@ async function withRetry(fn, retries = 3, delayMs = 2000) {
                         waitTime = parseFloat(retryInfo.retryDelay.replace('s', '')) * 1000 + 1000; // Add 1s buffer
                     }
                 }
-                console.warn(`[BACKEND] Gemini ${error.status} error, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
+                // Cap wait time to max 5 seconds to prevent extremely long hangs
+                if (waitTime > 5000)
+                    waitTime = 5000;
+                console.warn(`[BACKEND] Gemini ${error.status || (isTimeout ? 'Timeout' : 'Fetch Error')} error, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
                 await new Promise(resolve => setTimeout(resolve, waitTime));
             }
             else {
@@ -34,6 +42,27 @@ async function withRetry(fn, retries = 3, delayMs = 2000) {
     }
     throw new Error("Unreachable");
 }
+const MAX_CHAT_HISTORY_MESSAGES = 4;
+const truncateForPrompt = (value, maxLength = 180) => {
+    const normalized = (value ?? '').replace(/\s+/g, ' ').trim();
+    if (normalized.length <= maxLength)
+        return normalized;
+    return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+};
+const normalizeGeneratedText = (text) => {
+    if (!text) {
+        return "I'm here with you. Tell me what feels most heavy right now.";
+    }
+    const cleaned = text.replace(/```(?:json)?/gi, '').trim();
+    const finalText = cleaned.replace(/\s+/g, ' ').trim();
+    if (!finalText) {
+        return "I'm here with you. Tell me what feels most heavy right now.";
+    }
+    if (!/[.!?]$/.test(finalText)) {
+        return `${finalText}.`;
+    }
+    return finalText;
+};
 const SYSTEM_PROMPT = `
 You are the MindBridge Oracle — an advanced, emotionally intelligent AI companion built exclusively for university students in Ghana and across Africa. You are not a generic chatbot. You are a trusted, compassionate presence who understands the unique intersection of academic pressure, cultural identity, spiritual life, and personal growth that defines the African student experience.
 
@@ -158,10 +187,11 @@ export const generateOracleResponse = async (userMessage, context, userId) => {
         const model = genAI.getGenerativeModel({
             model: modelName,
             systemInstruction: SYSTEM_PROMPT,
-            tools: tools,
             generationConfig: {
-                maxOutputTokens: 500, // Increased limit so it doesn't get cut off mid-sentence
-                temperature: 0.7,
+                maxOutputTokens: 800,
+                temperature: 0.6,
+                topP: 0.9,
+                candidateCount: 1,
             }
         });
         // Build a rich, structured user profile context block
@@ -176,20 +206,20 @@ export const generateOracleResponse = async (userMessage, context, userId) => {
                 (latestMood.facialMetrics ? ` [Video Check-in detected: ${Math.round(latestMood.facialMetrics.smileProbability * 100)}% smile frequency, ${Math.round(latestMood.facialMetrics.eyeOpenProbability * 100)}% eye contact]` : '')
             : 'No mood logs yet.';
         const recentMoodsSummary = context.recentMoods && context.recentMoods.length > 0
-            ? context.recentMoods.map((m, i) => `${i + 1}. ${new Date(m.createdAt).toLocaleDateString('en-GB', { weekday: 'short', hour: 'numeric' })} - Score: ${m.score}/10, Emotions: ${m.emotions?.join(', ') || 'none'}, Note: ${m.note || 'none'}`).join('\n')
+            ? context.recentMoods.slice(0, 5).map((m, i) => `${i + 1}. ${new Date(m.createdAt).toLocaleDateString('en-GB', { weekday: 'short', hour: 'numeric' })} - Score: ${m.score}/10, Emotions: ${m.emotions?.join(', ') || 'none'}, Note: ${truncateForPrompt(m.note)}`).join('\n')
             : 'No recent checkins.';
         const journalSummary = recentJournal.length > 0
-            ? recentJournal.map((j, i) => `${i + 1}. "${j.title || 'Untitled'}" (${j.mood || 'no mood tag'}) — ${new Date(j.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`).join('\n')
+            ? recentJournal.slice(0, 3).map((j, i) => `${i + 1}. "${truncateForPrompt(j.title || 'Untitled', 40)}" (${j.mood || 'no mood tag'}) — ${new Date(j.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`).join('\n')
             : 'No journal entries yet.';
         const assessments = context.assessments || [];
         const assessmentSummary = assessments.length > 0
             ? assessments.map((a) => `- ${a.type}: ${a.severity} (Score: ${a.score}) on ${new Date(a.createdAt).toLocaleDateString()}`).join('\n')
             : 'No clinical assessments completed yet.';
-        // Prepare history: reverse since DB gives descending
-        const rawHistory = context.history || [];
-        let chatHistory = rawHistory.reverse().map((msg) => ({
+        // Prepare history: reverse since DB gives descending, then keep only the most recent, compact turns.
+        const rawHistory = Array.isArray(context.history) ? [...context.history].reverse() : [];
+        let chatHistory = rawHistory.slice(0, MAX_CHAT_HISTORY_MESSAGES).map((msg) => ({
             role: msg.role === 'user' ? 'user' : 'model',
-            parts: [{ text: msg.content }]
+            parts: [{ text: truncateForPrompt(msg.content, 250) }]
         }));
         // Ensure perfectly alternating history ending with model
         let lastRole = 'model';
@@ -324,41 +354,6 @@ INSTRUCTIONS:
         }
         let result = await withRetry(() => chat.sendMessage(messageContent));
         let response = result.response;
-        // Handle Function Calls (Tools) in a loop in parallel
-        let calls = response.functionCalls();
-        let iteration = 0;
-        while (calls && calls.length > 0 && iteration < 5) {
-            const functionResponses = await Promise.all(calls.map(async (call) => {
-                console.log(`[Oracle Tool] Calling: ${call.name} with model: ${modelName}`, call.args);
-                let toolResponse;
-                switch (call.name) {
-                    case "get_mood_history":
-                        toolResponse = await AiRepository.getMoodHistory(userId, call.args.limit || 7);
-                        break;
-                    case "get_journal_history":
-                        toolResponse = await AiRepository.getJournalHistory(userId, call.args.limit || 3);
-                        break;
-                    case "get_ritual_status":
-                        toolResponse = await AiRepository.getTodayRitualStatus(userId);
-                        break;
-                    case "get_recommended_resources":
-                        toolResponse = await AiRepository.searchResources(call.args.category);
-                        break;
-                    default:
-                        toolResponse = { error: "Unknown tool" };
-                }
-                return {
-                    functionResponse: {
-                        name: call.name,
-                        response: { result: toolResponse }
-                    }
-                };
-            }));
-            result = await withRetry(() => chat.sendMessage(functionResponses));
-            response = result.response;
-            calls = response.functionCalls();
-            iteration++;
-        }
         let finalText = "";
         try {
             finalText = response.text() || "";
@@ -366,9 +361,7 @@ INSTRUCTIONS:
         catch (e) {
             finalText = "";
         }
-        if (!finalText || finalText.trim() === '') {
-            finalText = "I've checked some details for you, but I'm having trouble putting it into words. Can you tell me more about what's on your mind?";
-        }
+        finalText = normalizeGeneratedText(finalText);
         return finalText;
     }
     catch (error) {

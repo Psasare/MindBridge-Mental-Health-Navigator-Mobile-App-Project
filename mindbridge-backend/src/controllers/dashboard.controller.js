@@ -8,6 +8,13 @@ const prisma = new PrismaClient();
 export const getDashboardAggregate = async (req, res) => {
     try {
         const userId = req.userId;
+        // Wake up Neon serverless DB with a single connection before spawning 12 parallel queries
+        try {
+            await prisma.$queryRaw `SELECT 1`;
+        }
+        catch (e) {
+            console.warn('DB warmup failed or timed out, continuing anyway...', e);
+        }
         // Run completely parallel execution of all previously separated endpoints
         const [latestMood, moodCount, user, recentJournal, journalCount, onboarding, history, assessments, latestCommunityPost, moodHistory, gamificationStatus, dailyStatus] = await Promise.all([
             // from getOracleContext
@@ -25,12 +32,19 @@ export const getDashboardAggregate = async (req, res) => {
             // from gamification
             GoalService.getGamificationStatus(userId).catch(() => null),
             // from daily goals
-            GoalService.getDailyStatus(userId).catch(() => null)
+            (async () => {
+                let status = await GoalService.getDailyStatus(userId);
+                if (!status) {
+                    await GoalService.generateDailyGoals(userId, 'stress');
+                    status = await GoalService.getDailyStatus(userId);
+                }
+                return status;
+            })().catch(() => null)
         ]);
         // Calculate proactive insights with caching (copied from getProactiveInsights)
         const cacheKey = `insights:${userId}`;
         const TTL_SECONDS = 3600; // 1 hour
-        const proactiveInsights = await getOrSetCache(cacheKey, TTL_SECONDS, async () => {
+        const proactiveInsightsPromise = getOrSetCache(cacheKey, TTL_SECONDS, async () => {
             try {
                 const recentMoodsForInsight = await prisma.moodLog.findMany({
                     where: { userId },
@@ -64,6 +78,14 @@ export const getDashboardAggregate = async (req, res) => {
                 };
             }
         });
+        // Fast-fallback: Never block the dashboard load for more than 800ms
+        const proactiveInsights = await Promise.race([
+            proactiveInsightsPromise,
+            new Promise((resolve) => setTimeout(() => resolve({
+                dashboardPrompt: "How are you feeling right now?",
+                suggestedResources: [{ id: 'res-fallback', title: 'Daily Mindfulness Practice', type: 'audio', category: 'General' }]
+            }), 800))
+        ]);
         res.json({
             oracleContext: {
                 latestMood: latestMood || null,

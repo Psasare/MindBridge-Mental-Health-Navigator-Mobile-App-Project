@@ -3,8 +3,16 @@ import { createClient } from 'redis';
 export const redisClient = createClient({
     url: process.env.REDIS_URL || 'redis://localhost:6379'
 });
-redisClient.on('error', (err) => console.error('[Redis Client Error]', err));
+redisClient.on('error', (err) => {
+    // Only log if we are explicitly trying to use Redis to avoid spam
+    if (process.env.USE_REDIS === 'true' || process.env.NODE_ENV === 'production') {
+        console.error('[Redis Client Error]', err);
+    }
+});
 export const connectCache = async () => {
+    if (process.env.NODE_ENV !== 'production' && process.env.USE_REDIS !== 'true') {
+        return;
+    }
     if (!redisClient.isOpen) {
         try {
             await redisClient.connect();
@@ -15,16 +23,19 @@ export const connectCache = async () => {
         }
     }
 };
-/**
- * Scalable Cache Wrapper
- * @param key Unique cache identifier
- * @param ttl Time to live in seconds
- * @param fetcher Async function to fetch fresh data on cache miss
- */
+// Simple in-memory cache for local dev fallback
+const memoryCache = new Map();
 export async function getOrSetCache(key, ttl, fetcher) {
     if (!redisClient.isOpen) {
         // Fallback if Redis is down (graceful degradation)
-        return fetcher();
+        const now = Date.now();
+        const memCached = memoryCache.get(key);
+        if (memCached && memCached.expiry > now) {
+            return memCached.value;
+        }
+        const freshData = await fetcher();
+        memoryCache.set(key, { value: freshData, expiry: now + (ttl * 1000) });
+        return freshData;
     }
     try {
         const cached = await redisClient.get(key);

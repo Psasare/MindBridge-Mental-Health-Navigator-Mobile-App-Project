@@ -89,13 +89,14 @@ export const chatWithOracle = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
     const { message, audioBase64, sessionId } = req.body;
+    const inputMessage = typeof message === 'string' ? message : '';
 
-    if (!message && !audioBase64) {
+    if (!inputMessage && !audioBase64) {
       return res.status(400).json({ error: 'Message or audio is required' });
     }
 
     // 1. Safety Screening (Pre-LLM)
-    const lowerInput = message.toLowerCase();
+    const lowerInput = inputMessage.toLowerCase();
     const isCrisis = CRISIS_KEYWORDS.some(kw => lowerInput.includes(kw));
 
     if (isCrisis) {
@@ -140,13 +141,13 @@ export const chatWithOracle = async (req: Request, res: Response) => {
     let activeSessionId = sessionId;
     if (!activeSessionId) {
       // Create a new session, using the first 30 chars of the message as title
-      const title = message ? (message.substring(0, 30) + (message.length > 30 ? '...' : '')) : 'Audio Note';
+      const title = inputMessage ? (inputMessage.substring(0, 30) + (inputMessage.length > 30 ? '...' : '')) : 'Audio Note';
       const newSession = await AiRepository.createChatSession(userId, title);
       activeSessionId = newSession.id;
     }
 
     await prisma.chatMessage.create({
-      data: { sessionId: activeSessionId, role: 'user', content: message || 'Audio message' }
+      data: { sessionId: activeSessionId, role: 'user', content: inputMessage || 'Audio message' }
     });
 
     const contextForOracle: any = {
@@ -171,8 +172,8 @@ export const chatWithOracle = async (req: Request, res: Response) => {
 
     // 4. Run State Analyzer and Oracle Response Generator in PARALLEL to cut latency in half
     const [currentState, aiResponse] = await Promise.all([
-      analyzeCurrentState(message || "User sent a voice note", contextForOracle),
-      generateOracleResponse(message, contextForOracle, userId)
+      analyzeCurrentState(inputMessage || "User sent a voice note", contextForOracle),
+      generateOracleResponse(inputMessage, contextForOracle, userId)
     ]);
 
     // 5. Save Results to DB

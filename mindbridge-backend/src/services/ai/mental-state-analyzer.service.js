@@ -2,14 +2,19 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from 'dotenv';
 dotenv.config();
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY || "");
-async function withRetry(fn, retries = 3, delayMs = 2000) {
+async function withRetry(fn, retries = 3, delayMs = 2000, timeoutMs = 15000) {
     let attempt = 0;
     while (attempt < retries) {
         try {
-            return await fn();
+            return await Promise.race([
+                fn(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeoutMs))
+            ]);
         }
         catch (error) {
-            if ((error?.status === 503 || error?.status === 429) && attempt < retries - 1) {
+            const isTimeout = error.message === 'Timeout';
+            const isFetchFailure = error.message?.includes('fetch failed') || error.name === 'TypeError';
+            if ((error?.status === 503 || error?.status === 429 || isTimeout || isFetchFailure) && attempt < retries - 1) {
                 attempt++;
                 let waitTime = delayMs * Math.pow(2, attempt - 1);
                 // Extract retryDelay from errorDetails if present
@@ -19,7 +24,9 @@ async function withRetry(fn, retries = 3, delayMs = 2000) {
                         waitTime = parseFloat(retryInfo.retryDelay.replace('s', '')) * 1000 + 1000; // Add 1s buffer
                     }
                 }
-                console.warn(`[BACKEND] Gemini ${error.status} error in analyzer, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
+                if (waitTime > 5000)
+                    waitTime = 5000;
+                console.warn(`[BACKEND] Gemini ${error.status || (isTimeout ? 'Timeout' : 'Fetch Error')} error in analyzer, retrying in ${waitTime}ms... (Attempt ${attempt}/${retries - 1})`);
                 await new Promise(resolve => setTimeout(resolve, waitTime));
             }
             else {
