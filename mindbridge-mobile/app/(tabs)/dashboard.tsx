@@ -195,7 +195,7 @@ export default function DashboardScreen() {
 
 
       {isLoading ? (
-        <Animated.View entering={FadeIn.duration(400)} exiting={FadeIn.duration(300)} style={{ flex: 1, paddingTop: insets.top }}>
+        <Animated.View entering={FadeIn.duration(150)} exiting={FadeIn.duration(100)} style={{ flex: 1, paddingTop: insets.top }}>
           <DashboardSkeleton />
         </Animated.View>
       ) : (

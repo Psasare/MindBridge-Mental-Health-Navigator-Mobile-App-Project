@@ -25,8 +25,8 @@ const ShimmerBlock = ({ width, height, borderRadius = RFValue(16), style, delay 
       delay,
       withRepeat(
         withSequence(
-          withTiming(0.7, { duration: 800, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0.3, { duration: 800, easing: Easing.inOut(Easing.ease) })
+          withTiming(0.7, { duration: 450, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.3, { duration: 450, easing: Easing.inOut(Easing.ease) })
         ),
         -1,
         true

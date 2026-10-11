@@ -18,14 +18,16 @@ export const useDashboardData = () => {
   const { userData: authData } = useContext(AuthContext) as any;
   const [stepCount, setStepCount] = useState<number | null>(null);
 
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['dashboard', 'aggregate', authData?.id],
+  const { data, isLoading, isFetching, refetch } = useQuery({
+    queryKey: ['dashboard', 'aggregate', authData?.id || 'current'],
     queryFn: async () => {
       const response = await api.get('/dashboard/aggregate');
       return response.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes fresh
-    retry: 2
+    staleTime: 1000 * 60 * 3, // 3 minutes fresh
+    gcTime: 1000 * 60 * 60 * 24, // keep in cache for 24 hours
+    placeholderData: (previousData) => previousData,
+    retry: 1
   });
 
   const initPedometer = useCallback(async () => {
@@ -90,7 +92,9 @@ export const useDashboardData = () => {
     microGoals: data?.proactiveInsights?.microGoals || [],
     actionableCopingMechanisms: data?.proactiveInsights?.actionableCopingMechanisms || [],
     insightSeverity: data?.proactiveInsights?.severity || 'mild',
-    isLoading,
+    isLoading: isLoading && !data,
+    isFetching,
+    hasData: Boolean(data),
     dailyGoals: data?.dailyGoals?.goals || [],
     completedGoalIds: data?.dailyGoals?.completedIds || [],
     gamification: data?.gamification || { totalPoints: 0, currentStreak: 0 },

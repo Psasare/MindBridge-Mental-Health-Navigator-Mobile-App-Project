@@ -93,13 +93,13 @@ export const getDashboardAggregate = async (req: Request, res: Response) => {
       }
     });
 
-    // Fast-fallback: Never block the dashboard load for more than 800ms
+    // Fast-fallback: Never block the dashboard load for more than 150ms
     const proactiveInsights = await Promise.race([
       proactiveInsightsPromise,
       new Promise<any>((resolve) => setTimeout(() => resolve({
         dashboardPrompt: "How are you feeling right now?",
         suggestedResources: [{ id: 'res-fallback', title: 'Daily Mindfulness Practice', type: 'audio', category: 'General' }]
-      }), 800))
+      }), 150))
     ]);
 
     res.json({
