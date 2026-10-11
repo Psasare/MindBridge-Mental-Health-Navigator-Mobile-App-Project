@@ -1,1 +1,0 @@
-{"version":3,"file":"onboarding.routes.js","sourceRoot":"","sources":["onboarding.routes.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,MAAM,EAAE,MAAM,SAAS,CAAC;AACjC,OAAO,EAAE,cAAc,EAAE,MAAM,yCAAyC,CAAC;AACzE,OAAO,EAAE,IAAI,EAAE,MAAM,kCAAkC,CAAC;AAExD,MAAM,MAAM,GAAG,MAAM,EAAE,CAAC;AAExB,MAAM,CAAC,IAAI,CAAC,GAAG,EAAE,IAAI,EAAE,cAAc,CAAC,CAAC;AAEvC,eAAe,MAAM,CAAC"}

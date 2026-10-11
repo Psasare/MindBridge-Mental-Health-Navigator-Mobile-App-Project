@@ -1,8 +1,6 @@
 import { Worker, Job } from 'bullmq';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/prisma.js';
 import { analyzeVoiceAudio } from '../services/gemini.service.js';
-
-const prisma = new PrismaClient();
 
 const connection = {
   host: process.env.REDIS_HOST || 'localhost',

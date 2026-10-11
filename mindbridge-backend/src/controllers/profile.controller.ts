@@ -1,8 +1,6 @@
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/prisma.js';
 import { GoalService } from '../services/goal.service.js';
-
-const prisma = new PrismaClient();
 
 export const getProfile = async (req: Request, res: Response) => {
   try {

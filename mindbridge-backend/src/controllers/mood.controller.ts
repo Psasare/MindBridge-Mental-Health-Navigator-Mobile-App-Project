@@ -1,9 +1,7 @@
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/prisma.js';
 import { z } from 'zod';
 import { GoalService } from '../services/goal.service.js';
-
-const prisma = new PrismaClient();
 
 const createMoodLogSchema = z.object({
   score: z.number().min(1).max(10),

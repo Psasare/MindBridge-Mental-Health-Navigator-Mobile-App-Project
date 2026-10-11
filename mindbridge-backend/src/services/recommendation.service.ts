@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../utils/prisma.js';
 
 export const recommendResources = async (userId: string, primaryState: string, severity: number) => {
   const resourceClient = (prisma as any).resource;

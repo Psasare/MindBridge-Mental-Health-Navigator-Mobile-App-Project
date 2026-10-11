@@ -1,8 +1,6 @@
 import type { Response } from 'express';
 import type { AuthRequest } from '../middleware/auth.middleware.js';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../utils/prisma.js';
 
 export const saveOnboarding = async (req: AuthRequest, res: Response) => {
   try {

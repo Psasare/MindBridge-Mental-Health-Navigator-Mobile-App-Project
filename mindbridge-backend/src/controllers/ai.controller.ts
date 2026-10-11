@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/prisma.js';
 import { generateOracleResponse, generateProactiveInsights, analyzeVoiceAudio, generatePersonalizedAssessment, evaluatePersonalizedAssessment } from '../services/gemini.service.js';
 import { analyzeCurrentState } from '../services/ai/mental-state-analyzer.service.js';
 import { AiRepository } from '../repositories/ai.repository.js';
@@ -7,8 +7,6 @@ import { recommendResources } from '../services/recommendation.service.js';
 import { GoalService } from '../services/goal.service.js';
 import { getOrSetCache } from '../utils/cache.js';
 import { dispatchAiTask } from '../workers/queue.js';
-
-const prisma = new PrismaClient();
 
 // High-risk keywords for safety screening
 const CRISIS_KEYWORDS = [

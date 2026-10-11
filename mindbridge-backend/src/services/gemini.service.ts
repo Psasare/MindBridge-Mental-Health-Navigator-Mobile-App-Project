@@ -60,14 +60,27 @@ const normalizeGeneratedText = (text: string) => {
   }
 
   const cleaned = text.replace(/```(?:json)?/gi, '').trim();
-  const finalText = cleaned.replace(/\s+/g, ' ').trim();
+  let finalText = cleaned.replace(/\s+/g, ' ').trim();
 
   if (!finalText) {
     return "I'm here with you. Tell me what feels most heavy right now.";
   }
 
+  // If text doesn't end with sentence-ending punctuation, check if we can cleanly trim to the last complete sentence
   if (!/[.!?]$/.test(finalText)) {
-    return `${finalText}.`;
+    const lastPunctuationIndex = Math.max(
+      finalText.lastIndexOf('.'),
+      finalText.lastIndexOf('!'),
+      finalText.lastIndexOf('?')
+    );
+
+    // If there is a complete sentence earlier in the output, preserve up to that sentence
+    if (lastPunctuationIndex > 20) {
+      finalText = finalText.slice(0, lastPunctuationIndex + 1).trim();
+    } else {
+      // Otherwise cleanly conclude the statement
+      finalText = `${finalText}.`;
+    }
   }
 
   return finalText;
@@ -133,8 +146,8 @@ RESPONSE FORMAT & RHYTHM (STRICT RULES)
 - NEVER use bullet points, numbered lists, or long paragraphs unless the user explicitly asks for a list.
 - Do NOT provide exhaustive advice. Pick ONE insight or ONE small suggestion and stop.
 - If the person needs more information, they will ask. Give them space to query you.
-- Never use filler phrases like "I understand", "That sounds hard", "Of course", "I'm here for you". Just get straight to the point with empathy.
 - Often end with a single, short question to keep dialogue flowing.
+- SENTENCE COMPLETION: You MUST always finish your sentence completely with terminal punctuation (. or ?). Never cut off mid-thought.
 
 ═══════════════════════════════════════════
 SAFETY PROTOCOL

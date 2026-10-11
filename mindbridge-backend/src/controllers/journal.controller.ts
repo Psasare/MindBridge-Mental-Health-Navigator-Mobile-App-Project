@@ -1,9 +1,7 @@
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/prisma.js';
 import { analyzeJournalEntry } from '../services/gemini.service.js';
 import { z } from 'zod';
-
-const prisma = new PrismaClient();
 
 const createEntrySchema = z.object({
   title: z.string().optional().nullable(),

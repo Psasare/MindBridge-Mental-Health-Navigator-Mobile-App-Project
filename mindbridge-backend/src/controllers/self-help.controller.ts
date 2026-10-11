@@ -1,8 +1,6 @@
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/prisma.js';
 import { generateCBTReframe } from '../services/self-help.service.js';
-
-const prisma = new PrismaClient();
 
 export const processCBTWorksheet = async (req: Request, res: Response) => {
   try {

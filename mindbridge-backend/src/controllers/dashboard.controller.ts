@@ -1,25 +1,16 @@
 import type { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/prisma.js';
 import { AiRepository } from '../repositories/ai.repository.js';
 import { GoalService } from '../services/goal.service.js';
 import { generateProactiveInsights } from '../services/gemini.service.js';
 import { recommendResources } from '../services/recommendation.service.js';
 import { getOrSetCache } from '../utils/cache.js';
 
-const prisma = new PrismaClient();
-
 export const getDashboardAggregate = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
 
-    // Wake up Neon serverless DB with a single connection before spawning 12 parallel queries
-    try {
-      await prisma.$queryRaw`SELECT 1`;
-    } catch (e) {
-      console.warn('DB warmup failed or timed out, continuing anyway...', e);
-    }
-
-    // Run completely parallel execution of all previously separated endpoints
+    // Run parallel execution of all aggregated queries using shared connection pool
     const [
       latestMood,
       moodCount,
@@ -76,8 +67,12 @@ export const getDashboardAggregate = async (req: Request, res: Response) => {
           const severityScore = generatedInsights.severity === 'severe' || generatedInsights.severity === 'critical' ? 8 : (generatedInsights.severity === 'moderate' ? 6 : 4);
           suggestedResources = await recommendResources(userId, generatedInsights.primaryState, severityScore);
         } else if (generatedInsights.recommendedResourceCategories && Array.isArray(generatedInsights.recommendedResourceCategories)) {
-          for (const cat of generatedInsights.recommendedResourceCategories) {
-            const resources = await AiRepository.searchResources(cat).catch(() => []);
+          const fetchedLists = await Promise.all(
+            generatedInsights.recommendedResourceCategories.map((cat: string) => 
+              AiRepository.searchResources(cat).catch(() => [])
+            )
+          );
+          for (const resources of fetchedLists) {
             if (resources && resources.length > 0) {
               suggestedResources.push(resources[0]);
             }

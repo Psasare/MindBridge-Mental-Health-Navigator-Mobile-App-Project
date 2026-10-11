@@ -3,7 +3,7 @@ import type { AuthRequest } from '../middleware/auth.middleware.js';
 
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../utils/prisma.js';
 import { z } from 'zod';
 
 const registerSchema = z.object({
@@ -25,7 +25,6 @@ const updatePasswordSchema = z.object({
   newPassword: z.string().min(6),
 });
 
-const prisma = new PrismaClient();
 
 export const register = async (req: Request, res: Response) => {
   try {
