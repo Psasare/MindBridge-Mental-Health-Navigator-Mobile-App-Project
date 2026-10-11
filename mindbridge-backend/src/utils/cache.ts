@@ -27,8 +27,17 @@ export const connectCache = async () => {
   }
 };
 
-// Simple in-memory cache for local dev fallback
+// Simple in-memory cache for local dev fallback with LRU/expiry cleanup
 const memoryCache = new Map<string, { value: any, expiry: number }>();
+
+function pruneMemoryCache() {
+  const now = Date.now();
+  for (const [k, v] of memoryCache.entries()) {
+    if (v.expiry <= now) {
+      memoryCache.delete(k);
+    }
+  }
+}
 
 export async function getOrSetCache<T>(key: string, ttl: number, fetcher: () => Promise<T>): Promise<T> {
   if (!redisClient.isOpen) {
@@ -39,6 +48,11 @@ export async function getOrSetCache<T>(key: string, ttl: number, fetcher: () => 
       return memCached.value as T;
     }
     
+    // Prune if cache is getting large
+    if (memoryCache.size > 200) {
+      pruneMemoryCache();
+    }
+
     const freshData = await fetcher();
     memoryCache.set(key, { value: freshData, expiry: now + (ttl * 1000) });
     return freshData;

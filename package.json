@@ -2,9 +2,11 @@
   "name": "mindbridge-workspace",
   "version": "1.0.0",
   "scripts": {
-    "dev:all": "concurrently --raw \"npm run dev:backend\" \"npm run dev:mobile\"",
-    "dev:backend": "cd mindbridge-backend && npm run dev",
-    "dev:mobile": "cd mindbridge-mobile && cross-env NODE_OPTIONS=--dns-result-order=ipv4first npx expo start --clear"
+    "dev:all": "concurrently --kill-others-on-fail --raw \"npm run dev:backend\" \"npm run dev:mobile\"",
+    "dev:backend": "npm --prefix mindbridge-backend run dev",
+    "dev:mobile": "npm --prefix mindbridge-mobile run start",
+    "dev:mobile:clean": "npm --prefix mindbridge-mobile run start -- --clear",
+    "build:backend": "npm --prefix mindbridge-backend run build"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

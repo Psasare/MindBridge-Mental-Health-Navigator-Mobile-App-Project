@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext, useMemo } from 'react';
 import api from '../../src/services/api';
 import {
   View,
@@ -263,7 +263,7 @@ export default function AIGuideScreen() {
   const { t } = theme;
   const router = useRouter();
   const { userData: authData } = useContext(AuthContext) as any;
-  const S = createStyles(theme);
+  const S = useMemo(() => createStyles(theme), [theme]);
 
   const [messages, setMessages] = useState<any[]>([]);
   const [message, setMessage] = useState('');

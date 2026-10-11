@@ -213,7 +213,7 @@ export const generateOracleResponse = async (userMessage: string, context: any, 
       model: modelName,
       systemInstruction: SYSTEM_PROMPT,
       generationConfig: {
-        maxOutputTokens: 800,
+        maxOutputTokens: 2048,
         temperature: 0.6,
         topP: 0.9,
         candidateCount: 1,

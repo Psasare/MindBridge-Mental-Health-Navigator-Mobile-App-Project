@@ -3,18 +3,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceEventEmitter } from 'react-native';
 import Constants from 'expo-constants';
 
-let API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
+const configuredUrl = process.env.EXPO_PUBLIC_API_URL;
+let API_URL = configuredUrl || 'http://localhost:5000/api';
 
-// Dynamically pick up the local network IP when running in Expo development
+// Dynamically pick up the local network IP when running in Expo development on a physical device,
+// only if no custom non-localhost URL was explicitly configured
 const debuggerHost = Constants.expoConfig?.hostUri;
-if (__DEV__ && debuggerHost) {
-  // hostUri looks like "10.12.40.53:8081"
+if (__DEV__ && debuggerHost && (!configuredUrl || configuredUrl.includes('localhost') || configuredUrl.includes('127.0.0.1'))) {
   const localIp = debuggerHost.split(':')[0];
   API_URL = `http://${localIp}:5000/api`;
 }
 
 const api = axios.create({
-  baseURL: API_URL, 
+  baseURL: API_URL,
+  timeout: 15000, // 15s timeout to prevent indefinite screen hangs
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 api.interceptors.request.use(async (config) => {

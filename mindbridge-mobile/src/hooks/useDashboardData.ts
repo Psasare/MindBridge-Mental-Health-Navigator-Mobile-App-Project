@@ -1,4 +1,4 @@
-import { useState, useCallback, useContext } from 'react';
+import { useState, useCallback, useContext, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { Pedometer } from 'expo-sensors';
@@ -30,32 +30,45 @@ export const useDashboardData = () => {
 
   const initPedometer = useCallback(async () => {
     try {
-      const { status } = await Pedometer.getPermissionsAsync();
-      const isAvailable = await Pedometer.isAvailableAsync();
-      if (isAvailable && status === 'granted') {
+      const isAvailable = await Pedometer.isAvailableAsync().catch(() => false);
+      if (!isAvailable) return;
+
+      const { status } = await Pedometer.getPermissionsAsync().catch(() => ({ status: 'denied' }));
+      if (status === 'granted') {
         const end = new Date();
         const start = new Date();
         start.setHours(0, 0, 0, 0);
-        const result = await Pedometer.getStepCountAsync(start, end);
+        const result = await Pedometer.getStepCountAsync(start, end).catch(() => null);
         if (result) {
           setStepCount(result.steps);
         }
       }
-    } catch (e) {
-      console.log('Pedometer access denied or failed:', e);
+    } catch {
+      // Gracefully ignore on environments without pedometer support
     }
   }, []);
 
-  const logs = data?.oracleContext?.recentJournal || [];
-  const growth = getGrowthStage(logs.length);
-  const gardenStats = { count: logs.length, stage: growth.label, icon: growth.icon, color: growth.color };
+  const logs = useMemo(() => data?.oracleContext?.recentJournal || [], [data?.oracleContext?.recentJournal]);
   
-  const todayStr = new Date().toDateString();
-  const rituals = {
-    garden: data?.oracleContext?.latestMood && new Date(data.oracleContext.latestMood.createdAt).toDateString() === todayStr,
-    journal: logs.some((log: any) => new Date(log.createdAt).toDateString() === todayStr),
-    breathing: false 
-  };
+  const gardenStats = useMemo(() => {
+    const growth = getGrowthStage(logs.length);
+    return { count: logs.length, stage: growth.label, icon: growth.icon, color: growth.color };
+  }, [logs.length]);
+  
+  const rituals = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    return {
+      garden: Boolean(data?.oracleContext?.latestMood && new Date(data.oracleContext.latestMood.createdAt).toDateString() === todayStr),
+      journal: logs.some((log: any) => new Date(log.createdAt).toDateString() === todayStr),
+      breathing: false 
+    };
+  }, [data?.oracleContext?.latestMood, logs]);
+
+  const userData = useMemo(() => ({
+    name: data?.oracleContext?.onboarding?.firstName || authData?.name || 'Friend', 
+    language: 'English', 
+    streak: data?.gamification?.currentStreak || 0 
+  }), [data?.oracleContext?.onboarding?.firstName, authData?.name, data?.gamification?.currentStreak]);
   
   return {
     rituals,

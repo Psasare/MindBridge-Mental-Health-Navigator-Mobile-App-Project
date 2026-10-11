@@ -8,6 +8,8 @@ export const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 60 * 24, // 24 hours
       staleTime: 1000 * 60 * 5, // 5 minutes
       retry: 2,
+      refetchOnWindowFocus: false, // Prevent aggressive network requests on app focus
+      refetchOnReconnect: true,
     },
   },
 });
