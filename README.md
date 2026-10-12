@@ -449,9 +449,9 @@ MindBridge's visual identity was architected to avoid the sterile, clinical feel
 
 * **Lead Researcher & Developer:** **Prosper Shaibu Asare**  
   * *Student ID:* `11117173`  
-  * *Department:* Computer Science
-  **School:** University of Ghana.  
+  * *Department:* Computer Science 
 * **Academic Supervisor:** Prof. Isaac Wiafe.
+* **School:** University of Ghana. 
 * **Special Thanks:** Mental Health Authority of Ghana, campus peer counselors, and all university students who participated in usability evaluations and feedback interviews.
 
 ---
