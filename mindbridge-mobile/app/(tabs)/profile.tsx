@@ -245,15 +245,68 @@ export default function ProfileScreen() {
   const styles = createStyles(theme);
 
   const isGuest = userToken?.startsWith('guest-token');
-  const [profile, setProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<any>(() => {
+    if (authData) {
+      return {
+        id: authData.id,
+        name: authData.name,
+        email: authData.email,
+        username: authData.username,
+        studentId: authData.studentId,
+        phoneNumber: authData.phoneNumber,
+        profileImage: authData.profileImage,
+        onboarding: authData.onboarding || {
+          university: authData.academic?.institution,
+          program: authData.academic?.faculty,
+          level: authData.academic?.level,
+        },
+        stats: {
+          streak: authData.streak || 0,
+          points: authData.points || 0,
+          seeds: authData.latestReflection ? 1 : 0,
+          badges: Math.floor((authData.points || 0) / 500),
+          trend: []
+        }
+      };
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(!authData);
   const [insights, setInsights] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState<any>({});
+  const [editData, setEditData] = useState<any>(() => {
+    if (authData) {
+      return {
+        name: authData.name,
+        phoneNumber: authData.phoneNumber,
+        studentId: authData.studentId,
+        username: authData.username,
+        university: authData.onboarding?.university || authData.academic?.institution,
+        program: authData.onboarding?.program || authData.academic?.faculty,
+        level: authData.onboarding?.level || authData.academic?.level,
+      };
+    }
+    return {};
+  });
   const [showUniPicker, setShowUniPicker] = useState(false);
   const [uniSearch, setUniSearch] = useState('');
   const [showHelp, setShowHelp] = useState(false);
-  const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [userStats, setUserStats] = useState<UserStats | null>(() => {
+    if (authData) {
+      return {
+        currentStreak: authData.streak || 0,
+        longestStreak: authData.streak || 0,
+        lastCheckInDate: authData.latestMood?.createdAt || null,
+        totalCheckIns: authData.latestMood ? 1 : 0,
+        totalJournals: authData.latestReflection ? 1 : 0,
+        totalCrisisUses: 0,
+        totalPeerSupport: 0,
+        points: authData.points || 0,
+        badges: [],
+      };
+    }
+    return null;
+  });
 
   const fetchProfileData = async () => {
     try {
