@@ -79,6 +79,7 @@ import { AppTourModal } from '../../src/components/AppTourModal';
 import { ReadMoreText } from '../../src/components/ReadMoreText';
 import { InterventionModal } from '../../src/components/InterventionModal';
 import { CelebrationModal } from '../../src/components/CelebrationModal';
+import { formatText } from '../../src/utils/textUtils';
 
 const { width } = Dimensions.get('window');
 const springConfig = { damping: 15, stiffness: 150, mass: 0.8 };
@@ -114,11 +115,6 @@ export default function DashboardScreen() {
     checkStatus,
     initPedometer,
   } = useDashboardData();
-
-  const formatText = (text: string | null | undefined) => {
-    if (!text) return '';
-    return text.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-  };
 
   const completedCount = completedGoalIds.length;
   
@@ -439,10 +435,10 @@ export default function DashboardScreen() {
                   }}
                 >
                   <View style={styles.resourceInfo}>
-                    <View style={styles.resourceTag}><Text style={styles.resourceTagText}>{res.category}</Text></View>
+                    <View style={styles.resourceTag}><Text style={styles.resourceTagText}>{formatText(res.category)}</Text></View>
                     <Text style={[styles.resourceTitle, { color: theme.colors.text.primary }]} numberOfLines={1}>{res.title}</Text>
                     <View style={styles.resourceMeta}>
-                      <Text style={[styles.resourceMetaText, { color: theme.colors.text.tertiary }]}>{res.type.toUpperCase()}</Text>
+                      <Text style={[styles.resourceMetaText, { color: theme.colors.text.tertiary }]}>{formatText(res.type)}</Text>
                     </View>
                   </View>
                   <View style={styles.resourceAction}>

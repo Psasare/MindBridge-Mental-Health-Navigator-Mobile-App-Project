@@ -9,6 +9,7 @@ import Animated, { FadeInDown, FadeIn, SlideInDown } from 'react-native-reanimat
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { formatText } from '../src/utils/textUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -128,9 +129,9 @@ export default function GoalExecutionScreen() {
           <Animated.View entering={FadeInDown}>
             <View style={styles.categoryBadge}>
               <Activity size={14} color={theme.colors.plum} />
-              <Text style={styles.categoryText}>{goal.category.toUpperCase().replace('_', ' ')}</Text>
+              <Text style={styles.categoryText}>{formatText(goal.category).toUpperCase()}</Text>
             </View>
-            <Text style={[styles.title, { color: theme.colors.text.primary }]}>{goal.name}</Text>
+            <Text style={[styles.title, { color: theme.colors.text.primary }]}>{formatText(goal.name)}</Text>
             
             <View style={styles.metaRow}>
               <View style={styles.metaBadge}>

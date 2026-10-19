@@ -11,8 +11,8 @@ import {
 import { useTheme } from '../../src/context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInUp, FadeIn, Layout } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { CheckCircle2, Circle, Clock, Flame, Calendar, Trophy } from 'lucide-react-native';
+import { formatText } from '../../src/utils/textUtils';
 
 const INITIAL_TASKS = [
   { id: '1', title: 'Morning Reflection', time: '08:00 AM', completed: true, points: 10, category: 'Mind' },
@@ -130,7 +130,7 @@ export default function JourneyScreen() {
                   </Text>
                   <View style={styles.taskFooter}>
                     <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryText}>{task.category}</Text>
+                      <Text style={styles.categoryText}>{formatText(task.category)}</Text>
                     </View>
                     <Text style={styles.pointsText}>+{task.points} pts</Text>
                   </View>

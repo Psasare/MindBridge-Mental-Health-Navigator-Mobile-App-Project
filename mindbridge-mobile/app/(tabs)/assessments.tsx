@@ -20,6 +20,7 @@ import { SkeletonLoader } from '../../src/components/SkeletonLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../src/services/api';
 import { useRouter } from 'expo-router';
+import { formatText } from '../../src/utils/textUtils';
 import { 
   ClipboardList, 
   Activity, 
@@ -691,7 +692,7 @@ export default function AssessmentsScreen() {
                   </View>
                   <View style={styles.resultInfo}>
                     <Text style={[styles.resultTest, { color: theme.colors.text.primary, fontSize: 14 }]}>{res.title}</Text>
-                    <Text style={{ color: theme.colors.text.tertiary, fontSize: 12 }}>{res.category}</Text>
+                    <Text style={{ color: theme.colors.text.tertiary, fontSize: 12 }}>{formatText(res.category)}</Text>
                   </View>
                   <ChevronRight color={getActiveColor()} size={20} />
                 </TouchableOpacity>

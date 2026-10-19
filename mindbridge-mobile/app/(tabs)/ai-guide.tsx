@@ -20,6 +20,7 @@ import { AuthContext } from '../../src/context/AuthContext';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp, FadeIn } from 'react-native-reanimated';
+import { formatText } from '../../src/utils/textUtils';
 
 import { BlurView } from 'expo-blur';
 import * as Clipboard from 'expo-clipboard';
@@ -162,7 +163,7 @@ const MessageItem = ({ item, theme, router, t, handleSend }: any) => {
                   <View style={[msgStyles.stateHeader, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }]}>
                     <Activity size={12} color={theme.colors.text.primary} />
                     <Text style={[msgStyles.stateLabel, { color: theme.colors.text.primary }]}>
-                      {item.state.severity?.toUpperCase()} {item.state.primaryCondition?.toUpperCase()} DETECTED
+                      {formatText(item.state.severity).toUpperCase()} {formatText(item.state.primaryCondition).toUpperCase()} DETECTED
                     </Text>
                   </View>
                   )}
@@ -170,7 +171,7 @@ const MessageItem = ({ item, theme, router, t, handleSend }: any) => {
                   <Text style={[msgStyles.stateActionText, { color: theme.colors.text.secondary }]}>
                     {item.state.severity === 'severe' || item.state.severity === 'critical'
                       ? 'We strongly recommend speaking with a campus counselor about this.'
-                      : `Here is a tool that might help with your ${item.state.primaryCondition}:`}
+                      : `Here is a tool that might help with your ${formatText(item.state.primaryCondition).toLowerCase()}:`}
                   </Text>
 
                   <TouchableOpacity activeOpacity={0.7} 

@@ -63,6 +63,7 @@ import api from '../../src/services/api';
 import { AuthContext } from '../../src/context/AuthContext';
 import { Typography } from '../../src/components/ui/Typography';
 import { Button } from '../../src/components/ui/Button';
+import { formatText } from '../../src/utils/textUtils';
 import { useAudioRecorder, useAudioRecorderState, createAudioPlayer, AudioPlayer, requestRecordingPermissionsAsync, RecordingPresets, setAudioModeAsync } from 'expo-audio';
 import * as FileSystem from 'expo-file-system';
 import * as Location from 'expo-location';
@@ -194,10 +195,6 @@ export default function WellnessTrackerScreen() {
   
   const [audioUri, setAudioUri] = useState<string | null>(null);
 
-  const formatText = (text: string | null | undefined) => {
-    if (!text) return '';
-    return text.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
-  };
   const [isPlaying, setIsPlaying] = useState(false);
   const [player, setPlayer] = useState<AudioPlayer | null>(null);
 
@@ -837,7 +834,7 @@ export default function WellnessTrackerScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.historyMood, { color: theme.colors.text.primary }]}>{res.title || 'Mindfulness Exercise'}</Text>
-                  <Text style={[styles.historyTime, { color: theme.colors.text.tertiary }]}>{res.category || 'General'} · Recommended by AI</Text>
+                  <Text style={[styles.historyTime, { color: theme.colors.text.tertiary }]}>{formatText(res.category) || 'General'} · Recommended by AI</Text>
                 </View>
                 <ArrowRight size={16} color={theme.colors.plum} />
               </TouchableOpacity>
@@ -916,7 +913,7 @@ export default function WellnessTrackerScreen() {
                   <Text style={[styles.historyMood, { color: theme.colors.text.primary }]}>{new Date(item.createdAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</Text>
                   <View style={styles.historyMeta}>
                     <Clock size={12} color={theme.colors.text.tertiary} />
-                    <Text style={[styles.historyTime, { color: theme.colors.text.tertiary }]}>Score: {item.score}/10 · {emotion}</Text>
+                    <Text style={[styles.historyTime, { color: theme.colors.text.tertiary }]}>Score: {item.score}/10 · {formatText(emotion)}</Text>
                   </View>
                 </View>
                 <ArrowRight size={16} color={theme.colors.text.tertiary} />
