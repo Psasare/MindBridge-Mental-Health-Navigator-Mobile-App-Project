@@ -10,45 +10,45 @@ export const getDashboardAggregate = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
 
-    // Run parallel execution of all aggregated queries using shared connection pool
+    // Run parallel execution of aggregated queries using shared connection pool
     const [
-      latestMood,
+      moodHistory,
       moodCount,
-      user,
+      userWithOnboarding,
       recentJournal,
       journalCount,
-      onboarding,
       history,
       assessments,
       latestCommunityPost,
-      moodHistory,
       gamificationStatus,
       dailyStatus
     ] = await Promise.all([
-      // from getOracleContext
-      prisma.moodLog.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' } }),
+      // from getMoodLogs & oracleContext latestMood
+      prisma.moodLog.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 30 }),
       prisma.moodLog.count({ where: { userId } }),
-      prisma.user.findUnique({ where: { id: userId }, select: { name: true, createdAt: true } }),
+      // combined user & onboarding lookup
+      prisma.user.findUnique({ where: { id: userId }, select: { name: true, createdAt: true, onboarding: true } }),
       prisma.journal.findMany({ where: { userId }, take: 3, orderBy: { createdAt: 'desc' }, select: { title: true, content: true, mood: true, createdAt: true } }),
       prisma.journal.count({ where: { userId } }),
-      prisma.onboarding.findUnique({ where: { userId } }),
       AiRepository.getChatHistory(userId, 15).catch(() => []),
       AiRepository.getLatestAssessments(userId).catch(() => []),
       prisma.communityPost.findFirst({ orderBy: { createdAt: 'desc' } }),
-      // from getMoodLogs
-      prisma.moodLog.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 30 }),
       // from gamification
       GoalService.getGamificationStatus(userId).catch(() => null),
       // from daily goals
       (async () => {
         let status = await GoalService.getDailyStatus(userId);
         if (!status) {
-          await GoalService.generateDailyGoals(userId, 'stress');
+          await GoalService.generateDailyGoals(userId, 'stress').catch(() => null);
           status = await GoalService.getDailyStatus(userId);
         }
         return status;
       })().catch(() => null)
     ]);
+
+    const latestMood = moodHistory[0] || null;
+    const user = userWithOnboarding;
+    const onboarding = userWithOnboarding?.onboarding || null;
 
     // Calculate proactive insights with caching (copied from getProactiveInsights)
     const cacheKey = `insights:${userId}`;

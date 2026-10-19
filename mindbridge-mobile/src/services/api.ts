@@ -3,14 +3,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DeviceEventEmitter } from 'react-native';
 import Constants from 'expo-constants';
 
-let API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
+let API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-// Dynamically pick up the local network IP when running in Expo development on a physical device
-const debuggerHost = Constants.expoConfig?.hostUri;
-if (__DEV__ && debuggerHost) {
-  // hostUri looks like "172.20.10.3:8081"
-  const localIp = debuggerHost.split(':')[0];
-  API_URL = `http://${localIp}:5000/api`;
+// If not explicitly configured in .env, dynamically derive from Metro hostUri
+if (!API_URL) {
+  const debuggerHost = Constants.expoConfig?.hostUri;
+  if (__DEV__ && debuggerHost) {
+    const localIp = debuggerHost.split(':')[0];
+    API_URL = `http://${localIp}:5000/api`;
+  } else {
+    API_URL = 'http://localhost:5000/api';
+  }
 }
 
 console.log('[API] Resolved baseURL:', API_URL);

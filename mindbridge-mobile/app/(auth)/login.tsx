@@ -119,7 +119,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       const response = await api.post('/auth/login', { email, password });
-      await signIn(response.data.token, response.data.user);
+      await signIn(response.data.token, response.data.user, response.data);
     } catch (error: any) {
       const msg = error.response?.data?.error || 'Unable to connect to server';
       Alert.alert('Login Failed', msg);

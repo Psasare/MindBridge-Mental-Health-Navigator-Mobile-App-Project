@@ -11,12 +11,20 @@ interface AuthContextType {
     name?: string, 
     email?: string, 
     username?: string,
+    studentId?: string,
+    phoneNumber?: string,
+    profileImage?: string,
     isOnboarded?: boolean,
     preferredLanguage?: string,
+    onboarding?: any,
     academic?: { institution: string, faculty: string, level: string, status: string },
-    preferences?: { stressSource: string, supportType: string, reminders: boolean }
+    preferences?: { stressSource: string, supportType: string, reminders: boolean },
+    latestMood?: any,
+    latestReflection?: any,
+    streak?: number,
+    points?: number
   } | null;
-  signIn: (token: string, user?: any) => Promise<void>;
+  signIn: (token: string, user?: any, initialPayload?: any) => Promise<void>;
   signOut: () => Promise<void>;
   updateUserData: (data: Partial<AuthContextType['userData']>) => Promise<void>;
   isLoading: boolean;
@@ -54,12 +62,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const signIn = async (token: string, user?: any) => {
+  const signIn = async (token: string, user?: any, initialPayload?: any) => {
     await AsyncStorage.setItem('userToken', token);
     if (user) {
       await AsyncStorage.setItem('userData', JSON.stringify(user));
       setUserData(user);
     }
+
+    // Instantly pre-seed caches so dashboard and profile render in 0ms without skeleton delay
+    if (user && initialPayload?.dashboardSnapshot) {
+      queryClient.setQueryData(['dashboard', 'aggregate', user.id], initialPayload.dashboardSnapshot);
+      await AsyncStorage.setItem('dashboard_cache', JSON.stringify({
+        journalHistory: initialPayload.dashboardSnapshot.oracleContext?.recentJournal || [],
+        moodLogs: initialPayload.dashboardSnapshot.moodHistory || []
+      })).catch(() => null);
+      
+      await AsyncStorage.setItem('garden_cache', JSON.stringify({
+        totalCount: initialPayload.dashboardSnapshot.moodHistory?.length || 0,
+        moodLogs: initialPayload.dashboardSnapshot.moodHistory || [],
+        insights: initialPayload.profileSnapshot?.insights || null,
+        history: (initialPayload.dashboardSnapshot.moodHistory || []).slice(0, 3),
+        aiInsight: null,
+        suggestedResources: []
+      })).catch(() => null);
+    }
+
+    if (initialPayload?.profileSnapshot) {
+      await AsyncStorage.setItem('profile_cache', JSON.stringify(initialPayload.profileSnapshot)).catch(() => null);
+    }
+
     setUserToken(token);
 
     // Redirect based on onboarding status
@@ -72,7 +103,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     queryClient.clear();
-    await AsyncStorage.clear(); // This safely wipes both React Query offline caches and user auth state.
+    // Safely wipe user-specific session and data caches while preserving preferences
+    const userKeys = [
+      'userToken',
+      'userData',
+      'profile_cache',
+      'dashboard_cache',
+      'garden_cache',
+      'progress_cache',
+      'REACT_QUERY_OFFLINE_CACHE'
+    ];
+    await AsyncStorage.multiRemove(userKeys);
     setUserToken(null);
     setUserData(null);
     router.replace('/(auth)/login');
