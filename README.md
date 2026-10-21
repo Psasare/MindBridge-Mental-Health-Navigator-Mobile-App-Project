@@ -1,4 +1,4 @@
-# MindBridge — Mental Health Navigator Mobile App
+# MindBridge - Mental Health Navigator Mobile App
 
 [![Expo](https://img.shields.io/badge/Expo-SDK%2057-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
